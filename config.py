@@ -11,7 +11,7 @@ safety_dist = 0.03                         # Safety distance
 x0 = np.array([0, 0, 0])                   # Initial state
 
 # Actuator limits
-v_limit = 0.26                             # Linear velocity limit
+v_limit = 0.30                             # Linear velocity limit
 omega_limit = 3.8                          # Angular velocity limit
 
 # Type of control

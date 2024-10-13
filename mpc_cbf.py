@@ -2,8 +2,9 @@ import do_mpc
 from casadi import *
 import config
 from numpy import linalg as LA
-from numpy.linalg import inv
 import casadi as ca
+import numpy as np
+
 class MPC:
     """MPC-CBF Optimization problem:
 
@@ -20,13 +21,10 @@ class MPC:
     def __init__(self,xff,j,i,liveliness):
         self.sim_time = config.sim_time          # Total simulation time steps
         self.Ts = config.Ts                      # Sampling time
-        self.T_horizon = config.T_horizon        # Prediction horizon
         self.x0 = config.x0                      # Initial pose
-        self.v_limit = config.v_limit            # Linear velocity limit
-        self.omega_limit = config.omega_limit    # Angular velocity limit
         self.R = config.R                        # Controls cost matrix
         self.Q = config.Q  
-        self.A=   np.array([[1, -2],[-2, 1]] )                  # State cost matrix
+        self.A = np.array([[1, -2],[-2, 1]] )                  # State cost matrix
         self.static_obstacles_on = config.static_obstacles_on  # Whether to have static obstacles
         self.moving_obstacles_on = config.moving_obstacles_on  # Whether to have moving obstacles
         if self.static_obstacles_on:
@@ -42,7 +40,6 @@ class MPC:
         self.controller = config.controller      # Type of control
 
         self.model = self.define_model()
-        # self.mpc = self.define_mpc()
         self.mpc = self.define_mpc(xff,j,i,liveliness)
         self.simulator = self.define_simulator()
         self.estimator = do_mpc.estimator.StateFeedback(self.model)
@@ -59,11 +56,11 @@ class MPC:
         model_type = 'discrete'
         model = do_mpc.model.Model(model_type)
 
-        # States
+        # States: (x, y, theta)
         n_states = 3
         _x = model.set_variable(var_type='_x', var_name='x', shape=(n_states, 1))
 
-        # Inputs
+        # Inputs: (v, omega)
         n_controls = 2
         _u = model.set_variable(var_type='_u', var_name='u', shape=(n_controls, 1))
 
@@ -148,7 +145,7 @@ class MPC:
 
         # Set parameters
         setup_mpc = {'n_robust': 0,  # Robust horizon
-                     'n_horizon': self.T_horizon,
+                     'n_horizon': config.T_horizon,
                      't_step': self.Ts,
                      'state_discretization': 'discrete',
                      'store_full_solution': True,
@@ -163,7 +160,7 @@ class MPC:
         mpc.set_rterm(u=self.R)         # Input penalty (R diagonal matrix in objective fun)
 
         # State and input bounds
-        max_u = np.array([self.v_limit, self.omega_limit])
+        max_u = np.array([config.v_limit, config.omega_limit])
         mpc.bounds['lower', '_u', 'u'] = -max_u
         mpc.bounds['upper', '_u', 'u'] = max_u
 
@@ -218,8 +215,8 @@ class MPC:
         # new_vector = vertcat(u_0, vec1_1)  # form a new vector
             relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
             constraint = (self.A @ new_vector)
-            # self.v_limit = self.v_limit/2
-            # self.v_limit = self.v_limit/2
+            # config.v_limit = config.v_limit/2
+            # config.v_limit = config.v_limit/2
         elif j>3 and i==0 and l<1.1:
             u_0 = self.model.u['u'][1]  # get the first component of u
             vec1_1 =vec1[0]  # get the first component of vec1
@@ -227,15 +224,9 @@ class MPC:
             relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
             constraint = (self.A @ new_vector)
 
-    # set the constraint
+        # set the constraint
         mpc.set_nl_cons('custom_sigmoid_constraint', constraint, ub=0)
-
         return mpc
-
-
-
-
-
 
 
     def add_obstacle_constraints(self, mpc):
