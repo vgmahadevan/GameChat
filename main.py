@@ -1,10 +1,10 @@
 """Game theoretic MPC-CBF controller for a differential drive mobile robot."""
 
 # State: [x, y, theta], Position: [x, y]
-#x1 and x2 are time series states of agents 1 and 2 respectively
-#n is the number of agents
-#N is number of iterations for one time horizon
-#controller[1] and controller[2] are the Game thereotic MPC controllers for agent 1 and 2 respectively
+# x1 and x2 are time series states of agents 1 and 2 respectively
+# n is the number of agents
+# N is number of iterations for one time horizon
+# mpc_cbf.py containst eh code for the Game thereotic MPC controllers for agent 1 and 2 respectively
 
 import numpy as np
 from mpc_cbf import MPC
@@ -12,12 +12,10 @@ import config
 from scenarios import DoorwayScenario, IntersectionScenario
 from plotter import Plotter
 
-
 # Add number of agents
 n=2
 N=50 #Number of iteration steps for each agent
 
-controller=[None]*n #Control input intitialization
 xf=np.zeros((n,3)) # initialization of final states
 u = []
 L=[]
@@ -60,17 +58,17 @@ def main():
             liveliness='on'
 
             #Initialization of MPC controller for the ith agent
-            controller[i] = MPC(final_positions_both_agents,j,i,liveliness)
+            controller = MPC(final_positions_both_agents,j,i,liveliness)
 
             #final_positions_both_agents stores the final positions of both agents
             #[1,:], [3,:], [5,:]... are final positions of agent 1
             #[2,:], [4,:], [6,:]... are final positions of agent 2
             final_positions_both_agents[c,:]=xf[i,:]
-            lll=controller[i].run_simulation(final_positions_both_agents,j)
+            lll=controller.run_simulation(final_positions_both_agents,j)
             LL.append(lll)
             #The position of agent i is propogated one time horizon ahead using the MPC controller
-            x, uf, uf_proj, l =controller[i].run_simulation_to_get_final_condition(final_positions_both_agents,j,i,liveliness, first_time)
-            xf[i,:] = x.ravel()            
+            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(final_positions_both_agents,j,i,liveliness, first_time)
+            xf[i,:] = x.ravel()
             u.append(uf)
             u_proj.append(uf_proj)
             L.append(l)

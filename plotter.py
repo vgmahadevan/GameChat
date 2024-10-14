@@ -58,9 +58,9 @@ class Plotter:
         self.scenario.plot(self.ax)
         self.x1 = x1
         self.x2 = x2
-        print("Plotting x1 and x2")
-        print(self.x1)
-        print(self.x2)
+        # print("Plotting x1 and x2")
+        # print(self.x1)
+        # print(self.x2)
 
         # Draw the stationary circles
         # circles = [Circle((obstacles[i,0], obstacles[i,1]), obstacles[i,2], fill = False) for i in range(len(obstacles))]
@@ -72,12 +72,12 @@ class Plotter:
         # Save the animation
         ani.save('agents_animation.mp4', writer='ffmpeg')
         # Adjusting the font to "Segoe UI"
-        plt.rcParams['font.size'] = 200
+        # plt.rcParams['font.size'] = 200
 
         # Set the color palette to "deep"
         sns.set_palette("deep")
         sns.set()
-        fontsize = 36
+        fontsize = 14
         agent_1_velocities = [v.ravel() for i, v in enumerate(u[:40]) if i % 2 == 0] 
         agent_2_velocities = [v.ravel() for i, v in enumerate(u[:40]) if i % 2 != 0]
         agent_2_velocities_proj = [v.ravel() for i, v in enumerate(u_proj[:40]) if i % 2 != 0]
@@ -95,7 +95,7 @@ class Plotter:
         iterations = range(len(agent_2_velocities))
 
         # Plotting the velocities as a function of the iteration for both agents
-        plt.figure(figsize=(25, 14))
+        plt.figure(figsize=(10, 10))
 
         # Plotting the x and y velocities for Agent 1
         plt.subplot(2, 1, 1)
