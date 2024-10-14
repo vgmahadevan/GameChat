@@ -54,11 +54,8 @@ def main():
                 if i!=k:
                     config.obs.append((initial[k,0], initial[k,1],0.08)) 
 
-            #Liveliness "on" or "off" can be selected from here
-            liveliness='on'
-
             #Initialization of MPC controller for the ith agent
-            controller = MPC(final_positions_both_agents,j,i,liveliness)
+            controller = MPC(final_positions_both_agents,j,i)
 
             #final_positions_both_agents stores the final positions of both agents
             #[1,:], [3,:], [5,:]... are final positions of agent 1
@@ -67,7 +64,7 @@ def main():
             lll=controller.run_simulation(final_positions_both_agents,j)
             LL.append(lll)
             #The position of agent i is propogated one time horizon ahead using the MPC controller
-            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(final_positions_both_agents,j,i,liveliness, first_time)
+            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(final_positions_both_agents,j,i,first_time)
             xf[i,:] = x.ravel()
             u.append(uf)
             u_proj.append(uf_proj)

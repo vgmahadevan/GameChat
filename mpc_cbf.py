@@ -18,7 +18,7 @@ class MPC:
 
     where x'_k = x_{des_k} - x_k
     """
-    def __init__(self,xff,j,i,liveliness):
+    def __init__(self,xff,j,i):
         self.sim_time = config.sim_time          # Total simulation time steps
         self.Ts = config.Ts                      # Sampling time
         self.x0 = config.x0                      # Initial pose
@@ -40,7 +40,7 @@ class MPC:
         self.controller = config.controller      # Type of control
 
         self.model = self.define_model()
-        self.mpc = self.define_mpc(xff,j,i,liveliness)
+        self.mpc = self.define_mpc(xff,j,i,config.liveliness)
         self.simulator = self.define_simulator()
         self.estimator = do_mpc.estimator.StateFeedback(self.model)
         self.set_init_state()
@@ -182,51 +182,51 @@ class MPC:
         return mpc
     
     ##Liveness
-    def add_custom_constraint(self, mpc,xff,j,i,liveliness):
-        T=0.1
-        epsilon=0.001
-        l=3
-        xf_minus_one=xff[j,0:2]
-        xf_one=xff[j-2,0:2]
-        xf_minus_two=xff[j-1,0:2]
-        xf_two=xff[j-3,0:2]
-        vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T
-        constraint=0*self.model.u['u'][0]
-        u_0 = self.model.u['u'][0] 
-        u_1 = self.model.u['u'][1] 
-        if j<3 and i==0:
-            xf_minus_one=xff[j,0:2]
-            xf_one=xff[j-2,0:2]
-            xf_minus_two=xff[j-1,0:2]
-            xf_two=xff[j-3,0:2]
-        #Will add liveliness condition here
-            vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
-            vec2=(xf_minus_one-xf_minus_two)#xf[j,0:2]-xf[i,0:2]
-            l=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
+    # def add_custom_constraint(self, mpc,xff,j,i,liveliness):
+    #     T=0.1
+    #     epsilon=0.001
+    #     l=3
+    #     xf_minus_one=xff[j,0:2]
+    #     xf_one=xff[j-2,0:2]
+    #     xf_minus_two=xff[j-1,0:2]
+    #     xf_two=xff[j-3,0:2]
+    #     vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T
+    #     constraint=0*self.model.u['u'][0]
+    #     u_0 = self.model.u['u'][0] 
+    #     u_1 = self.model.u['u'][1] 
+    #     if j<3 and i==0:
+    #         xf_minus_one=xff[j,0:2]
+    #         xf_one=xff[j-2,0:2]
+    #         xf_minus_two=xff[j-1,0:2]
+    #         xf_two=xff[j-3,0:2]
+    #     #Will add liveliness condition here
+    #         vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
+    #         vec2=(xf_minus_one-xf_minus_two)#xf[j,0:2]-xf[i,0:2]
+    #         l=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
 
-        if j>3 and i==1 and l<1.1:
-            u_0 = self.model.u['u'][0]  # get the first component of u
-        # if j>3:
-            vec1_1 =vec1[1]  # get the first component of vec1
-        # else:
-        #     vec1_1=5.0
-            new_vector=vertcat(u_0, vec1_1)
+    #     if j>3 and i==1 and l<1.1:
+    #         u_0 = self.model.u['u'][0]  # get the first component of u
+    #     # if j>3:
+    #         vec1_1 =vec1[1]  # get the first component of vec1
+    #     # else:
+    #     #     vec1_1=5.0
+    #         new_vector=vertcat(u_0, vec1_1)
 
-        # new_vector = vertcat(u_0, vec1_1)  # form a new vector
-            relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
-            constraint = (self.A @ new_vector)
-            # config.v_limit = config.v_limit/2
-            # config.v_limit = config.v_limit/2
-        elif j>3 and i==0 and l<1.1:
-            u_0 = self.model.u['u'][1]  # get the first component of u
-            vec1_1 =vec1[0]  # get the first component of vec1
-            new_vector=vertcat(vec1_1, u_0)
-            relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
-            constraint = (self.A @ new_vector)
+    #     # new_vector = vertcat(u_0, vec1_1)  # form a new vector
+    #         relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
+    #         constraint = (self.A @ new_vector)
+    #         # config.v_limit = config.v_limit/2
+    #         # config.v_limit = config.v_limit/2
+    #     elif j>3 and i==0 and l<1.1:
+    #         u_0 = self.model.u['u'][1]  # get the first component of u
+    #         vec1_1 =vec1[0]  # get the first component of vec1
+    #         new_vector=vertcat(vec1_1, u_0)
+    #         relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
+    #         constraint = (self.A @ new_vector)
 
-        # set the constraint
-        mpc.set_nl_cons('custom_sigmoid_constraint', constraint, ub=0)
-        return mpc
+    #     # set the constraint
+    #     mpc.set_nl_cons('custom_sigmoid_constraint', constraint, ub=0)
+    #     return mpc
 
 
     def add_obstacle_constraints(self, mpc):
@@ -389,7 +389,7 @@ class MPC:
         #Will add liveliness condition here
             vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
             vec2=(xf_minus_one-xf_minus_two)#xf[j,0:2]-xf[i,0:2]
-            l=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
+            lq=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
         for k in range(self.sim_time):
             u0 = self.mpc.make_step(x0)
             y_next = self.simulator.make_step(u0)
@@ -398,7 +398,7 @@ class MPC:
         return l
 
 
-    def run_simulation_to_get_final_condition(self,xff,j,i,liveliness, first_time):
+    def run_simulation_to_get_final_condition(self,xff,j,i,first_time):
         """Runs a closed-loop control simulation."""
         x1 = config.x0#self.x0
         T=0.1
@@ -418,7 +418,7 @@ class MPC:
         for k in range(self.sim_time):
             u1 = self.mpc.make_step(x1)
             u1_before_proj=u1
-            if j>3 and l<0.3 and i==1 and liveliness=='on':
+            if j>3  and i==1 and config.liveliness and l < config.liveness_threshold:
                 # u1[0]=u1[0]/10
                 # u=np.matmul(inv(A),u1)
                 v = (xf_minus_two - xf_two)/T

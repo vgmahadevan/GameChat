@@ -101,4 +101,9 @@ elif control_type == "traj_tracking":
 else:
     raise ValueError("Please choose among the available options for the control type!")
 
+# ------------------------------------------------------------------------------
+# Liveness parameters.
+liveliness = True
+liveness_threshold = 0.3
+
 
