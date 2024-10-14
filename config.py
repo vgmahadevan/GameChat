@@ -8,7 +8,6 @@ T_horizon = 3                         # Prediction horizon time steps
 
 gamma = 0.1                                # CBF parameter in [0,1]
 safety_dist = 0.03                         # Safety distance
-x0 = np.array([0, 0, 0])                   # Initial state
 
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
@@ -96,7 +95,6 @@ elif control_type == "traj_tracking":
     elif trajectory == "infinity":
         A = 1.0                            # Amplitude
         w = 0.3                            # Angular frequency
-        x0 = np.array([1, 0, np.pi/2])     # Initial state
 else:
     raise ValueError("Please choose among the available options for the control type!")
 

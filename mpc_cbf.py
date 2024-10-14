@@ -21,7 +21,6 @@ class MPC:
     def __init__(self,xff,j,i):
         self.sim_time = config.sim_time          # Total simulation time steps
         self.Ts = config.Ts                      # Sampling time
-        self.x0 = config.x0                      # Initial pose
         self.R = config.R                        # Controls cost matrix
         self.Q = config.Q  
         self.A = np.array([[1, -2],[-2, 1]] )                  # State cost matrix
@@ -42,7 +41,6 @@ class MPC:
         self.mpc = self.define_mpc(xff,j,i,config.liveliness)
         self.simulator = self.define_simulator()
         self.estimator = do_mpc.estimator.StateFeedback(self.model)
-        self.set_init_state()
 
     def define_model(self):
         """Configures the dynamical model of the system (and part of the objective function).
@@ -289,16 +287,15 @@ class MPC:
 
         return simulator
 
-    def set_init_state(self):
+    def set_init_state(self, x0):
         """Sets the initial state in all components."""
-        self.mpc.x0 = self.x0
-        self.simulator.x0 = self.x0
-        self.estimator.x0 = self.x0
+        self.mpc.x0 = x0
+        self.simulator.x0 = x0
+        self.estimator.x0 = x0
         self.mpc.set_initial_guess()
 
-    def run_simulation(self,xff,j):
+    def run_simulation(self,x0):
         """Runs a closed-loop control simulation."""
-        x0 = self.x0
         for k in range(self.sim_time):
             u0 = self.mpc.make_step(x0)
             y_next = self.simulator.make_step(u0)
@@ -307,9 +304,9 @@ class MPC:
         return
 
 
-    def run_simulation_to_get_final_condition(self,xff,j,i):
+    def run_simulation_to_get_final_condition(self,x0,xff,j,i):
         """Runs a closed-loop control simulation."""
-        x1 = config.x0#self.x0
+        x1 = x0
         T=0.1
         epsilon=0.001
         # if j>3:
@@ -317,13 +314,11 @@ class MPC:
         xf_one=xff[j-2,0:2]
         xf_minus_two=xff[j-1,0:2]
         xf_two=xff[j-3,0:2]
-    #Will add liveliness condition here
+        # Will add liveliness condition here
         vec1=((xf_minus_two-xf_two)-(xf_minus_one-xf_one))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
         vec2=( xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
         l=np.arccos(abs(np.dot(vec1,vec2))/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
             # l=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
-        # print(vec1)
-        A=[[1, -3],[-3, 1]]
         for k in range(self.sim_time):
             u1 = self.mpc.make_step(x1)
             u1_before_proj=u1

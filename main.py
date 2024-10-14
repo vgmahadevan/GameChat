@@ -43,7 +43,6 @@ def main():
         for i in range(n):  # i is the i^th agent 
 
         # Define controller & run simulation for each agent i
-            config.x0=initial[i,:]
             config.goal=goals[i,:]
             config.obs = scenario.obstacles.copy()
 
@@ -54,14 +53,15 @@ def main():
 
             #Initialization of MPC controller for the ith agent
             controller = MPC(final_positions_both_agents,j,i)
+            controller.set_init_state(initial[i,:])
 
             #final_positions_both_agents stores the final positions of both agents
             #[1,:], [3,:], [5,:]... are final positions of agent 1
             #[2,:], [4,:], [6,:]... are final positions of agent 2
             final_positions_both_agents[c,:]=xf[i,:]
-            controller.run_simulation(final_positions_both_agents,j)
+            controller.run_simulation(initial[i,:])
             #The position of agent i is propogated one time horizon ahead using the MPC controller
-            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(final_positions_both_agents,j,i)
+            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
             xf[i,:] = x.ravel()
             u.append(uf)
             u_proj.append(uf_proj)
