@@ -37,7 +37,6 @@ class MPC:
             self.goal = config.goal              # Robot's goal pose
         self.gamma = config.gamma                # CBF parameter
         self.safety_dist = config.safety_dist    # Safety distance
-        self.controller = config.controller      # Type of control
 
         self.model = self.define_model()
         self.mpc = self.define_mpc(xff,j,i,config.liveliness)
@@ -170,90 +169,12 @@ class MPC:
 
         # Add safety constraints
         if self.static_obstacles_on or self.moving_obstacles_on:
-            if self.controller == "MPC-DC":
-                # MPC-DC: Add obstacle avoidance constraints
-                mpc = self.add_obstacle_constraints(mpc)
-            else:
-                # MPC-CBF: Add CBF constraints
-                mpc = self.add_cbf_constraints(mpc)
-                # mpc = self.add_custom_constraint(mpc,xff,j,i,liveliness)
-
+            # MPC-CBF: Add CBF constraints
+            mpc = self.add_cbf_constraints(mpc)
+    
         mpc.setup()
         return mpc
     
-    ##Liveness
-    # def add_custom_constraint(self, mpc,xff,j,i,liveliness):
-    #     T=0.1
-    #     epsilon=0.001
-    #     l=3
-    #     xf_minus_one=xff[j,0:2]
-    #     xf_one=xff[j-2,0:2]
-    #     xf_minus_two=xff[j-1,0:2]
-    #     xf_two=xff[j-3,0:2]
-    #     vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T
-    #     constraint=0*self.model.u['u'][0]
-    #     u_0 = self.model.u['u'][0] 
-    #     u_1 = self.model.u['u'][1] 
-    #     if j<3 and i==0:
-    #         xf_minus_one=xff[j,0:2]
-    #         xf_one=xff[j-2,0:2]
-    #         xf_minus_two=xff[j-1,0:2]
-    #         xf_two=xff[j-3,0:2]
-    #     #Will add liveliness condition here
-    #         vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
-    #         vec2=(xf_minus_one-xf_minus_two)#xf[j,0:2]-xf[i,0:2]
-    #         l=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
-
-    #     if j>3 and i==1 and l<1.1:
-    #         u_0 = self.model.u['u'][0]  # get the first component of u
-    #     # if j>3:
-    #         vec1_1 =vec1[1]  # get the first component of vec1
-    #     # else:
-    #     #     vec1_1=5.0
-    #         new_vector=vertcat(u_0, vec1_1)
-
-    #     # new_vector = vertcat(u_0, vec1_1)  # form a new vector
-    #         relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
-    #         constraint = (self.A @ new_vector)
-    #         # config.v_limit = config.v_limit/2
-    #         # config.v_limit = config.v_limit/2
-    #     elif j>3 and i==0 and l<1.1:
-    #         u_0 = self.model.u['u'][1]  # get the first component of u
-    #         vec1_1 =vec1[0]  # get the first component of vec1
-    #         new_vector=vertcat(vec1_1, u_0)
-    #         relu =ca.fmax(1.1 - l, 0)# 1 / (1 + cs.exp(-l + 0.2))
-    #         constraint = (self.A @ new_vector)
-
-    #     # set the constraint
-    #     mpc.set_nl_cons('custom_sigmoid_constraint', constraint, ub=0)
-    #     return mpc
-
-
-    def add_obstacle_constraints(self, mpc):
-        """Adds the obstacle constraints to the mpc controller. (MPC-DC)
-
-        Inputs:
-          - mpc(do_mpc.controller.MPC): The mpc controller
-        Returns:
-          - mpc(do_mpc.controller.MPC): The mpc controller with obstacle constraints added
-        """
-        if self.static_obstacles_on:
-            i = 0
-            for x_obs, y_obs, r_obs in self.obs:
-                obs_avoid = - (self.model.x['x'][0] - x_obs)**2 \
-                            - (self.model.x['x'][1] - y_obs)**2 \
-                            + (self.r + r_obs + self.safety_dist)**2
-                mpc.set_nl_cons('obstacle_constraint'+str(i), obs_avoid, ub=0)
-                i += 1
-
-        if self.moving_obstacles_on:
-            for i in range(len(self.moving_obs)):
-                obs_avoid = - (self.model.x['x'][0] - self.model.tvp['x_moving_obs'+str(i)])**2 \
-                            - (self.model.x['x'][1] - self.model.tvp['y_moving_obs'+str(i)])**2 \
-                            + (self.r + self.moving_obs[i][4] + self.safety_dist)**2
-                mpc.set_nl_cons('moving_obstacle_constraint'+str(i), obs_avoid, ub=0)
-
-        return mpc
 
     def add_cbf_constraints(self, mpc):
         """Adds the CBF constraints to the mpc controller. (MPC-CBF)
@@ -378,27 +299,15 @@ class MPC:
     def run_simulation(self,xff,j):
         """Runs a closed-loop control simulation."""
         x0 = self.x0
-        epsilon=0.001
-        T=0.1
-        l=3
-        if j>3:
-            xf_minus_one=xff[j,0:2]
-            xf_one=xff[j-2,0:2]
-            xf_minus_two=xff[j-1,0:2]
-            xf_two=xff[j-3,0:2]
-        #Will add liveliness condition here
-            vec1=((xf_minus_one-xf_one)-(xf_minus_two-xf_two))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
-            vec2=(xf_minus_one-xf_minus_two)#xf[j,0:2]-xf[i,0:2]
-            lq=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
         for k in range(self.sim_time):
             u0 = self.mpc.make_step(x0)
             y_next = self.simulator.make_step(u0)
             # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
             x0 = self.estimator.make_step(y_next)
-        return l
+        return
 
 
-    def run_simulation_to_get_final_condition(self,xff,j,i,first_time):
+    def run_simulation_to_get_final_condition(self,xff,j,i):
         """Runs a closed-loop control simulation."""
         x1 = config.x0#self.x0
         T=0.1
@@ -431,11 +340,6 @@ class MPC:
                     return np.array([norm_v / 2.5, 0])
 
                 # Scale u to have a norm half of that of v
-                # if first_time:
-                #     u = (u1_before_proj / norm_u1) * (norm_v / 2)
-                # else:
-                #     u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
-                # first_time = False
                 u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
                 # u1 = np.where(u < 0, 0, u)
                 # u1 = abs(u)

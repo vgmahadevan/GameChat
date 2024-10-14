@@ -39,8 +39,6 @@ def main():
     #Add all initial and goal positions of the agents here (Format: [x, y, theta])
     initial = scenario.initial
     goals = scenario.goals
-    LL=[]
-    first_time = True
     for j in range(N): # j denotes the j^th step in one time horizon
         for i in range(n):  # i is the i^th agent 
 
@@ -61,10 +59,9 @@ def main():
             #[1,:], [3,:], [5,:]... are final positions of agent 1
             #[2,:], [4,:], [6,:]... are final positions of agent 2
             final_positions_both_agents[c,:]=xf[i,:]
-            lll=controller.run_simulation(final_positions_both_agents,j)
-            LL.append(lll)
+            controller.run_simulation(final_positions_both_agents,j)
             #The position of agent i is propogated one time horizon ahead using the MPC controller
-            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(final_positions_both_agents,j,i,first_time)
+            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(final_positions_both_agents,j,i)
             xf[i,:] = x.ravel()
             u.append(uf)
             u_proj.append(uf_proj)

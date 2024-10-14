@@ -15,7 +15,6 @@ v_limit = 0.30                             # Linear velocity limit
 omega_limit = 3.8                          # Angular velocity limit
 
 # Type of control
-controller = "MPC-CBF"                     # Options: "MPC-CBF", "MPC-DC"
 control_type = "setpoint"                  # Options: "setpoint", "traj_tracking"
 trajectory = "infinity"                    # Type of trajectory. Options: circular, infinity
 
