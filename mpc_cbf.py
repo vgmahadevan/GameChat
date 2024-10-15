@@ -18,7 +18,7 @@ class MPC:
 
     where x'_k = x_{des_k} - x_k
     """
-    def __init__(self,xff,j,i):
+    def __init__(self):
         self.sim_time = config.sim_time          # Total simulation time steps
         self.Ts = config.Ts                      # Sampling time
         self.R = config.R                        # Controls cost matrix
@@ -38,9 +38,8 @@ class MPC:
         self.safety_dist = config.safety_dist    # Safety distance
 
         self.model = self.define_model()
-        self.mpc = self.define_mpc(xff,j,i,config.liveliness)
+        self.mpc = self.define_mpc()
         self.simulator = self.define_simulator()
-        self.estimator = do_mpc.estimator.StateFeedback(self.model)
 
     def define_model(self):
         """Configures the dynamical model of the system (and part of the objective function).
@@ -131,7 +130,7 @@ class MPC:
         cost_expression = transpose(X)@self.Q@X
         return model, cost_expression
 
-    def define_mpc(self,xff,j,i,liveliness):
+    def define_mpc(self):
         """Configures the mpc controller.
 
         Returns:
@@ -146,6 +145,7 @@ class MPC:
                      't_step': self.Ts,
                      'state_discretization': 'discrete',
                      'store_full_solution': True,
+                     'nlpsol_opts': {'ipopt.print_level':0, 'print_time':0},
                      # 'nlpsol_opts': {'ipopt.linear_solver': 'MA27'}
                      }
         mpc.set_param(**setup_mpc)
@@ -291,16 +291,16 @@ class MPC:
         """Sets the initial state in all components."""
         self.mpc.x0 = x0
         self.simulator.x0 = x0
-        self.estimator.x0 = x0
         self.mpc.set_initial_guess()
 
     def run_simulation(self,x0):
         """Runs a closed-loop control simulation."""
+        # print("Simualtor at beginning of simulation 1", self.simulator.x0)
         for k in range(self.sim_time):
             u0 = self.mpc.make_step(x0)
-            y_next = self.simulator.make_step(u0)
+            x0 = self.simulator.make_step(u0)
             # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
-            x0 = self.estimator.make_step(y_next)
+        # print("Simualtor at end of simulation 1", self.simulator.x0)
         return
 
 
@@ -309,7 +309,7 @@ class MPC:
         x1 = x0
         T=0.1
         epsilon=0.001
-        # if j>3:
+        # NOTE: For j < 3 the liveness value will be accurate lowkey.
         xf_minus_one=xff[j,0:2] 
         xf_one=xff[j-2,0:2]
         xf_minus_two=xff[j-1,0:2]
@@ -318,13 +318,12 @@ class MPC:
         vec1=((xf_minus_two-xf_two)-(xf_minus_one-xf_one))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
         vec2=( xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
         l=np.arccos(abs(np.dot(vec1,vec2))/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
-            # l=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon)))
+        # print("Simualtor at beginning of simulation 2", self.simulator.x0)
         for k in range(self.sim_time):
             u1 = self.mpc.make_step(x1)
             u1_before_proj=u1
-            if j>3  and i==1 and config.liveliness and l < config.liveness_threshold:
-                # u1[0]=u1[0]/10
-                # u=np.matmul(inv(A),u1)
+            if j>3 and i==1 and config.liveliness and l < config.liveness_threshold:
+                print("RUNNING LIVELINESS", l)
                 v = (xf_minus_two - xf_two)/T
                 norm_u1 = np.linalg.norm(u1_before_proj)
                 norm_v = np.linalg.norm(v)
@@ -335,15 +334,13 @@ class MPC:
                     return np.array([norm_v / 2.5, 0])
 
                 # Scale u to have a norm half of that of v
-                u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
-                # u1 = np.where(u < 0, 0, u)
-                # u1 = abs(u)
-                u1 = u
+                u1 = (u1_before_proj / norm_u1) * (norm_u1 / 2)
             # Calculate the stage cost for each timestep
             # Below is the game theoretic control input chosen
             # if l<0.2 and LA.norm(vec2)<0.2 and np.matmul(A,u1)<0:
             #     u1=np.matmul(inv(A),u1)
-            y_next = self.simulator.make_step(u1)
+            x1 = self.simulator.make_step(u1)
+            # if k == 0:
+            #     print("Simualtor after step 1 of simulation 2", self.simulator.x0)
             # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
-            x1 = self.estimator.make_step(y_next)
         return x1, u1_before_proj, u1, l

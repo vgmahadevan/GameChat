@@ -37,8 +37,8 @@ plotter = Plotter()
 def main():
     c=0
     #Add all initial and goal positions of the agents here (Format: [x, y, theta])
-    initial = scenario.initial
-    goals = scenario.goals
+    initial = scenario.initial.copy()
+    goals = scenario.goals.copy()
     for j in range(N): # j denotes the j^th step in one time horizon
         for i in range(n):  # i is the i^th agent 
 
@@ -51,16 +51,16 @@ def main():
                 if i!=k:
                     config.obs.append((initial[k,0], initial[k,1],0.08)) 
 
-            #Initialization of MPC controller for the ith agent
-            controller = MPC(final_positions_both_agents,j,i)
+            # Initialization of MPC controller for the ith agent
+            controller = MPC()
             controller.set_init_state(initial[i,:])
 
-            #final_positions_both_agents stores the final positions of both agents
-            #[1,:], [3,:], [5,:]... are final positions of agent 1
-            #[2,:], [4,:], [6,:]... are final positions of agent 2
-            final_positions_both_agents[c,:]=xf[i,:]
-            controller.run_simulation(initial[i,:])
-            #The position of agent i is propogated one time horizon ahead using the MPC controller
+            # final_positions_both_agents stores the final positions of both agents
+            # [1,:], [3,:], [5,:]... are final positions of agent 1
+            # [2,:], [4,:], [6,:]... are final positions of agent 2
+            final_positions_both_agents[c,:] = xf[i,:]
+            # controller.run_simulation(initial[i,:])
+            # The position of agent i is propogated one time horizon ahead using the MPC controller
             x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
             xf[i,:] = x.ravel()
             u.append(uf)
@@ -70,7 +70,7 @@ def main():
             c += 1
    
         # Plots
-        initial=xf #The final state is assigned to the initial state stack for future MPC
+        initial = xf #The final state is assigned to the initial state stack for future MPC
 
     #x1 and x2 are times series data of positions of agents 1 and 2 respectively
     for ll in range(N-1):
