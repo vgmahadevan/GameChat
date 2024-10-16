@@ -289,7 +289,13 @@ class MPC:
 
     def set_init_state(self, x0):
         """Sets the initial state in all components."""
+        self.mpc.setup()
+        self.mpc.reset_history()
+        self.simulator.reset_history()
         self.mpc.x0 = x0
+        # print("Initial control:", self.mpc.u0['u'].T)
+        self.mpc.u0 = np.zeros_like(self.mpc.u0['u'])
+        # self.mpc.z0 = np.zeros_like(self.mpc.z0['z'])
         self.simulator.x0 = x0
         self.mpc.set_initial_guess()
 
@@ -316,31 +322,50 @@ class MPC:
         xf_two=xff[j-3,0:2]
         # Will add liveliness condition here
         vec1=((xf_minus_two-xf_two)-(xf_minus_one-xf_one))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
-        vec2=( xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
+        vec2=(xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
         l=np.arccos(abs(np.dot(vec1,vec2))/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
-        # print("Simualtor at beginning of simulation 2", self.simulator.x0)
+        # print("X1 at beginning of final simulation", x1)
+        # print("Simulator at beginning of final simulation", self.simulator.x0['x'])
         for k in range(self.sim_time):
+            # print(f"\tSub-iteration")
             u1 = self.mpc.make_step(x1)
+            # print(f"\tOutput of MPC: {u1.T}")
             u1_before_proj=u1
             if j>3 and i==1 and config.liveliness and l < config.liveness_threshold:
-                print("RUNNING LIVELINESS", l)
-                v = (xf_minus_two - xf_two)/T
-                norm_u1 = np.linalg.norm(u1_before_proj)
-                norm_v = np.linalg.norm(v)
+                # v = (xf_minus_two - xf_two)/T
+                # norm_u1 = np.linalg.norm(u1_before_proj)
+                # norm_v = np.linalg.norm(v)
 
-                # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
-                if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
-                    # Example: [half_norm_v, 0]
-                    return np.array([norm_v / 2.5, 0])
+                # # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
+                # if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
+                #     # Example: [half_norm_v, 0]
+                #     return np.array([norm_v / 2.5, 0])
 
-                # Scale u to have a norm half of that of v
-                u1 = (u1_before_proj / norm_u1) * (norm_u1 / 2)
+                # # Scale u to have a norm half of that of v
+                # u1 = (u1_before_proj / norm_u1) * (norm_u1 / 2)
+
+                v0 = np.linalg.norm((xf_minus_two - xf_two)/T)
+                v1 = np.linalg.norm((xf_minus_one - xf_one)/T)
+                curr_v0_v1_point = np.array([v0, v1])
+                desired_v0_v1_vec = np.array([1.0, 2.0])
+                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec) / np.linalg.norm(desired_v0_v1_vec)
+                control_vec = desired_v0_v1_point - curr_v0_v1_point
+                control_vec_normalized = control_vec / np.linalg.norm(control_vec)
+                control_mag = np.linalg.norm(u1_before_proj)
+                u1 = control_vec_normalized * control_mag
+                print(f"Running liveness {l}. Original control {u1_before_proj}. Control magnitude: {control_mag}. Output control {u1}")
+                u1 = u1.reshape((2, 1))
+
             # Calculate the stage cost for each timestep
             # Below is the game theoretic control input chosen
             # if l<0.2 and LA.norm(vec2)<0.2 and np.matmul(A,u1)<0:
             #     u1=np.matmul(inv(A),u1)
+            # print(f"\tU1 before proj: {u1_before_proj.T}, U1: {u1.T}")
             x1 = self.simulator.make_step(u1)
             # if k == 0:
             #     print("Simualtor after step 1 of simulation 2", self.simulator.x0)
             # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
+            # print(f"\tX1: {x1.T}")
+        # print("Simualtor at end of final simulation", x1)
+        # print("Control at end of final simulation", u1)
         return x1, u1_before_proj, u1, l

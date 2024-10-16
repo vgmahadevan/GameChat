@@ -20,6 +20,10 @@ xf=np.zeros((n,3)) # initialization of final states
 u = []
 L=[]
 u_proj = []
+
+# final_positions_both_agents stores the final positions of both agents
+# [1,:], [3,:], [5,:]... are final positions of agent 1
+# [2,:], [4,:], [6,:]... are final positions of agent 2
 final_positions_both_agents=np.zeros((n*N,3)) # initialization of final states for both agents
 
 x1=np.zeros((N,3)) # initialization of times series states of agent 1 
@@ -36,7 +40,7 @@ plotter = Plotter()
 
 def main():
     c=0
-    #Add all initial and goal positions of the agents here (Format: [x, y, theta])
+    # Add all initial and goal positions of the agents here (Format: [x, y, theta])
     initial = scenario.initial.copy()
     goals = scenario.goals.copy()
     for j in range(N): # j denotes the j^th step in one time horizon
@@ -52,22 +56,36 @@ def main():
                     config.obs.append((initial[k,0], initial[k,1],0.08)) 
 
             # Initialization of MPC controller for the ith agent
-            controller = MPC()
-            controller.set_init_state(initial[i,:])
+            # print(f"\n\nIteration {j}, Agent {i}")
+            # print("Initial state: ", initial[i,:])
+            # print("\nController 1")
+            # controller = MPC()
+            # controller.set_init_state(initial[i,:])
 
-            # final_positions_both_agents stores the final positions of both agents
-            # [1,:], [3,:], [5,:]... are final positions of agent 1
-            # [2,:], [4,:], [6,:]... are final positions of agent 2
             final_positions_both_agents[c,:] = xf[i,:]
-            # controller.run_simulation(initial[i,:])
             # The position of agent i is propogated one time horizon ahead using the MPC controller
-            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+            # controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+
+            # print("\nController 2")
+            # controller2 = MPC()
+            # controller2.set_init_state(initial[i,:])
+            # controller2.run_simulation(initial[i,:])
+            # controller2.set_init_state(initial[i,:])
+            # controller2.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+
+            print("\nController 3")
+            controller3 = MPC()
+            controller3.set_init_state(initial[i,:])
+            controller3.run_simulation(initial[i,:])
+            x, uf, uf_proj, l = controller3.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+
             xf[i,:] = x.ravel()
             u.append(uf)
             u_proj.append(uf_proj)
             L.append(l)
 
             c += 1
+            # print(1/0)
    
         # Plots
         initial = xf #The final state is assigned to the initial state stack for future MPC
