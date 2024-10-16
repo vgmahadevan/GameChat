@@ -316,21 +316,23 @@ class MPC:
         T=0.1
         epsilon=0.001
         # NOTE: For j < 3 the liveness value will be accurate lowkey.
-        xf_minus_one=xff[j,0:2] 
-        xf_one=xff[j-2,0:2]
-        xf_minus_two=xff[j-1,0:2]
-        xf_two=xff[j-3,0:2]
+        c=j*2+i
+        xf_minus_one=xff[c,0:2] 
+        xf_one=xff[c-2,0:2]
+        xf_minus_two=xff[c-1,0:2]
+        xf_two=xff[c-3,0:2]
         # Will add liveliness condition here
         vec1=((xf_minus_two-xf_two)-(xf_minus_one-xf_one))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
         vec2=(xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
-        l=np.arccos(abs(np.dot(vec1,vec2))/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
+        print(f"Vel vec: {vec1}, Pos vec: {vec2}")
+        l=np.arccos(-np.dot(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
         # print("X1 at beginning of final simulation", x1)
         # print("Simulator at beginning of final simulation", self.simulator.x0['x'])
         for k in range(self.sim_time):
             # print(f"\tSub-iteration")
             u1 = self.mpc.make_step(x1)
             # print(f"\tOutput of MPC: {u1.T}")
-            u1_before_proj=u1
+            u1_before_proj=u1.copy()
             if j>3 and i==1 and config.liveliness and l < config.liveness_threshold:
                 # v = (xf_minus_two - xf_two)/T
                 # norm_u1 = np.linalg.norm(u1_before_proj)
@@ -347,14 +349,21 @@ class MPC:
                 v0 = np.linalg.norm((xf_minus_two - xf_two)/T)
                 v1 = np.linalg.norm((xf_minus_one - xf_one)/T)
                 curr_v0_v1_point = np.array([v0, v1])
-                desired_v0_v1_vec = np.array([1.0, 2.0])
-                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec) / np.linalg.norm(desired_v0_v1_vec)
-                control_vec = desired_v0_v1_point - curr_v0_v1_point
-                control_vec_normalized = control_vec / np.linalg.norm(control_vec)
-                control_mag = np.linalg.norm(u1_before_proj)
-                u1 = control_vec_normalized * control_mag
-                print(f"Running liveness {l}. Original control {u1_before_proj}. Control magnitude: {control_mag}. Output control {u1}")
-                u1 = u1.reshape((2, 1))
+                desired_v0_v1_vec = np.array([3.0, 1.0])
+                desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
+                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
+                # control_vec = desired_v0_v1_point - curr_v0_v1_point
+                u1[0] = desired_v0_v1_point[i]*T
+                # control_vec_normalized = control_vec / np.linalg.norm(control_vec)
+                # control_mag = np.linalg.norm(u1_before_proj)
+                # u1 = control_vec_normalized * control_mag
+                print(f"Running liveness {l}. Original control {u1_before_proj.T}. Output control {u1.T}")
+                print(f"\tAgent 0 Points: {xf_two}, {xf_minus_two}")
+                print(f"\tAgent 1 Points: {xf_one}, {xf_minus_one}")
+                print(f"\tAgent 0 Vel: {v0}, Agent 1 Vel: {v1}")
+                print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
+                print(f"\tdVel Vec: {vec1}, dPos Vec: {vec2}, L: {l}")
+                # u1 = u1.reshape((2, 1))
 
             # Calculate the stage cost for each timestep
             # Below is the game theoretic control input chosen

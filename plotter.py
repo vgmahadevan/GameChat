@@ -22,6 +22,41 @@ class Plotter:
 
 
     # Function to update the plots
+    def plot_live(self, scenario, x1, x2, u, u_proj, L):
+        self.ax.clear()
+        self.ax.set_xlim(-1, 2)
+        self.ax.set_ylim(-1, 1)
+        
+        # Draw the fading trails for agent 1
+        L, u, u_proj = np.round(L, 2), np.round(u, 2), np.round(u_proj, 2)
+        self.liveliness_text = self.ax.text(0.05, 0.95, f'Liveliness function = {L[-1]}.\nAgent 0 U = {u[-2].T}.\nAgent 0 U_proj = {u_proj[-2].T}\nAgent 1 U = {u[-1].T}.\nAgent 1 U_proj = {u_proj[-1].T}', transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
+
+        # Redraw static elements
+        scenario.plot(self.ax)
+
+        # Reset plot limits and other properties as needed
+        self.ax.set_xlim(-2.6, 2.2)
+        self.ax.set_ylim(-1.5, 1)
+ 
+        # Determine the start index for the fading effect
+        frame = len(x1)
+        trail_length = 20
+        start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
+
+        # Draw the fading trails for agent 1
+        for i in range(start_index, frame):
+            alpha = 1 - ((frame - 1 - i) / trail_length)**2
+            self.ax.scatter(x1[i, 0], x1[i, 1], c='r', s=25, alpha=alpha)
+            self.ax.scatter(x2[i, 0], x2[i, 1], c='b', s=25, alpha=alpha)
+
+        # Update the liveliness text
+        # Your existing code to update liveliness text
+        plt.draw()
+        plt.pause(0.1)
+        plt.waitforbuttonpress()
+
+
+    # Function to update the plots
     def update(self, frame):
         self.ax.clear()
 

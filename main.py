@@ -56,7 +56,7 @@ def main():
                     config.obs.append((initial[k,0], initial[k,1],0.08)) 
 
             # Initialization of MPC controller for the ith agent
-            # print(f"\n\nIteration {j}, Agent {i}")
+            print(f"\n\nIteration {j}, Agent {i}")
             # print("Initial state: ", initial[i,:])
             # print("\nController 1")
             # controller = MPC()
@@ -73,7 +73,7 @@ def main():
             # controller2.set_init_state(initial[i,:])
             # controller2.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
 
-            print("\nController 3")
+            # print("\nController 3")
             controller3 = MPC()
             controller3.set_init_state(initial[i,:])
             controller3.run_simulation(initial[i,:])
@@ -89,6 +89,13 @@ def main():
    
         # Plots
         initial = xf #The final state is assigned to the initial state stack for future MPC
+        x1_j=np.zeros((j,3)) # initialization of times series states of agent 1 
+        x2_j=np.zeros((j,3)) # initialization of times series states of agent 2
+        for ll in range(j):
+            x1_j[ll,:]=final_positions_both_agents[n*ll,:]
+            x2_j[ll,:]=final_positions_both_agents[n*ll+1,:]
+
+        plotter.plot_live(scenario, x1_j[1:], x2_j[1:], u, u_proj, L)
 
     #x1 and x2 are times series data of positions of agents 1 and 2 respectively
     for ll in range(N-1):
