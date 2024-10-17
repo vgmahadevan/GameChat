@@ -29,14 +29,27 @@ class Plotter:
         
         # Draw the fading trails for agent 1
         L, u, u_proj = np.round(L, 2), np.round(u, 2), np.round(u_proj, 2)
-        self.liveliness_text = self.ax.text(0.05, 0.95, f'Liveliness function = {L[-1]}.\nAgent 0 U = {u[-2].T}.\nAgent 0 U_proj = {u_proj[-2].T}\nAgent 1 U = {u[-1].T}.\nAgent 1 U_proj = {u_proj[-1].T}', transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
+        if len(x1) > 2:
+            x0_heading = np.rad2deg(np.arctan2(x1[-1, 1] - x1[-2, 1], x1[-1, 0] - x1[-2, 0]))
+            x1_heading = np.rad2deg(np.arctan2(x2[-1, 1] - x2[-2, 1], x2[-1, 0] - x2[-2, 0]))
+        else:
+            x0_heading, x1_heading = 0, 0
+        liveliness_text = [f'Liveliness function = {L[-1]}.',
+                           f'Agent 0 U = {u[-2].T}.',
+                           f'Agent 0 U_proj = {u_proj[-2].T}.',
+                           f'Agent 0 Heading = {x0_heading}.',
+                           f'Agent 1 U = {u[-1].T}.',
+                           f'Agent 1 U_proj = {u_proj[-1].T}',
+                           f'Agent 1 Heading = {x1_heading}.',
+        ]
+        self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
 
         # Redraw static elements
         scenario.plot(self.ax)
 
         # Reset plot limits and other properties as needed
         self.ax.set_xlim(-2.6, 2.2)
-        self.ax.set_ylim(-1.5, 1)
+        self.ax.set_ylim(-1, 1)
  
         # Determine the start index for the fading effect
         frame = len(x1)
@@ -48,6 +61,16 @@ class Plotter:
             alpha = 1 - ((frame - 1 - i) / trail_length)**2
             self.ax.scatter(x1[i, 0], x1[i, 1], c='r', s=25, alpha=alpha)
             self.ax.scatter(x2[i, 0], x2[i, 1], c='b', s=25, alpha=alpha)
+
+        if frame > 2:
+            v1 = x1[-1] - x1[-2]
+            v2 = x2[-1] - x2[-2]
+            dv = v1 - v2
+            dp = x1[-1] - x2[-1]
+            
+            plt.arrow(0, 0, dp[0], dp[1], color='m', linewidth=2)
+            plt.arrow(0, 0, dv[0], dv[1], color='g', linewidth=2)
+
 
         # Update the liveliness text
         # Your existing code to update liveliness text
@@ -65,7 +88,7 @@ class Plotter:
 
         # Reset plot limits and other properties as needed
         self.ax.set_xlim(-2.6, 2.2)
-        self.ax.set_ylim(-1.5, 1)
+        self.ax.set_ylim(-1, 1)
 
         # Determine the start index for the fading effect
         trail_length = 20
@@ -113,10 +136,10 @@ class Plotter:
         sns.set_palette("deep")
         sns.set()
         fontsize = 14
-        agent_1_velocities = [v.ravel() for i, v in enumerate(u[:40]) if i % 2 == 0] 
-        agent_2_velocities = [v.ravel() for i, v in enumerate(u[:40]) if i % 2 != 0]
-        agent_2_velocities_proj = [v.ravel() for i, v in enumerate(u_proj[:40]) if i % 2 != 0]
-        liveness = [v for i, v in enumerate(L[:40]) if i % 2 != 0]
+        agent_1_velocities = [v.ravel() for i, v in enumerate(u) if i % 2 == 0] 
+        agent_2_velocities = [v.ravel() for i, v in enumerate(u) if i % 2 != 0]
+        agent_2_velocities_proj = [v.ravel() for i, v in enumerate(u_proj) if i % 2 != 0]
+        liveness = [v for i, v in enumerate(L) if i % 2 != 0]
 
         # Unpacking the velocities into x and y components for both agents
         agent_1_x, agent_1_y = zip(*agent_1_velocities)
@@ -128,6 +151,7 @@ class Plotter:
 
         # Creating iteration indices for each agent based on the number of velocity points
         iterations = range(len(agent_2_velocities))
+        print("Iterations:", list(iterations))
 
         # Plotting the velocities as a function of the iteration for both agents
         plt.figure(figsize=(10, 10))

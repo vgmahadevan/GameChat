@@ -7,8 +7,8 @@ class DoorwayScenario:
     def __init__(self):
         self.initial = np.array([[-1, 0.5, 0],
                     [-1, -0.5, 0]])
-        self.goals = np.array([[2, 0, 0],
-                    [2, 0, 0]])
+        self.goals = np.array([[2, 0.0, 0],
+                    [2, 0.0, 0]])
         self.ox=1
         self.obstacles=[(self.ox, 0.3, 0.1),(self.ox, 0.4, 0.1),(self.ox, 0.5, 0.1),(self.ox, 0.6, 0.1),(self.ox, 0.7, 0.1),(self.ox, 0.8, 0.1),(self.ox, 0.9, 0.1), (self.ox, 1.0, 0.1), (self.ox, -0.3, 0.1),(self.ox, -0.4, 0.1),(self.ox, -0.5, 0.1),(self.ox, -0.6, 0.1),(self.ox, -0.7, 0.1), (self.ox, -0.8, 0.1),(self.ox, -0.9, 0.1),(self.ox, -1.0, 0.1)]
     
@@ -17,8 +17,6 @@ class DoorwayScenario:
         rect1 = patches.Rectangle((self.ox-0.1,-1.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
         ax.add_patch(rect)
         ax.add_patch(rect1)
-
-
 
 
 class IntersectionScenario:
@@ -47,6 +45,7 @@ class IntersectionScenario:
 
     def plot(self, ax):
         length=1
+        ox, ox1 = self.ox, self.ox1
         rect = patches.Rectangle((ox-0.1,-length),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
         rect1 = patches.Rectangle((ox1-0.1,-length),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
         rect2 = patches.Rectangle((ox1-0.1,ox1),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)

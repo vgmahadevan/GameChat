@@ -18,22 +18,17 @@ class MPC:
 
     where x'_k = x_{des_k} - x_k
     """
-    def __init__(self):
+    def __init__(self, goal, static_obs = [], moving_obs = []):
         self.sim_time = config.sim_time          # Total simulation time steps
-        self.Ts = config.Ts                      # Sampling time
-        self.R = config.R                        # Controls cost matrix
-        self.Q = config.Q  
+        self.control_type = "setpoint"
+        self.Q = config.COST_MATRICES[self.control_type]['Q']
+        self.R = config.COST_MATRICES[self.control_type]['R']
         self.A = np.array([[1, -2],[-2, 1]] )                  # State cost matrix
-        self.static_obstacles_on = config.static_obstacles_on  # Whether to have static obstacles
-        self.moving_obstacles_on = config.moving_obstacles_on  # Whether to have moving obstacles
-        if self.static_obstacles_on:
-            self.obs = config.obs                # Static Obstacles
-        if self.moving_obstacles_on:             # Moving obstacles
-            self.moving_obs = config.moving_obs
+        self.static_obs = static_obs
+        self.moving_obs = moving_obs
         self.r = config.r                        # Robot radius
-        self.control_type = config.control_type  # "setpoint" or "traj_tracking"
-        if self.control_type == "setpoint":      # Go-to-goal
-            self.goal = config.goal              # Robot's goal pose
+        self.goal = goal
+        # Only control_type of "setpoint" is currently supported.
         self.gamma = config.gamma                # CBF parameter
         self.safety_dist = config.safety_dist    # Safety distance
 
@@ -64,7 +59,7 @@ class MPC:
         B = self.get_sys_matrix_B(_x)
 
         # Set right-hand-side of ODE for all introduced states (_x).
-        x_next = _x + B@_u*self.Ts
+        x_next = _x + B@_u*config.Ts
         model.set_rhs('x', x_next, process_noise=False)  # Set to True if adding noise
 
         # Optional: Define an expression, which represents the stage and terminal
@@ -75,10 +70,9 @@ class MPC:
         model.set_expression(expr_name='cost', expr=cost_expr)
 
         # Moving obstacle (define time-varying parameter for its position)
-        if self.moving_obstacles_on is True:
-            for i in range(len(self.moving_obs)):
-                model.set_variable('_tvp', 'x_moving_obs'+str(i))
-                model.set_variable('_tvp', 'y_moving_obs'+str(i))
+        for i in range(len(self.moving_obs)):
+            model.set_variable('_tvp', 'x_moving_obs'+str(i))
+            model.set_variable('_tvp', 'y_moving_obs'+str(i))
 
         # Setup model
         model.setup()
@@ -142,7 +136,7 @@ class MPC:
         # Set parameters
         setup_mpc = {'n_robust': 0,  # Robust horizon
                      'n_horizon': config.T_horizon,
-                     't_step': self.Ts,
+                     't_step': config.Ts,
                      'state_discretization': 'discrete',
                      'store_full_solution': True,
                      'nlpsol_opts': {'ipopt.print_level':0, 'print_time':0},
@@ -162,14 +156,12 @@ class MPC:
         mpc.bounds['upper', '_u', 'u'] = max_u
 
         # If trajectory tracking or moving obstacles: Define time-varying parameters
-        if self.control_type == "traj_tracking" or self.moving_obstacles_on is True:
+        if self.control_type == "traj_tracking" or self.moving_obs:
             mpc = self.set_tvp_for_mpc(mpc)
 
-        # Add safety constraints
-        if self.static_obstacles_on or self.moving_obstacles_on:
-            # MPC-CBF: Add CBF constraints
-            mpc = self.add_cbf_constraints(mpc)
-    
+        # MPC-CBF: Add CBF safety constraints
+        mpc = self.add_cbf_constraints(mpc)
+
         mpc.setup()
         return mpc
     
@@ -197,22 +189,20 @@ class MPC:
         """
         # Get state vector x_{t+k+1}
         B = self.get_sys_matrix_B(self.model.x['x'])
-        x_k1 = self.model.x['x'] + B@self.model.u['u']*self.Ts
+        x_k1 = self.model.x['x'] + B@self.model.u['u']*config.Ts
 
         # Compute CBF constraints
         cbf_constraints = []
-        if self.static_obstacles_on:
-            for obs in self.obs:
-                h_k1 = self.h(x_k1, obs)
-                h_k = self.h(self.model.x['x'], obs)
-                cbf_constraints.append(-h_k1 + (1-self.gamma)*h_k)
+        for obs in self.static_obs:
+            h_k1 = self.h(x_k1, obs)
+            h_k = self.h(self.model.x['x'], obs)
+            cbf_constraints.append(-h_k1 + (1-self.gamma)*h_k)
 
-        if self.moving_obstacles_on:
-            for i in range(len(self.moving_obs)):
-                obs = (self.model.tvp['x_moving_obs'+str(i)], self.model.tvp['y_moving_obs'+str(i)], self.moving_obs[i][4])
-                h_k1 = self.h(x_k1, obs)
-                h_k = self.h(self.model.x['x'], obs)
-                cbf_constraints.append(-h_k1 + (1-self.gamma)*h_k)
+        for i in range(len(self.moving_obs)):
+            obs = (self.model.tvp['x_moving_obs'+str(i)], self.model.tvp['y_moving_obs'+str(i)], self.moving_obs[i][4])
+            h_k1 = self.h(x_k1, obs)
+            h_k = self.h(self.model.x['x'], obs)
+            cbf_constraints.append(-h_k1 + (1-self.gamma)*h_k)
 
         return cbf_constraints
 
@@ -255,11 +245,10 @@ class MPC:
                 tvp_struct_mpc['_tvp', :, 'x_set_point'] = x_traj
                 tvp_struct_mpc['_tvp', :, 'y_set_point'] = y_traj
 
-            if self.moving_obstacles_on is True:
-                # Moving obstacles trajectory
-                for i in range(len(self.moving_obs)):
-                    tvp_struct_mpc['_tvp', :, 'x_moving_obs'+str(i)] = self.moving_obs[i][0]*t_now + self.moving_obs[i][1]
-                    tvp_struct_mpc['_tvp', :, 'y_moving_obs'+str(i)] = self.moving_obs[i][2]*t_now + self.moving_obs[i][3]
+            # Moving obstacles trajectory
+            for i in range(len(self.moving_obs)):
+                tvp_struct_mpc['_tvp', :, 'x_moving_obs'+str(i)] = self.moving_obs[i][0]*t_now + self.moving_obs[i][1]
+                tvp_struct_mpc['_tvp', :, 'y_moving_obs'+str(i)] = self.moving_obs[i][2]*t_now + self.moving_obs[i][3]
 
             return tvp_struct_mpc
 
@@ -273,10 +262,10 @@ class MPC:
           - simulator(do_mpc.simulator.Simulator): The simulator
         """
         simulator = do_mpc.simulator.Simulator(self.model)
-        simulator.set_param(t_step=self.Ts)
+        simulator.set_param(t_step=config.Ts)
 
         # If trajectory tracking or moving obstacles: Add time-varying parameters
-        if self.control_type == "traj_tracking" or self.moving_obstacles_on is True:
+        if self.control_type == "traj_tracking" or self.moving_obs:
             tvp_template = simulator.get_tvp_template()
 
             def tvp_fun(t_now):
@@ -301,12 +290,12 @@ class MPC:
 
     def run_simulation(self,x0):
         """Runs a closed-loop control simulation."""
-        # print("Simualtor at beginning of simulation 1", self.simulator.x0)
+        # print("Simulator at beginning of simulation 1", self.simulator.x0)
         for k in range(self.sim_time):
             u0 = self.mpc.make_step(x0)
             x0 = self.simulator.make_step(u0)
             # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
-        # print("Simualtor at end of simulation 1", self.simulator.x0)
+        # print("Simulator at end of simulation 1", self.simulator.x0)
         return
 
 
@@ -317,53 +306,54 @@ class MPC:
         epsilon=0.001
         # NOTE: For j < 3 the liveness value will be accurate lowkey.
         c=j*2+i
-        xf_minus_one=xff[c,0:2] 
-        xf_one=xff[c-2,0:2]
-        xf_minus_two=xff[c-1,0:2]
-        xf_two=xff[c-3,0:2]
+        # print("C", c)
+        # xf_minus_one=xff[c,0:2] 
+        # xf_one=xff[c-2,0:2]
+        # xf_minus_two=xff[c-1,0:2]
+        # xf_two=xff[c-3,0:2]
+
+        xf_minus_one=xff[j,0:2] 
+        xf_one=xff[j-2,0:2]
+        xf_minus_two=xff[j-1,0:2]
+        xf_two=xff[j-3,0:2]
+
         # Will add liveliness condition here
         vec1=((xf_minus_two-xf_two)-(xf_minus_one-xf_one))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
         vec2=(xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
-        print(f"Vel vec: {vec1}, Pos vec: {vec2}")
-        l=np.arccos(-np.dot(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
+        l=np.arccos(abs(np.dot(vec1,vec2))/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
         # print("X1 at beginning of final simulation", x1)
         # print("Simulator at beginning of final simulation", self.simulator.x0['x'])
         for k in range(self.sim_time):
-            # print(f"\tSub-iteration")
             u1 = self.mpc.make_step(x1)
-            # print(f"\tOutput of MPC: {u1.T}")
             u1_before_proj=u1.copy()
-            if j>3 and i==1 and config.liveliness and l < config.liveness_threshold:
-                # v = (xf_minus_two - xf_two)/T
-                # norm_u1 = np.linalg.norm(u1_before_proj)
-                # norm_v = np.linalg.norm(v)
+            if j>3 and i == 1 and config.liveliness and l < config.liveness_threshold:
+                # v_ego = u1[0] / T
+                # v_opp = np.linalg.norm((xf_minus_two - xf_two))/(T*4)
+                # curr_v0_v1_point = np.array([0.0, 0.0])
+                # curr_v0_v1_point[i] = v_ego
+                # curr_v0_v1_point[1 - i] = v_opp
+                # desired_v0_v1_vec = np.array([3.0, 1.0])
+                # desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
+                # desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
+                # mult_factor = (desired_v0_v1_point[i]*T) / u1[0]
+                # u1 *= mult_factor
+                # print(f"Running liveness {l}. Original control {u1_before_proj.T}. Output control {u1.T}")
+                # print(f"\tEgo Points: {xf_one}, {xf_minus_one}")
+                # print(f"\tOpp Points: {xf_two}, {xf_minus_two}")
+                # print(f"\tEgo Vel: {v_ego}, Opp Vel: {v_opp}")
+                # print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
+                # print(f"\tdVel Vec: {vec1}, dPos Vec: {vec2}, L: {l}")
 
-                # # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
-                # if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
-                #     # Example: [half_norm_v, 0]
-                #     return np.array([norm_v / 2.5, 0])
+                v = (xf_minus_two - xf_two)/T
+                norm_u1 = np.linalg.norm(u1_before_proj)
+                norm_v = np.linalg.norm(v)
 
-                # # Scale u to have a norm half of that of v
-                # u1 = (u1_before_proj / norm_u1) * (norm_u1 / 2)
+                # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
+                if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
+                    return np.array([norm_v / 2.5, 0])
 
-                v0 = np.linalg.norm((xf_minus_two - xf_two)/T)
-                v1 = np.linalg.norm((xf_minus_one - xf_one)/T)
-                curr_v0_v1_point = np.array([v0, v1])
-                desired_v0_v1_vec = np.array([3.0, 1.0])
-                desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
-                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
-                # control_vec = desired_v0_v1_point - curr_v0_v1_point
-                u1[0] = desired_v0_v1_point[i]*T
-                # control_vec_normalized = control_vec / np.linalg.norm(control_vec)
-                # control_mag = np.linalg.norm(u1_before_proj)
-                # u1 = control_vec_normalized * control_mag
-                print(f"Running liveness {l}. Original control {u1_before_proj.T}. Output control {u1.T}")
-                print(f"\tAgent 0 Points: {xf_two}, {xf_minus_two}")
-                print(f"\tAgent 1 Points: {xf_one}, {xf_minus_one}")
-                print(f"\tAgent 0 Vel: {v0}, Agent 1 Vel: {v1}")
-                print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
-                print(f"\tdVel Vec: {vec1}, dPos Vec: {vec2}, L: {l}")
-                # u1 = u1.reshape((2, 1))
+                u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
+                u1 = u
 
             # Calculate the stage cost for each timestep
             # Below is the game theoretic control input chosen

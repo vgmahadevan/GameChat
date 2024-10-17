@@ -46,38 +46,24 @@ def main():
     for j in range(N): # j denotes the j^th step in one time horizon
         for i in range(n):  # i is the i^th agent 
 
-        # Define controller & run simulation for each agent i
-            config.goal=goals[i,:]
-            config.obs = scenario.obstacles.copy()
+            # Define controller & run simulation for each agent i
+            obs = scenario.obstacles.copy()
 
             # Ensures that other agents act as obstacles to agent i
             for k in range(n):
-                if i!=k:
-                    config.obs.append((initial[k,0], initial[k,1],0.08)) 
+                if i != k:
+                    obs.append((initial[k,0], initial[k,1], 0.08)) 
 
             # Initialization of MPC controller for the ith agent
-            print(f"\n\nIteration {j}, Agent {i}")
-            # print("Initial state: ", initial[i,:])
-            # print("\nController 1")
-            # controller = MPC()
-            # controller.set_init_state(initial[i,:])
-
-            final_positions_both_agents[c,:] = xf[i,:]
             # The position of agent i is propogated one time horizon ahead using the MPC controller
-            # controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+            print(f"\n\nIteration {j}, Agent {i}")
+            print("Initial state: ", initial[i,:], "Goal:", goals[i,:])
+            final_positions_both_agents[c,:] = xf[i,:]
 
-            # print("\nController 2")
-            # controller2 = MPC()
-            # controller2.set_init_state(initial[i,:])
-            # controller2.run_simulation(initial[i,:])
-            # controller2.set_init_state(initial[i,:])
-            # controller2.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
-
-            # print("\nController 3")
-            controller3 = MPC()
-            controller3.set_init_state(initial[i,:])
-            controller3.run_simulation(initial[i,:])
-            x, uf, uf_proj, l = controller3.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+            controller = MPC(goal=goals[i,:], static_obs=obs)
+            controller.set_init_state(initial[i,:])
+            controller.run_simulation(initial[i,:])
+            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
 
             xf[i,:] = x.ravel()
             u.append(uf)
@@ -95,7 +81,7 @@ def main():
             x1_j[ll,:]=final_positions_both_agents[n*ll,:]
             x2_j[ll,:]=final_positions_both_agents[n*ll+1,:]
 
-        plotter.plot_live(scenario, x1_j[1:], x2_j[1:], u, u_proj, L)
+        # plotter.plot_live(scenario, x1_j[1:], x2_j[1:], u, u_proj, L)
 
     #x1 and x2 are times series data of positions of agents 1 and 2 respectively
     for ll in range(N-1):
