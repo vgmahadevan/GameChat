@@ -26,11 +26,9 @@ class MPC:
         self.A = np.array([[1, -2],[-2, 1]] )                  # State cost matrix
         self.static_obs = static_obs
         self.moving_obs = moving_obs
-        self.r = config.r                        # Robot radius
         self.goal = goal
         # Only control_type of "setpoint" is currently supported.
         self.gamma = config.gamma                # CBF parameter
-        self.safety_dist = config.safety_dist    # Safety distance
 
         self.model = self.define_model()
         self.mpc = self.define_mpc()
@@ -175,10 +173,8 @@ class MPC:
           - mpc(do_mpc.controller.MPC): The mpc model with CBF constraints added
         """
         cbf_constraints = self.get_cbf_constraints()
-        i = 0
-        for cbc in cbf_constraints:
+        for i, cbc in enumerate(cbf_constraints):
             mpc.set_nl_cons('cbf_constraint'+str(i), cbc, ub=0)
-            i += 1
         return mpc
 
     def get_cbf_constraints(self):
@@ -216,7 +212,7 @@ class MPC:
           - h(casadi.casadi.SX): The Control Barrier Function
         """
         x_obs, y_obs, r_obs = obstacle
-        h = (x[0] - x_obs)**2 + (x[1] - y_obs)**2 - (self.r + r_obs + self.safety_dist)**2
+        h = (x[0] - x_obs)**2 + (x[1] - y_obs)**2 - (config.agent_radius + r_obs + config.safety_dist)**2
         return h
 
     def set_tvp_for_mpc(self, mpc):

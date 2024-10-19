@@ -8,13 +8,13 @@
 
 import numpy as np
 from mpc_cbf import MPC
-import config
 from scenarios import DoorwayScenario, IntersectionScenario
 from plotter import Plotter
+from data_logger import DataLogger
 
 # Add number of agents
 n=2
-N=50 #Number of iteration steps for each agent
+N=50 # Number of iteration steps for each agent
 
 xf=np.zeros((n,3)) # initialization of final states
 u = []
@@ -37,12 +37,14 @@ scenario = DoorwayScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
+logger = DataLogger('doorway_train_data_no_liveness.json')
 
 def main():
     c=0
     # Add all initial and goal positions of the agents here (Format: [x, y, theta])
     initial = scenario.initial.copy()
     goals = scenario.goals.copy()
+    logger.set_obstacles( scenario.obstacles.copy())
     for j in range(N): # j denotes the j^th step in one time horizon
         for i in range(n):  # i is the i^th agent 
 
@@ -52,7 +54,7 @@ def main():
             # Ensures that other agents act as obstacles to agent i
             for k in range(n):
                 if i != k:
-                    obs.append((initial[k,0], initial[k,1], 0.08)) 
+                    obs.append((initial[k,0], initial[k,1], config.agent_radius)) 
 
             # Initialization of MPC controller for the ith agent
             # The position of agent i is propogated one time horizon ahead using the MPC controller
@@ -64,6 +66,9 @@ def main():
             controller.set_init_state(initial[i,:])
             controller.run_simulation(initial[i,:])
             x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
+            opp_state = (initial[1-i,0], initial[1-i,1])
+            data_input = np.concatenate((x, opp_state), axis=None)
+            logger.log_iteration(data_input, uf)
 
             xf[i,:] = x.ravel()
             u.append(uf)
@@ -88,17 +93,6 @@ def main():
         x1[ll,:]=final_positions_both_agents[n*ll,:]
         x2[ll,:]=final_positions_both_agents[n*ll+1,:]
     
-    # T=0.4
-    # L=[]
-    # # Computation of liveliness value L for agent 1
-    # for i in range(len(x1)-2):
-    #     vec1=((x2[i+1,0:2]-x2[i,0:2])-(x1[i+1,0:2]-x1[i,0:2]))/T
-    #     vec2=x1[i,0:2]-x2[i,0:2]
-    #     l=np.arccos(np.dot(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+0.001))
-    #     l_sin=abs(np.arcsin(np.cross(vec1,vec2)/(LA.norm(vec1)*LA.norm(vec2)+0.001)))
-    #     print(l, l_sin)
-    #     L.append(l)
-
     # Discard the first element of both x1 and x2
     plotter.plot(scenario, x1[1:], x2[1:], u, u_proj, L)
        

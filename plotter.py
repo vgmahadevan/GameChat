@@ -1,9 +1,9 @@
+import math
+import config
 import numpy as np
 import seaborn as sns
-import math
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from matplotlib.patches import Circle
 
 class Plotter:
     def __init__(self):
@@ -17,7 +17,7 @@ class Plotter:
         # Reset plot limits and other properties as needed
         self.ax.set_xlim(-1, 2)
         self.ax.set_ylim(-1, 1)
-        self.liveliness_text.set_text('Liveliness function = OFF')
+        self.liveliness_text.set_text(f'Liveliness function = {config.liveliness}')
         return []
 
 

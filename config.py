@@ -27,7 +27,7 @@ Q_tr = np.diag([200, 200, 0.005])          # State cost matrix
 R_tr = np.array([0.1, 0.001])              # Controls cost matrix
 
 # Obstacles
-r = 0.1                               # Robot radius (for obstacle avoidance)
+agent_radius = 0.1                               # Robot radius (for obstacle avoidance)
 
 
 # ------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ COST_MATRICES = {
 
 # ------------------------------------------------------------------------------
 # Liveness parameters.
-liveliness = True
+liveliness = False
 liveness_threshold = 0.3
 
 
