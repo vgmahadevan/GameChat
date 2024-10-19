@@ -22,25 +22,26 @@ class Plotter:
 
 
     # Function to update the plots
-    def plot_live(self, scenario, x1, x2, u, u_proj, L):
+    def plot_live(self, scenario, x_cum, u, u_proj, L):
         self.ax.clear()
         self.ax.set_xlim(-1, 2)
         self.ax.set_ylim(-1, 1)
+
+        x1, x2 = x_cum
         
         # Draw the fading trails for agent 1
         L, u, u_proj = np.round(L, 2), np.round(u, 2), np.round(u_proj, 2)
-        if len(x1) > 2:
-            x0_heading = np.rad2deg(np.arctan2(x1[-1, 1] - x1[-2, 1], x1[-1, 0] - x1[-2, 0]))
-            x1_heading = np.rad2deg(np.arctan2(x2[-1, 1] - x2[-2, 1], x2[-1, 0] - x2[-2, 0]))
-        else:
-            x0_heading, x1_heading = 0, 0
+        x0_state = x1[-1].T.copy()
+        x0_state[2] = np.rad2deg(x0_state[2])
+        x1_state = x2[-1].T.copy()
+        x1_state[2] = np.rad2deg(x1_state[2])
         liveliness_text = [f'Liveliness function = {L[-1]}.',
+                           f'Agent 0 X = {x0_state}.',
                            f'Agent 0 U = {u[-2].T}.',
                            f'Agent 0 U_proj = {u_proj[-2].T}.',
-                           f'Agent 0 Heading = {x0_heading}.',
+                           f'Agent 1 X = {x1_state}.',
                            f'Agent 1 U = {u[-1].T}.',
                            f'Agent 1 U_proj = {u_proj[-1].T}',
-                           f'Agent 1 Heading = {x1_heading}.',
         ]
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
 
@@ -59,14 +60,14 @@ class Plotter:
         # Draw the fading trails for agent 1
         for i in range(start_index, frame):
             alpha = 1 - ((frame - 1 - i) / trail_length)**2
-            self.ax.scatter(x1[i, 0], x1[i, 1], c='r', s=25, alpha=alpha)
-            self.ax.scatter(x2[i, 0], x2[i, 1], c='b', s=25, alpha=alpha)
+            self.ax.scatter(x1[i][0], x1[i][1], c='r', s=25, alpha=alpha)
+            self.ax.scatter(x2[i][0], x2[i][1], c='b', s=25, alpha=alpha)
 
         if frame > 2:
-            v1 = x1[-1] - x1[-2]
-            v2 = x2[-1] - x2[-2]
+            dp = x1[-1][:2] - x2[-1][:2]
+            v1 = x1[-1][:2] - x1[-2][:2]
+            v2 = x2[-1][:2] - x2[-2][:2]
             dv = v1 - v2
-            dp = x1[-1] - x2[-1]
             
             plt.arrow(0, 0, dp[0], dp[1], color='m', linewidth=2)
             plt.arrow(0, 0, dv[0], dv[1], color='g', linewidth=2)
@@ -116,13 +117,6 @@ class Plotter:
         self.scenario.plot(self.ax)
         self.x1 = x1
         self.x2 = x2
-        # print("Plotting x1 and x2")
-        # print(self.x1)
-        # print(self.x2)
-
-        # Draw the stationary circles
-        # circles = [Circle((obstacles[i,0], obstacles[i,1]), obstacles[i,2], fill = False) for i in range(len(obstacles))]
-        # circles = [Circle((obs[0], obs[1]), obs[2], fill = True) for obs in self.scenario.obstacles]
 
         # Create an animation
         ani = FuncAnimation(self.fig, lambda frame: self.update(frame), frames=len(self.x1), init_func=lambda: self.init(), blit=False)

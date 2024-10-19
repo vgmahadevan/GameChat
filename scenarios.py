@@ -1,3 +1,5 @@
+import config
+from config import DynamicsModel
 import numpy as np
 import matplotlib.patches as patches
 
@@ -5,10 +7,16 @@ import matplotlib.patches as patches
 
 class DoorwayScenario:
     def __init__(self):
+        self.num_agents = 2
         self.initial = np.array([[-1, 0.5, 0],
                     [-1, -0.5, 0]])
         self.goals = np.array([[2, 0.0, 0],
                     [2, 0.0, 0]])
+        if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR:
+            # Set initial state to 0 velocity and goal to 0 velocity.
+            zeros = np.zeros((self.num_agents, 1))
+            self.initial = np.hstack((self.initial, zeros))
+            self.goals = np.hstack((self.goals, zeros))
         self.ox=1
         self.obstacles=[(self.ox, 0.3, 0.1),(self.ox, 0.4, 0.1),(self.ox, 0.5, 0.1),(self.ox, 0.6, 0.1),(self.ox, 0.7, 0.1),(self.ox, 0.8, 0.1),(self.ox, 0.9, 0.1), (self.ox, 1.0, 0.1), (self.ox, -0.3, 0.1),(self.ox, -0.4, 0.1),(self.ox, -0.5, 0.1),(self.ox, -0.6, 0.1),(self.ox, -0.7, 0.1), (self.ox, -0.8, 0.1),(self.ox, -0.9, 0.1),(self.ox, -1.0, 0.1)]
     

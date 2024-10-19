@@ -6,6 +6,7 @@
 # N is number of iterations for one time horizon
 # mpc_cbf.py containst eh code for the Game thereotic MPC controllers for agent 1 and 2 respectively
 
+import config
 import numpy as np
 from mpc_cbf import MPC
 from scenarios import DoorwayScenario, IntersectionScenario
@@ -16,7 +17,7 @@ from data_logger import DataLogger
 n=2
 N=50 # Number of iteration steps for each agent
 
-xf=np.zeros((n,3)) # initialization of final states
+xf=np.zeros((n,config.num_states)) # initialization of final states
 u = []
 L=[]
 u_proj = []
@@ -24,12 +25,14 @@ u_proj = []
 # final_positions_both_agents stores the final positions of both agents
 # [1,:], [3,:], [5,:]... are final positions of agent 1
 # [2,:], [4,:], [6,:]... are final positions of agent 2
-final_positions_both_agents=np.zeros((n*N,3)) # initialization of final states for both agents
+final_positions_both_agents=np.zeros((n*N,config.num_states)) # initialization of final states for both agents
 
-x1=np.zeros((N,3)) # initialization of times series states of agent 1 
-x2=np.zeros((N,3)) # initialization of times series states of agent 1 
+x1=np.zeros((N,config.num_states)) # initialization of times series states of agent 1 
+x2=np.zeros((N,config.num_states)) # initialization of times series states of agent 1 
 
-xf_minus=np.zeros((n,3))
+x_cum = [[], []]
+
+xf_minus=np.zeros((n,config.num_states))
 
 # Scenarios: "doorway" or "intersection"
 scenario = DoorwayScenario()
@@ -47,7 +50,6 @@ def main():
     logger.set_obstacles( scenario.obstacles.copy())
     for j in range(N): # j denotes the j^th step in one time horizon
         for i in range(n):  # i is the i^th agent 
-
             # Define controller & run simulation for each agent i
             obs = scenario.obstacles.copy()
 
@@ -71,6 +73,7 @@ def main():
             logger.log_iteration(data_input, uf)
 
             xf[i,:] = x.ravel()
+            x_cum[i].append(x.ravel())
             u.append(uf)
             u_proj.append(uf_proj)
             L.append(l)
@@ -80,13 +83,7 @@ def main():
    
         # Plots
         initial = xf #The final state is assigned to the initial state stack for future MPC
-        x1_j=np.zeros((j,3)) # initialization of times series states of agent 1 
-        x2_j=np.zeros((j,3)) # initialization of times series states of agent 2
-        for ll in range(j):
-            x1_j[ll,:]=final_positions_both_agents[n*ll,:]
-            x2_j[ll,:]=final_positions_both_agents[n*ll+1,:]
-
-        # plotter.plot_live(scenario, x1_j[1:], x2_j[1:], u, u_proj, L)
+        # plotter.plot_live(scenario, x_cum, u, u_proj, L)
 
     #x1 and x2 are times series data of positions of agents 1 and 2 respectively
     for ll in range(N-1):
