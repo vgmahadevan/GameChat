@@ -11,7 +11,7 @@ class DynamicsModel(Enum):
 liveliness = False
 liveness_threshold = 0.3
 plot_rate = 1
-plot_live = True
+plot_live = False
 plot_live_pause = False
 # dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
@@ -23,8 +23,12 @@ else:
     num_states = 4 # (x, y, theta, v)
     num_controls = 2 # (a, omega)
 
+n = 2                                      # Number of agents
+runtime = 20.0                             # Total runtime [s]
+# runtime = 5.0
 Ts = 0.2                                   # Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps
+sim_steps = int(runtime / Ts)              # Number of iteration steps for each agent
 
 obs_gamma = 0.1                            # CBF parameter in [0,1]
 liveliness_gamma = 0.1                     # CBF parameter in [0,1]

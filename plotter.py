@@ -94,18 +94,19 @@ class Plotter:
         self.ax.set_xlim(-2.6, 2.2)
         self.ax.set_ylim(-1, 1)
 
-        L, u0, u0_proj, u1, u1_proj = np.round(self.L[frame], 2), np.round(self.u[frame*2], 2), np.round(self.u_proj[frame*2], 2), np.round(self.u[frame*2+1], 2), np.round(self.u_proj[frame*2+1], 2)
-        x0_state = self.x1[frame].T.copy()
+        u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
+        L, u0_ori, u1_ori = np.round(self.controllers[1].liveliness[frame], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
+        x0_state, x1_state = self.x_cum[0][frame].T.copy(), self.x_cum[1][frame].T.copy()
         x0_state[2] = np.rad2deg(x0_state[2])
-        x1_state = self.x2[frame].T.copy()
+        x1_state = self.x_cum[1][frame].T.copy()
         x1_state[2] = np.rad2deg(x1_state[2])
         liveliness_text = [f'Liveliness function = {L}.',
                            f'Agent 0 X = {x0_state}.',
+                           f'Agent 0 U_ori = {u0_ori.T}.',
                            f'Agent 0 U = {u0.T}.',
-                           f'Agent 0 U_proj = {u0_proj.T}.',
                            f'Agent 1 X = {x1_state}.',
-                           f'Agent 1 U = {u1.T}.',
-                           f'Agent 1 U_proj = {u1_proj.T}',
+                           f'Agent 1 U_ori = {u1_ori.T}.',
+                           f'Agent 1 U = {u1.T}',
         ]
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
 
@@ -113,15 +114,11 @@ class Plotter:
         trail_length = 20 * config.plot_rate
         start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
 
-        # Draw the fading trails for agent 1
+        # Draw the fading trails for agents 1 and 2
         for i in range(start_index, frame, config.plot_rate):
             alpha = 1 - ((frame - i) / trail_length)**2
-            self.ax.plot(self.x1[i:i+2, 0], self.x1[i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
-
-        # Draw the fading trails for agent 2
-        for i in range(start_index, frame, config.plot_rate):
-            alpha = 1 - ((frame - i) / trail_length)**2
-            self.ax.plot(self.x2[i:i+2, 0], self.x2[i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
+            self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
+            self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
 
         # Update the liveliness text
         # Your existing code to update liveliness text
@@ -130,22 +127,18 @@ class Plotter:
 
 
 
-    def plot(self, scenario, x1, x2, u, u_proj, L):
+    def plot(self, scenario, controllers, x_cum, u_cum):
         self.scenario = scenario
         self.scenario.plot(self.ax)
-        self.x1 = x1
-        self.x2 = x2
-        self.u = u
-        self.u_proj = u_proj
-        self.L = L
+        self.controllers = controllers
+        self.x_cum = x_cum
+        self.u_cum = u_cum
 
         # Create an animation
-        ani = FuncAnimation(self.fig, lambda frame: self.update(frame), frames=len(self.x1) // config.plot_rate, init_func=lambda: self.init(), blit=False)
+        ani = FuncAnimation(self.fig, lambda frame: self.update(frame), frames=len(self.x_cum[0]) // config.plot_rate, init_func=lambda: self.init(), blit=False)
 
         # Save the animation
         ani.save('agents_animation.mp4', writer='ffmpeg')
-        # Adjusting the font to "Segoe UI"
-        # plt.rcParams['font.size'] = 200
 
         # Set the color palette to "deep"
         sns.set_palette("deep")
@@ -153,26 +146,27 @@ class Plotter:
         fontsize = 14
 
         # TODO: Fix this.
-        agent_1_velocities = [v.ravel() for i, v in enumerate(u) if i % 2 == 0] 
-        agent_2_velocities = [v.ravel() for i, v in enumerate(u) if i % 2 != 0]
-        agent_2_velocities_proj = [v.ravel() for i, v in enumerate(u_proj) if i % 2 != 0]
-        liveness = [v for i, v in enumerate(L) if i % 2 != 0]
+        if config.dynamics == config.DynamicsModel.SINGLE_INTEGRATOR:
+            speed1, speed2 = u_cum.copy()
+            speed2_ori = controllers[1].u_ori.copy()
+            speed1 = [control[0] for control in speed1]
+            speed2 = [control[0] for control in speed2]
+            speed2_ori = [control[0] for control in speed2_ori]
+        else:
+            agent_1_states, agent_2_states = x_cum.copy()
+            speed1 = [state[3] for state in agent_1_states]
+            speed2 = [state[3] for state in agent_2_states]
+            speed2_ori = speed2
+
+        liveness = controllers[1].liveliness.copy()
 
         # Creating iteration indices for each agent based on the number of velocity points
-        iterations = range(0, len(agent_2_velocities), config.plot_rate)
+        iterations = range(0, len(speed1), config.plot_rate)
         print("Iterations:", list(iterations))
-
-        # Unpacking the velocities into x and y components for both agents
-        agent_1_x, agent_1_y = zip(*agent_1_velocities)
-        speed1 = tuple(math.sqrt(x**2 + y**2) for x, y in zip(agent_1_x, agent_1_y))
-        agent_2_x, agent_2_y = zip(*agent_2_velocities)
-        speed2 = tuple(math.sqrt(x**2 + y**2) for x, y in zip(agent_2_x, agent_2_y))
-        agent_2_x_proj, agent_2_y_proj = zip(*agent_2_velocities_proj)
-        speed2_proj = tuple(math.sqrt(x**2 + y**2) for x, y in zip(agent_2_x_proj, agent_2_y_proj))
 
         speed1 = [speed1[idx] for idx in iterations]
         speed2 = [speed2[idx] for idx in iterations]
-        speed2_proj = [speed2_proj[idx] for idx in iterations]
+        speed2_ori = [speed2_ori[idx] for idx in iterations]
         liveness = [liveness[idx] for idx in iterations]
 
         # Plotting the velocities as a function of the iteration for both agents
@@ -182,14 +176,14 @@ class Plotter:
         plt.subplot(2, 1, 1)
         sns.lineplot(x=iterations, y=speed1, label='Agent 1 speed', marker='o',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
         sns.lineplot(x=iterations, y=speed2, label='Agent 2 speed', marker='o',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        sns.lineplot(x=iterations, y=speed2_proj, label='Agent 2 speed projected', marker='P',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
+        sns.lineplot(x=iterations, y=speed2_ori, label='Agent 2 speed original', marker='P',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
         plt.xlabel('Iteration', fontsize = fontsize)
         plt.ylabel('Velocity', fontsize = fontsize)
         plt.legend(loc='upper left', ncol=1, fontsize = fontsize)
         plt.xlim(0, max(iterations))
-        plt.ylim(min(speed1 + speed2+ speed2_proj), max(speed1 + speed2+ speed2_proj))
+        plt.ylim(min(speed1 + speed2 + speed2_ori), max(speed1 + speed2 + speed2_ori))
         plt.xticks(np.arange(0, max(iterations)+1, 4*config.plot_rate), fontsize = fontsize)
-        plt.yticks(np.arange(round(min(speed1 + speed2+ speed2_proj), 1), round(max(speed1 + speed2+ speed2_proj), 1), .2), fontsize = fontsize)
+        plt.yticks(np.arange(round(min(speed1 + speed2 + speed2_ori), 1), round(max(speed1 + speed2 + speed2_ori), 1), .2), fontsize = fontsize)
         plt.grid(which='major', color='#CCCCCC', linestyle='--')
         plt.grid(which='minor', color='#CCCCCC', linestyle='-', axis='both')
         plt.minorticks_on()

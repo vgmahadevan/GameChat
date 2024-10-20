@@ -12,28 +12,10 @@ from mpc_cbf import MPC
 from scenarios import DoorwayScenario, IntersectionScenario
 from plotter import Plotter
 from data_logger import DataLogger
-
-# Add number of agents
-n=2
-N=int(20.0 / config.Ts) # Number of iteration steps for each agent
-# N = 10
-
-xf=np.zeros((n,config.num_states)) # initialization of final states
-u = []
-L=[]
-u_proj = []
-
-# final_positions_both_agents stores the final positions of both agents
-# [1,:], [3,:], [5,:]... are final positions of agent 1
-# [2,:], [4,:], [6,:]... are final positions of agent 2
-final_positions_both_agents=np.zeros((n*N,config.num_states)) # initialization of final states for both agents
-
-x1=np.zeros((N,config.num_states)) # initialization of times series states of agent 1 
-x2=np.zeros((N,config.num_states)) # initialization of times series states of agent 1 
+from environment import Environment
 
 x_cum = [[], []]
-
-xf_minus=np.zeros((n,config.num_states))
+u_cum = [[], []]
 
 # Scenarios: "doorway" or "intersection"
 scenario = DoorwayScenario()
@@ -43,59 +25,31 @@ scenario = DoorwayScenario()
 plotter = Plotter()
 logger = DataLogger('doorway_train_data_no_liveness.json')
 
-def main():
-    c=0
-    # Add all initial and goal positions of the agents here (Format: [x, y, theta])
-    initial = scenario.initial.copy()
-    goals = scenario.goals.copy()
-    logger.set_obstacles(scenario.obstacles.copy())
-    for j in range(N): # j denotes the j^th step in one time horizon
-        for i in range(n):  # i is the i^th agent 
-            # Define controller & run simulation for each agent i
-            obs = scenario.obstacles.copy()
+# Add all initial and goal positions of the agents here (Format: [x, y, theta])
+goals = scenario.goals.copy()
+logger.set_obstacles(scenario.obstacles.copy())
+env = Environment(scenario.initial.copy())
+controllers = []
+controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+controllers[-1].initialize_controller(env)
+controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+controllers[-1].initialize_controller(env)
 
-            # Ensures that other agents act as obstacles to agent i
-            for k in range(n):
-                if i != k:
-                    obs.append((initial[k,0], initial[k,1], config.agent_radius)) 
+for sim_iteration in range(config.sim_steps):
+    print(f"\nIteration: {sim_iteration}")
+    for agent_idx in range(config.n):
+        x_cum[agent_idx].append(env.initial_states[agent_idx])
 
-            # Initialization of MPC controller for the ith agent
-            # The position of agent i is propogated one time horizon ahead using the MPC controller
-            print(f"\n\nIteration {j}, Agent {i}")
-            final_positions_both_agents[c,:] = xf[i,:]
+    new_states, outputted_controls = env.run_simulation(sim_iteration, controllers)
 
-            controller = MPC(agent_idx=i, initial_state=initial[i,:], goal=goals[i,:], static_obs=obs, opp_state=initial[1-i,:])
-            controller.set_init_state(initial[i,:])
-            # controller.run_simulation(initial[i,:])
-            x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j)
-            # opp_state = (initial[1-i,0], initial[1-i,1])
-            # data_input = np.concatenate((x, opp_state), axis=None)
-            # logger.log_iteration(data_input, uf)
+    for agent_idx in range(config.n):
+        u_cum[agent_idx].append(outputted_controls[agent_idx])
 
-            xf[i,:] = x.ravel()
-            x_cum[i].append(x.ravel())
-            u.append(uf)
-            u_proj.append(uf_proj)
-            L.append(l)
+    # Plots
+    if sim_iteration % config.plot_rate == 0 and config.plot_live:
+        plotter.plot_live(scenario, x_cum, u, u_proj, L)
 
-            print(f"Initial state: {initial[i, :]}, Output control: {uf_proj}, New state: {xf[i, :]}")
-
-            c += 1
-   
-        # Plots
-        initial = xf.copy() #The final state is assigned to the initial state stack for future MPC
-        if j % config.plot_rate == 0 and config.plot_live:
-            plotter.plot_live(scenario, x_cum, u, u_proj, L)
-
-    #x1 and x2 are times series data of positions of agents 1 and 2 respectively
-    for ll in range(N-1):
-        x1[ll,:]=final_positions_both_agents[n*ll,:]
-        x2[ll,:]=final_positions_both_agents[n*ll+1,:]
-    
-    # Discard the first element of both x1 and x2
-    plotter.plot(scenario, x1[1:], x2[1:], u, u_proj, L)
-       
-
-
-if __name__ == '__main__':
-    main()
+# Discard the first element of both x1 and x2
+x_cum = np.array(x_cum)
+u_cum = np.array(u_cum)
+plotter.plot(scenario, controllers, x_cum, u_cum)
