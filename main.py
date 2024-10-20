@@ -15,7 +15,8 @@ from data_logger import DataLogger
 
 # Add number of agents
 n=2
-N=50 # Number of iteration steps for each agent
+N=int(30.0 / config.Ts) # Number of iteration steps for each agent
+# N = 10
 
 xf=np.zeros((n,config.num_states)) # initialization of final states
 u = []
@@ -61,16 +62,15 @@ def main():
             # Initialization of MPC controller for the ith agent
             # The position of agent i is propogated one time horizon ahead using the MPC controller
             print(f"\n\nIteration {j}, Agent {i}")
-            print("Initial state: ", initial[i,:], "Goal:", goals[i,:])
             final_positions_both_agents[c,:] = xf[i,:]
 
             controller = MPC(goal=goals[i,:], static_obs=obs)
             controller.set_init_state(initial[i,:])
-            controller.run_simulation(initial[i,:])
+            # controller.run_simulation(initial[i,:])
             x, uf, uf_proj, l = controller.run_simulation_to_get_final_condition(initial[i,:],final_positions_both_agents,j,i)
-            opp_state = (initial[1-i,0], initial[1-i,1])
-            data_input = np.concatenate((x, opp_state), axis=None)
-            logger.log_iteration(data_input, uf)
+            # opp_state = (initial[1-i,0], initial[1-i,1])
+            # data_input = np.concatenate((x, opp_state), axis=None)
+            # logger.log_iteration(data_input, uf)
 
             xf[i,:] = x.ravel()
             x_cum[i].append(x.ravel())
@@ -78,12 +78,15 @@ def main():
             u_proj.append(uf_proj)
             L.append(l)
 
+            print(f"Initial state: {initial[i, :]}, Output control: {uf_proj}, New state: {xf[i, :]}")
+
             c += 1
             # print(1/0)
    
         # Plots
-        initial = xf #The final state is assigned to the initial state stack for future MPC
-        # plotter.plot_live(scenario, x_cum, u, u_proj, L)
+        initial = xf.copy() #The final state is assigned to the initial state stack for future MPC
+        if j % config.plot_rate == 0:
+            plotter.plot_live(scenario, x_cum, u, u_proj, L)
 
     #x1 and x2 are times series data of positions of agents 1 and 2 respectively
     for ll in range(N-1):

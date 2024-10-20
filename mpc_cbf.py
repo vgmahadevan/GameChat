@@ -20,7 +20,6 @@ class MPC:
     where x'_k = x_{des_k} - x_k
     """
     def __init__(self, goal, static_obs = []):
-        self.sim_time = config.sim_time          # Total simulation time steps
         self.Q = config.COST_MATRICES[config.dynamics]['Q']
         self.R = config.COST_MATRICES[config.dynamics]['R']
         self.static_obs = static_obs
@@ -53,13 +52,6 @@ class MPC:
         x_next = _x + A*config.Ts + B@_u*config.Ts
         model.set_rhs('x', x_next, process_noise=False)  # Set to True if adding noise
 
-        # Optional: Define an expression, which represents the stage and terminal
-        # cost of the control problem. This term will be later used as the cost in
-        # the MPC formulation and can be used to directly plot the trajectory of
-        # the cost of each state.
-        cost_expr = self.get_cost_expression(model)
-        model.set_expression(expr_name='cost', expr=cost_expr)
-
         # Setup model
         model.setup()
         return model
@@ -88,7 +80,6 @@ class MPC:
         A[0] = x[3] * cos(x[2]) # x_dot = v * cos(theta)
         A[1] = x[3] * sin(x[2]) # y_dot = v * sin(theta)
 
-        a = 1e-9  # Small positive constant so system has relative degree 1
         B = SX.zeros(4, 2)
         B[3, 0] = 1 # dv = a
         B[2, 1] = 1 # dtheta = omega
@@ -117,8 +108,9 @@ class MPC:
         mpc.set_param(**setup_mpc)
 
         # Configure objective function
-        mterm = self.model.aux['cost']  # Terminal cost
-        lterm = self.model.aux['cost']  # Stage cost
+        mterm = self.get_cost_expression(self.model)
+        lterm = mterm
+
         mpc.set_objective(mterm=mterm, lterm=lterm)
         mpc.set_rterm(u=self.R)         # Input penalty (R diagonal matrix in objective fun)
 
@@ -194,7 +186,7 @@ class MPC:
     def run_simulation(self,x0):
         """Runs a closed-loop control simulation."""
         # print("Simulator at beginning of simulation 1", self.simulator.x0)
-        for k in range(self.sim_time):
+        for k in range(config.sim_time):
             u0 = self.mpc.make_step(x0)
             x0 = self.simulator.make_step(u0)
             # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
@@ -204,15 +196,15 @@ class MPC:
     def run_simulation_to_get_final_condition(self,x0,xff,j,i):
         """Runs a closed-loop control simulation."""
         x1 = x0
-        T=0.1
-        epsilon=0.001
+        # epsilon=0.001
         # NOTE: For j < 3 the liveness value will be accurate lowkey.
-        c=j*2+i
+        # c=j*2+i
         # print("C", c)
-        xf_minus_one=xff[c,0:2] 
-        xf_one=xff[c-2,0:2]
-        xf_minus_two=xff[c-1,0:2]
-        xf_two=xff[c-3,0:2]
+        # x_minus = min(5, j)
+        # ego_xf=xff[c,0:2] 
+        # ego_xf_minus_5=xff[c-2*x_minus,0:2]
+        # opp_xf=xff[c-1,0:2]
+        # opp_xf_minus_5=xff[c-2*x_minus-1,0:2]
 
         # xf_minus_one=xff[j,0:2] 
         # xf_one=xff[j-2,0:2]
@@ -220,54 +212,46 @@ class MPC:
         # xf_two=xff[j-3,0:2]
 
         # Will add liveliness condition here
-        vec1=((xf_minus_two-xf_two)-(xf_minus_one-xf_one))/T#((xf_minus[j,0:2]-xf[j,0:2])-(xf_minus[i,0:2]-xf[i,0:2]))/T
-        vec2=(xf_minus_two - xf_minus_one)#xf[j,0:2]-xf[i,0:2]
-        l=np.arccos(abs(np.dot(vec1,vec2))/(LA.norm(vec1)*LA.norm(vec2)+epsilon))
-        # print("X1 at beginning of final simulation", x1)
-        # print("Simulator at beginning of final simulation", self.simulator.x0['x'])
-        for k in range(self.sim_time):
+        # ego_vel = (ego_xf - ego_xf_minus_5)/(config.Ts*x_minus)
+        # opp_vel = (opp_xf - opp_xf_minus_5)/(config.Ts*x_minus)
+        # vel_diff = ego_vel - opp_vel
+        # pos_diff = ego_xf - opp_xf
+        # l=np.arccos(abs(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+epsilon))
+        # print("Position diff:", pos_diff)
+        # print("Velocity diff:", vel_diff)
+        # print("Liveliness:", l)
+        for k in range(config.sim_time):
             u1 = self.mpc.make_step(x1)
             u1_before_proj=u1.copy()
             if j>3 and i == 1 and config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness and l < config.liveness_threshold:
                 print("YOOOO")
-                # v_ego = u1[0] / T
-                # v_opp = np.linalg.norm((xf_minus_two - xf_two))/(T*4)
-                # curr_v0_v1_point = np.array([0.0, 0.0])
-                # curr_v0_v1_point[i] = v_ego
-                # curr_v0_v1_point[1 - i] = v_opp
-                # desired_v0_v1_vec = np.array([3.0, 1.0])
-                # desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
-                # desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
-                # mult_factor = (desired_v0_v1_point[i]*T) / u1[0]
-                # u1 *= mult_factor
-                # print(f"Running liveness {l}. Original control {u1_before_proj.T}. Output control {u1.T}")
-                # print(f"\tEgo Points: {xf_one}, {xf_minus_one}")
-                # print(f"\tOpp Points: {xf_two}, {xf_minus_two}")
-                # print(f"\tEgo Vel: {v_ego}, Opp Vel: {v_opp}")
-                # print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
-                # print(f"\tdVel Vec: {vec1}, dPos Vec: {vec2}, L: {l}")
+                print(ego_xf, ego_xf_minus_5)
+                v_ego, v_opp = np.linalg.norm(ego_vel), np.linalg.norm(opp_vel)
+                curr_v0_v1_point = np.array([0.0, 0.0])
+                curr_v0_v1_point[i] = v_ego
+                curr_v0_v1_point[1 - i] = v_opp
+                desired_v0_v1_vec = np.array([3.0, 1.0])
+                desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
+                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
+                mult_factor = (desired_v0_v1_point[i]*config.Ts) / u1[0]
+                u1 *= mult_factor
+                print(f"Running liveness {l}")
+                print(f"\tEgo Vel: {ego_vel}, Opp Vel: {opp_vel}")
+                print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
+                print(f"Original control {u1_before_proj.T}. Output control {u1.T}")
 
-                v = (xf_minus_two - xf_two)/T
-                norm_u1 = np.linalg.norm(u1_before_proj)
-                norm_v = np.linalg.norm(v)
+                # v = (xf_minus_two - xf_two)/T
+                # norm_u1 = np.linalg.norm(u1_before_proj)
+                # norm_v = np.linalg.norm(v)
 
-                # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
-                if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
-                    return np.array([norm_v / 2.5, 0])
+                # # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
+                # if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
+                #     return np.array([norm_v / 2.5, 0])
 
-                u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
-                u1 = u
+                # u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
+                # u1 = u
 
-            # Calculate the stage cost for each timestep
-            # Below is the game theoretic control input chosen
-            # if l<0.2 and LA.norm(vec2)<0.2 and np.matmul(A,u1)<0:
-            #     u1=np.matmul(inv(A),u1)
-            # print(f"\tU1 before proj: {u1_before_proj.T}, U1: {u1.T}")
             x1 = self.simulator.make_step(u1)
-            # if k == 0:
-            #     print("Simualtor after step 1 of simulation 2", self.simulator.x0)
-            # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
-            # print(f"\tX1: {x1.T}")
-        # print("Simualtor at end of final simulation", x1)
-        # print("Control at end of final simulation", u1)
-        return x1, u1_before_proj, u1, l
+
+        # return x1, u1_before_proj, u1, l
+        return x1, u1, u1, 0.0
