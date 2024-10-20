@@ -13,6 +13,7 @@ from scenarios import DoorwayScenario, IntersectionScenario
 from plotter import Plotter
 from data_logger import DataLogger
 from environment import Environment
+from model_controller import ModelController
 
 x_cum = [[], []]
 u_cum = [[], []]
@@ -23,7 +24,7 @@ scenario = DoorwayScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
-logger = DataLogger('doorway_train_data_no_liveness.json')
+logger = DataLogger('doorway_train_data_no_liveness2.json')
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
 goals = scenario.goals.copy()
@@ -32,7 +33,12 @@ env = Environment(scenario.initial.copy())
 controllers = []
 controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
 controllers[-1].initialize_controller(env)
-controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers[-1].initialize_controller(env)
+
+# controllers.append(ModelController(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+# controllers[-1].initialize_controller(env)
+controllers.append(ModelController("model_fc_definition.json", static_obs=scenario.obstacles.copy()))
 controllers[-1].initialize_controller(env)
 
 for sim_iteration in range(config.sim_steps):
@@ -40,7 +46,7 @@ for sim_iteration in range(config.sim_steps):
     for agent_idx in range(config.n):
         x_cum[agent_idx].append(env.initial_states[agent_idx])
 
-    new_states, outputted_controls = env.run_simulation(sim_iteration, controllers)
+    new_states, outputted_controls = env.run_simulation(sim_iteration, controllers, logger)
 
     for agent_idx in range(config.n):
         u_cum[agent_idx].append(outputted_controls[agent_idx])

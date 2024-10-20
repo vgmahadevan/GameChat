@@ -95,7 +95,7 @@ class Plotter:
         self.ax.set_ylim(-1, 1)
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
-        L, u0_ori, u1_ori = np.round(self.controllers[1].liveliness[frame], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
+        L, u0_ori, u1_ori = np.round(self.controllers[0].liveliness[frame], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
         x0_state, x1_state = self.x_cum[0][frame].T.copy(), self.x_cum[1][frame].T.copy()
         x0_state[2] = np.rad2deg(x0_state[2])
         x1_state = self.x_cum[1][frame].T.copy()
@@ -124,7 +124,6 @@ class Plotter:
         # Your existing code to update liveliness text
 
         return []
-
 
 
     def plot(self, scenario, controllers, x_cum, u_cum):
@@ -158,7 +157,7 @@ class Plotter:
             speed2 = [state[3] for state in agent_2_states]
             speed2_ori = speed2
 
-        liveness = controllers[1].liveliness.copy()
+        liveness = controllers[0].liveliness.copy()
 
         # Creating iteration indices for each agent based on the number of velocity points
         iterations = range(0, len(speed1), config.plot_rate)

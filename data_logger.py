@@ -1,13 +1,31 @@
 import json
+import torch
 import numpy as np
 
-class DataLogger:
+class Dataset(torch.utils.data.Dataset):
+    # Characterizes a dataset for PyTorch
+    def __init__(self, features, labels):
+        self.features = features
+        self.labels = labels
 
+    # Denotes the total number of samples
+    def __len__(self):
+        return len(self.features)
+
+    # Generates one sample of data
+    def __getitem__(self, index):
+        X = self.features[index]
+        y = self.labels[index]
+
+        return X, y
+
+
+class DataLogger:
     def __init__(self, filename):
         self.filename = filename
         self.data = {
-            'inputs': [],
-            'outputs': [],
+            'agent_inputs': {},
+            'agent_outputs': {},
             'obstacles': []
         }
     
@@ -15,16 +33,22 @@ class DataLogger:
         self.data['obstacles'] = obstacles
 
 
-    def log_iteration(self, inputs, outputs):
+    def log_iteration(self, agent_idx, ego_state, opp_state, controls):
+        inputs = np.append(ego_state, opp_state)
         inputs = inputs.reshape(-1).tolist()
-        outputs = outputs.reshape(-1).tolist()
-        self.data['inputs'].append(inputs)
-        self.data['outputs'].append(outputs)
+        outputs = controls.reshape(-1).tolist()
+        agent_idx = str(agent_idx)
+        if agent_idx not in self.data['agent_inputs']:
+            self.data['agent_inputs'][agent_idx] = []
+            self.data['agent_outputs'][agent_idx] = []
+        self.data['agent_inputs'][agent_idx].append(inputs)
+        self.data['agent_outputs'][agent_idx].append(outputs)
         json.dump(self.data, open(self.filename, 'w'))
 
 
-    def get_inputs(self, normalize):
-        data = np.array(self.data['inputs'])
+    def get_inputs(self, agent_idx, normalize):
+        agent_idx = str(agent_idx)
+        data = np.array(self.data['agent_inputs'][agent_idx])
         if not normalize:
             return data
 
@@ -34,8 +58,9 @@ class DataLogger:
         return data_normalized, data_mean, data_std
 
 
-    def get_outputs(self, normalize):
-        data = np.array(self.data['outputs'])
+    def get_outputs(self, agent_idx, normalize):
+        agent_idx = str(agent_idx)
+        data = np.array(self.data['agent_outputs'][agent_idx])
         if not normalize:
             return data
 
@@ -46,7 +71,7 @@ class DataLogger:
 
 
     def get_obstacles(self):
-        return np.array(self.data['obstacles'])
+        return self.data['obstacles'].copy()
 
 
     @staticmethod

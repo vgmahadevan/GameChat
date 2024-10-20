@@ -1,5 +1,6 @@
 """Configurations for the MPC controller."""
 
+import torch
 import numpy as np
 from enum import Enum, auto
 
@@ -54,3 +55,15 @@ COST_MATRICES = {
         "R": np.array([0.5, 10.0]),                  # Controls cost matrix
     }
 }
+
+# Training parameters.
+use_barriernet = True
+train_batch_size = 64
+use_cuda = torch.cuda.is_available()
+device = torch.device("cuda" if use_cuda else "cpu")
+learning_rate = 1e-3
+epochs = 20
+nHidden1 = 128
+nHidden21 = 32
+nHidden22 = 32
+saveprefix = 'model'

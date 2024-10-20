@@ -90,7 +90,7 @@ class Environment:
         self.simulator.reset_history()
         self.simulator.x0 = x0
 
-    def run_simulation(self, sim_iteration, controllers):
+    def run_simulation(self, sim_iteration, controllers, logger):
         """Runs a closed-loop control simulation."""
         self.sim_iteration = sim_iteration
 
@@ -111,6 +111,7 @@ class Environment:
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = x1.ravel()
             outputted_controls[agent_idx, :] = u1.ravel()
+            logger.log_iteration(agent_idx, initial_state, opp_state, outputted_controls[agent_idx, :])
             print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
 
         self.initial_states = new_states.copy()
