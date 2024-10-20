@@ -10,9 +10,9 @@ class DynamicsModel(Enum):
 # Liveness parameters.
 liveliness = True
 liveness_threshold = 0.3
-plot_rate = 5
-dynamics = DynamicsModel.SINGLE_INTEGRATOR
-# dynamics = DynamicsModel.DOUBLE_INTEGRATOR
+plot_rate = 1
+# dynamics = DynamicsModel.SINGLE_INTEGRATOR
+dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
@@ -24,14 +24,17 @@ else:
 Ts = 0.2                                   # Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps
 
-gamma = 0.1                                # CBF parameter in [0,1]
+obs_gamma = 0.1                            # CBF parameter in [0,1]
+liveliness_gamma = 0.1                     # CBF parameter in [0,1]
 safety_dist = 0.03                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
 
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
-omega_limit = 3.8                          # Angular velocity limit
+omega_limit = 1.0                          # Angular velocity limit
 accel_limit = 0.5
+
+zeta = 3.0
 
 # ------------------------------------------------------------------------------
 COST_MATRICES = {
@@ -43,6 +46,6 @@ COST_MATRICES = {
     DynamicsModel.DOUBLE_INTEGRATOR: {
         "Q": np.diag([15, 15, 0.005, 3]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
-        "R": np.array([0.0, 1.5]),                  # Controls cost matrix
+        "R": np.array([0.5, 10.0]),                  # Controls cost matrix
     }
 }
