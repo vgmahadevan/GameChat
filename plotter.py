@@ -77,7 +77,8 @@ class Plotter:
         # Your existing code to update liveliness text
         plt.draw()
         plt.pause(0.01)
-        plt.waitforbuttonpress()
+        if config.plot_live_pause:
+            plt.waitforbuttonpress()
 
 
     # Function to update the plots
@@ -107,7 +108,6 @@ class Plotter:
                            f'Agent 1 U_proj = {u1_proj.T}',
         ]
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
-
 
         # Determine the start index for the fading effect
         trail_length = 20 * config.plot_rate

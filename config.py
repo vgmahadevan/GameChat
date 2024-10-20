@@ -8,9 +8,11 @@ class DynamicsModel(Enum):
     DOUBLE_INTEGRATOR = auto()
 
 # Liveness parameters.
-liveliness = True
+liveliness = False
 liveness_threshold = 0.3
 plot_rate = 1
+plot_live = True
+plot_live_pause = False
 # dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 
@@ -28,13 +30,12 @@ obs_gamma = 0.1                            # CBF parameter in [0,1]
 liveliness_gamma = 0.1                     # CBF parameter in [0,1]
 safety_dist = 0.03                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
+zeta = 3.0
 
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
 omega_limit = 1.0                          # Angular velocity limit
 accel_limit = 0.5
-
-zeta = 3.0
 
 # ------------------------------------------------------------------------------
 COST_MATRICES = {
