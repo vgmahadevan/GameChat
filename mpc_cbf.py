@@ -5,6 +5,7 @@ from config import DynamicsModel
 from numpy import linalg as LA
 import numpy as np
 
+EPSILON = 0.001
 
 class MPC:
     """MPC-CBF Optimization problem:
@@ -183,49 +184,26 @@ class MPC:
         self.simulator.x0 = x0
         self.mpc.set_initial_guess()
 
-    def run_simulation(self,x0):
-        """Runs a closed-loop control simulation."""
-        # print("Simulator at beginning of simulation 1", self.simulator.x0)
-        for k in range(config.sim_time):
-            u0 = self.mpc.make_step(x0)
-            x0 = self.simulator.make_step(u0)
-            # y_next = self.simulator.make_step(u0, w0=10**(-4)*np.random.randn(3, 1))  # Optional Additive process noise
-        # print("Simulator at end of simulation 1", self.simulator.x0)
-        return
-
     def run_simulation_to_get_final_condition(self,x0,xff,j,i):
         """Runs a closed-loop control simulation."""
-        x1 = x0
-        # epsilon=0.001
-        # NOTE: For j < 3 the liveness value will be accurate lowkey.
-        # c=j*2+i
-        # print("C", c)
-        # x_minus = min(5, j)
-        # ego_xf=xff[c,0:2] 
-        # ego_xf_minus_5=xff[c-2*x_minus,0:2]
-        # opp_xf=xff[c-1,0:2]
-        # opp_xf_minus_5=xff[c-2*x_minus-1,0:2]
+        c=j*2+i
+        ego_xf=xff[c,0:2] 
+        opp_xf=xff[c-1,0:2]
+        opp_xf_prev_iter=xff[c-3,0:2]
 
-        # xf_minus_one=xff[j,0:2] 
-        # xf_one=xff[j-2,0:2]
-        # xf_minus_two=xff[j-1,0:2]
-        # xf_two=xff[j-3,0:2]
+        u1 = self.mpc.make_step(x0)
+        u1_before_proj=u1.copy()
 
-        # Will add liveliness condition here
-        # ego_vel = (ego_xf - ego_xf_minus_5)/(config.Ts*x_minus)
-        # opp_vel = (opp_xf - opp_xf_minus_5)/(config.Ts*x_minus)
-        # vel_diff = ego_vel - opp_vel
-        # pos_diff = ego_xf - opp_xf
-        # l=np.arccos(abs(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+epsilon))
-        # print("Position diff:", pos_diff)
-        # print("Velocity diff:", vel_diff)
-        # print("Liveliness:", l)
-        for k in range(config.sim_time):
-            u1 = self.mpc.make_step(x1)
-            u1_before_proj=u1.copy()
-            if j>3 and i == 1 and config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness and l < config.liveness_threshold:
-                print("YOOOO")
-                print(ego_xf, ego_xf_minus_5)
+        # Add liveliness condition here
+        l = 0.0
+        if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
+            # If liveness is turned on, check for liveliness condition and adjust our control input if needed.
+            ego_vel = np.array([u1[0][0] * np.cos(xff[c,2]), u1[0][0] * np.sin(xff[c,2])])
+            opp_vel = (opp_xf - opp_xf_prev_iter)/config.Ts
+            vel_diff = ego_vel - opp_vel
+            pos_diff = ego_xf - opp_xf
+            l=np.arccos(abs(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+EPSILON))
+            if j>3 and i == 1 and l < config.liveness_threshold:
                 v_ego, v_opp = np.linalg.norm(ego_vel), np.linalg.norm(opp_vel)
                 curr_v0_v1_point = np.array([0.0, 0.0])
                 curr_v0_v1_point[i] = v_ego
@@ -236,6 +214,8 @@ class MPC:
                 mult_factor = (desired_v0_v1_point[i]*config.Ts) / u1[0]
                 u1 *= mult_factor
                 print(f"Running liveness {l}")
+                print("Position diff:", pos_diff)
+                print("Velocity diff:", vel_diff)
                 print(f"\tEgo Vel: {ego_vel}, Opp Vel: {opp_vel}")
                 print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
                 print(f"Original control {u1_before_proj.T}. Output control {u1.T}")
@@ -251,7 +231,6 @@ class MPC:
                 # u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
                 # u1 = u
 
-            x1 = self.simulator.make_step(u1)
+        x1 = self.simulator.make_step(u1)
 
-        # return x1, u1_before_proj, u1, l
-        return x1, u1, u1, 0.0
+        return x1, u1_before_proj, u1, l

@@ -85,8 +85,8 @@ def main():
    
         # Plots
         initial = xf.copy() #The final state is assigned to the initial state stack for future MPC
-        if j % config.plot_rate == 0:
-            plotter.plot_live(scenario, x_cum, u, u_proj, L)
+        # if j % config.plot_rate == 0:
+        #     plotter.plot_live(scenario, x_cum, u, u_proj, L)
 
     #x1 and x2 are times series data of positions of agents 1 and 2 respectively
     for ll in range(N-1):

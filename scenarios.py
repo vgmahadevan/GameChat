@@ -10,8 +10,8 @@ class DoorwayScenario:
         self.num_agents = 2
         self.initial = np.array([[-1, 0.5, 0],
                     [-1, -0.5, 0]])
-        self.goals = np.array([[2, 0.0, -1.0],
-                    [2, 0.0, 1.0]])
+        self.goals = np.array([[2, -0.2, 0.0],
+                    [2, 0.2, 0.0]])
         if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR:
             # Set initial state to 0 velocity and goal to 0 velocity.
             zeros = np.zeros((self.num_agents, 1))

@@ -8,7 +8,7 @@ class DynamicsModel(Enum):
     DOUBLE_INTEGRATOR = auto()
 
 # Liveness parameters.
-liveliness = False
+liveliness = True
 liveness_threshold = 0.3
 plot_rate = 5
 dynamics = DynamicsModel.SINGLE_INTEGRATOR
@@ -21,7 +21,6 @@ else:
     num_states = 4 # (x, y, theta, v)
     num_controls = 2 # (a, omega)
 
-sim_time = 1                               # Total simulation time steps
 Ts = 0.2                                   # Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps
 
