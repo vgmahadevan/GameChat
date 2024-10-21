@@ -9,11 +9,11 @@ class ModelController:
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.u_ori = []
         if self.model_definition.is_barriernet:
-            self.model = BarrierNet.load(weights_filepath)
+            self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
         else:
             self.model = FCNet(self.model_definition).to(config.device)
-            self.model.load_state_dict(torch.load(self.model_definition.weights_path))
-            self.model.eval()
+        self.model.load_state_dict(torch.load(self.model_definition.weights_path))
+        self.model.eval()
 
     def initialize_controller(self, env):
         pass
@@ -26,11 +26,16 @@ class ModelController:
         self.initial_state = initial_state
         model_input_original = np.append(self.initial_state, self.opp_state)
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
-        model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
-        model_input = torch.reshape(model_input, (1, N_FEATURES)).to(config.device)
 
-        model_output = self.model(model_input, 0)
-        model_output = model_output.reshape(-1).cpu().detach().numpy()
+        with torch.no_grad():
+            model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
+            model_input = torch.reshape(model_input, (1, N_FEATURES)).to(config.device)
+            model_output = self.model(model_input, 0)
+            if self.model_definition.is_barriernet:
+                model_output = np.array([model_output[0], model_output[1]])
+            else:
+                model_output = model_output.reshape(-1).cpu().detach().numpy()
+
         output = model_output * self.model_definition.label_std + self.model_definition.label_mean
         output = output.reshape(-1, 1)
         self.u_ori.append(output)

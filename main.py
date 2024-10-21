@@ -38,7 +38,8 @@ controllers[-1].initialize_controller(env)
 
 # controllers.append(ModelController(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
 # controllers[-1].initialize_controller(env)
-controllers.append(ModelController("model_fc_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("model_fc_definition.json", static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("model_bn_definition.json", static_obs=scenario.obstacles.copy()))
 controllers[-1].initialize_controller(env)
 
 for sim_iteration in range(config.sim_steps):

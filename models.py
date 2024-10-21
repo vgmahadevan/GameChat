@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import config
 import json
+import numpy as np
 from torch.autograd import Variable
 import torch.nn.functional as F
 from qpth.qp import QPFunction
@@ -66,8 +67,8 @@ class BarrierNet(nn.Module):
     # Output controls: 2. [linear vel, angular vel].
     def __init__(self, model_definition, static_obstacles):
         super().__init__()
-        self.mean = torch.from_numpy(model_definition.input_mean).to(config.device)
-        self.std = torch.from_numpy(model_definition.input_std).to(config.device)
+        self.mean = torch.from_numpy(np.array(model_definition.input_mean)).to(config.device)
+        self.std = torch.from_numpy(np.array(model_definition.input_std)).to(config.device)
         self.static_obstacles = static_obstacles
 
         # QP Parameters
@@ -102,28 +103,38 @@ class BarrierNet(nn.Module):
         return x
 
     def dCBF(self, x0, x31, x32, sgn, nBatch):
-        Q = Variable(torch.eye(self.nCls))
-        Q = Q.unsqueeze(0).expand(nBatch, self.nCls, self.nCls).to(config.device)
-        px = x0[:,0]
-        py = x0[:,1]
-        theta = x0[:,2]
-        v = x0[:,3]
+        Q = Variable(torch.eye(N_CL))
+        Q = Q.unsqueeze(0).expand(nBatch, N_CL, N_CL).to(config.device)
+        px = x0[:,EGO_X_IDX]
+        py = x0[:,EGO_Y_IDX]
+        theta = x0[:,EGO_THETA_IDX]
+        v = x0[:,EGO_V_IDX]
         sin_theta = torch.sin(theta)
         cos_theta = torch.cos(theta)
         
-        num_obs = len(self.static_obstacles)
-        for obs_x, obs_y, R in self.static_obstacles:
+        # obstacles = self.static_obstacles[:5].copy()
+        obstacles = self.static_obstacles.copy()
+        # obstacles = []
+        obstacles.append((x0[:,OPP_X_IDX], x0[:,OPP_Y_IDX], config.agent_radius))
+
+        G = []
+        h = []
+        for obs_x, obs_y, R in obstacles:
             barrier = (px - obs_x)**2 + (py - obs_y)**2 - R**2
             barrier_dot = 2*(px - obs_x)*v*cos_theta + 2*(py - obs_y)*v*sin_theta
             Lf2b = 2*v**2
-            LgLfbu1 = torch.reshape(-2*(px - self.obs_x)*v*sin_theta + 2*(py - obs_y)*v*cos_theta, (nBatch, 1)) 
-            LgLfbu2 = torch.reshape(2*(px - self.obs_x)*cos_theta + 2*(py - obs_y)*sin_theta, (nBatch, 1))
+            LgLfbu1 = torch.reshape(-2*(px - obs_x)*v*sin_theta + 2*(py - obs_y)*v*cos_theta, (nBatch, 1)) 
+            LgLfbu2 = torch.reshape(2*(px - obs_x)*cos_theta + 2*(py - obs_y)*sin_theta, (nBatch, 1))
+            obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
+            obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
+            obs_h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0]*x32[:,1])*barrier, (nBatch, 1)))
+            G.append(obs_G)
+            h.append(obs_h)
         
-        G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
-        print(G.shape)
-        print(1/0)
-        G = torch.reshape(G, (nBatch, 1, self.nCls)).to(config.device)     
-        h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0]*x32[:,1])*barrier, (nBatch, 1))).to(self.device) 
+        G = torch.cat(G, dim=1).to(config.device)
+        h = torch.cat(h, dim=1).to(config.device)
+        assert(G.shape == (nBatch, len(obstacles), N_CL))
+        assert(h.shape == (nBatch, len(obstacles)))
         e = Variable(torch.Tensor()).to(config.device)
             
         if self.training or sgn == 1:    
