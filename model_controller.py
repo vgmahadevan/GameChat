@@ -2,12 +2,14 @@ import torch
 import config
 import numpy as np
 from models import FCNet, BarrierNet, ModelDefinition, N_FEATURES
+from util import calculate_liveliness
 
 
 class ModelController:
     def __init__(self, model_definition_filepath, static_obs):
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.u_ori = []
+        self.liveliness = []
         if self.model_definition.is_barriernet:
             self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
         else:
@@ -26,6 +28,8 @@ class ModelController:
         self.initial_state = initial_state
         model_input_original = np.append(self.initial_state, self.opp_state)
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
+
+        self.liveliness.append(calculate_liveliness(self.initial_state, self.opp_state)[0])
 
         with torch.no_grad():
             model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)

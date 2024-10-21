@@ -66,5 +66,5 @@ epochs = 20
 nHidden1 = 128
 nHidden21 = 32
 nHidden22 = 32
-agent_to_train = 0
+agent_to_train = 1
 saveprefix = f'model_{agent_to_train}'

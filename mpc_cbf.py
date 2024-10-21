@@ -2,10 +2,8 @@ import do_mpc
 from casadi import *
 import config
 from config import DynamicsModel
-from numpy import linalg as LA
 import numpy as np
-
-EPSILON = 0.001
+from util import calculate_liveliness
 
 class MPC:
     """MPC-CBF Optimization problem:
@@ -115,20 +113,12 @@ class MPC:
         h = (x[0] - x_obs)**2 + (x[1] - y_obs)**2 - (config.agent_radius + r_obs + config.safety_dist)**2
         return h
     
-    def calculate_liveliness(self, ego_state):
-        ego_vel = np.array([ego_state[3] * np.cos(ego_state[2]), ego_state[3] * np.sin(ego_state[2])])
-        opp_vel = np.array([self.opp_state[3] * np.cos(self.opp_state[2]), self.opp_state[3] * np.sin(self.opp_state[2])])
-        vel_diff = ego_vel - opp_vel
-        pos_diff = ego_state[:2] - self.opp_state[:2]
-        l = np.arccos(abs(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+EPSILON))
-        return l, pos_diff, vel_diff
-    
     # Assumes that the double-integrator dynamic model is being used
     def add_liveliness_constraint(self, mpc):
         if self.opp_state is None:
             return
 
-        l, _, _ = self.calculate_liveliness(self.initial_state.copy())
+        l, _, _ = calculate_liveliness(self.initial_state.copy(), self.opp_state)
         if l > config.liveness_threshold:
             return
         
@@ -184,7 +174,7 @@ class MPC:
         ego_state = self.initial_state.copy()
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
             ego_state = np.append(ego_state, [u1[0][0]])
-        l, pos_diff, vel_diff = self.calculate_liveliness(ego_state)
+        l, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
         self.liveliness.append(l)
         self.u_ori.append(u1.ravel())
         if l < config.liveness_threshold:

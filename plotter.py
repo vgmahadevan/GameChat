@@ -95,7 +95,11 @@ class Plotter:
         self.ax.set_ylim(-1, 1)
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
-        L, u0_ori, u1_ori = np.round(self.controllers[0].liveliness[frame], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
+        try:
+            L, u0_ori, u1_ori = np.round(self.controllers[0].liveliness[frame], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
+        except Exception as e:
+            print(e)
+            L, u0_ori, u1_ori = 0, np.array([np.nan]), np.array([np.nan])
         x0_state, x1_state = self.x_cum[0][frame].T.copy(), self.x_cum[1][frame].T.copy()
         x0_state[2] = np.rad2deg(x0_state[2])
         x1_state = self.x_cum[1][frame].T.copy()
@@ -144,7 +148,6 @@ class Plotter:
         sns.set()
         fontsize = 14
 
-        # TODO: Fix this.
         if config.dynamics == config.DynamicsModel.SINGLE_INTEGRATOR:
             speed1, speed2 = u_cum.copy()
             speed2_ori = controllers[1].u_ori.copy()

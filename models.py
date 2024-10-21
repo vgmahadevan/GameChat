@@ -119,7 +119,8 @@ class BarrierNet(nn.Module):
 
         G = []
         h = []
-        for obs_x, obs_y, R in obstacles:
+        for obs_x, obs_y, r in obstacles:
+            R = config.agent_radius + r + config.safety_dist
             barrier = (px - obs_x)**2 + (py - obs_y)**2 - R**2
             barrier_dot = 2*(px - obs_x)*v*cos_theta + 2*(py - obs_y)*v*sin_theta
             Lf2b = 2*v**2

@@ -44,7 +44,7 @@ def test(dataloader, model, loss_fn, losses):
 if __name__ == "__main__":
     params = {'batch_size': config.train_batch_size,
             'shuffle': True,
-            'num_workers': 20}
+            'num_workers': 4}
 
     logger = DataLogger.load_data('doorway_train_data_no_liveness.json')
 

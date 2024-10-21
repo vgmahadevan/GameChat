@@ -31,15 +31,16 @@ goals = scenario.goals.copy()
 logger.set_obstacles(scenario.obstacles.copy())
 env = Environment(scenario.initial.copy())
 controllers = []
-controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-controllers[-1].initialize_controller(env)
-# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
-# controllers[-1].initialize_controller(env)
 
-# controllers.append(ModelController(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-# controllers[-1].initialize_controller(env)
+# Setup agent 0
+controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("model_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
+controllers[-1].initialize_controller(env)
+
+# Setup agent 1
+# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("model_fc_definition.json", static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("model_bn_definition.json", static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("model_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 controllers[-1].initialize_controller(env)
 
 for sim_iteration in range(config.sim_steps):
