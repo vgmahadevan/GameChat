@@ -19,13 +19,15 @@ class DoorwayScenario:
             self.initial = np.hstack((self.initial, zeros))
             self.goals = np.hstack((self.goals, zeros))
         self.ox=1
-        self.obstacles=[(self.ox, 0.3, 0.1),(self.ox, 0.4, 0.1),(self.ox, 0.5, 0.1),(self.ox, 0.6, 0.1),(self.ox, 0.7, 0.1),(self.ox, 0.8, 0.1),(self.ox, 0.9, 0.1), (self.ox, 1.0, 0.1), (self.ox, -0.3, 0.1),(self.ox, -0.4, 0.1),(self.ox, -0.5, 0.1),(self.ox, -0.6, 0.1),(self.ox, -0.7, 0.1), (self.ox, -0.8, 0.1),(self.ox, -0.9, 0.1),(self.ox, -1.0, 0.1)]
+        self.obstacles = []
+        # self.obstacles=[(self.ox, 0.3, 0.1),(self.ox, 0.4, 0.1),(self.ox, 0.5, 0.1),(self.ox, 0.6, 0.1),(self.ox, 0.7, 0.1),(self.ox, 0.8, 0.1),(self.ox, 0.9, 0.1), (self.ox, 1.0, 0.1), (self.ox, -0.3, 0.1),(self.ox, -0.4, 0.1),(self.ox, -0.5, 0.1),(self.ox, -0.6, 0.1),(self.ox, -0.7, 0.1), (self.ox, -0.8, 0.1),(self.ox, -0.9, 0.1),(self.ox, -1.0, 0.1)]
     
     def plot(self, ax):
-        rect = patches.Rectangle((self.ox-0.1,0.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect1 = patches.Rectangle((self.ox-0.1,-1.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        ax.add_patch(rect)
-        ax.add_patch(rect1)
+        # rect = patches.Rectangle((self.ox-0.1,0.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect1 = patches.Rectangle((self.ox-0.1,-1.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # ax.add_patch(rect)
+        # ax.add_patch(rect1)
+        pass
 
 
 class IntersectionScenario:

@@ -27,9 +27,6 @@ class Plotter:
         self.controllers = controllers
         self.x_cum = np.array(x_cum)
         self.u_cum = np.array(u_cum)
-        print(len(self.u_cum), len(self.x_cum))
-        print(len(self.u_cum[0]), len(self.x_cum[0]))
-        print(self.u_cum, self.x_cum)
         self.update(len(x_cum[0]) - 1)
         plt.draw()
         plt.pause(0.01)
@@ -79,6 +76,8 @@ class Plotter:
             alpha = 1 - ((frame - 1 - i) / trail_length)**2
             self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
+        
+        
 
         return []
 

@@ -24,7 +24,7 @@ scenario = DoorwayScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
-logger = DataLogger('doorway_train_data_no_liveness2.json')
+# logger = DataLogger('doorway_train_data_no_liveness2.json')
 logger = BlankLogger()
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
