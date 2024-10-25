@@ -84,9 +84,10 @@ class MPC:
         if config.obstacle_avoidance:
             self.add_cbf_constraints(mpc)
 
-        if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR and config.liveliness and self.agent_idx == 1:
+        # if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR and config.liveliness and self.agent_idx == 1:
+        #     self.add_liveliness_constraint(mpc)
+        if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR and config.liveliness:
             self.add_liveliness_constraint(mpc)
-            # self.add_liveliness_constraint2(mpc)
 
         mpc.setup()
         return mpc
@@ -106,14 +107,16 @@ class MPC:
         cbf_constraints = []
         opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
         for obs in self.static_obs + [opponent_obs]:
+            # delta_h_k + gamma*h_k >= 0
+            # h_k1 - h_k + gamma*h_k >= 0
+            # -h_k1 + h_k - gamma*h_k <= 0
+            # -h_k1 + (1 - gamma)*h_k <= 0
             h_k = self.h_obs(self.model.x['x'], obs)
             h_k1 = self.h_obs(x_k1, obs)
             cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
 
         return cbf_constraints
     
-    # -h_k1 + (1 - gamma)*h_k <= 0
-    # h_k - h_k1 <= gamma*h_k
 
     """Computes the Control Barrier Function for an obstacle."""
     def h_obs(self, x, obstacle):
@@ -126,7 +129,7 @@ class MPC:
         if self.opp_state is None:
             return
 
-        l, _, _ = calculate_liveliness(self.initial_state.copy(), self.opp_state)
+        l, ttc, _, _ = calculate_liveliness(self.initial_state.copy(), self.opp_state)
         if l > config.liveness_threshold:
             return
         
@@ -167,72 +170,6 @@ class MPC:
         # h = mmax(h_vec)
         return h
 
-
-    # Assumes that the double-integrator dynamic model is being used
-    def add_liveliness_constraint2(self, mpc):
-        if self.opp_state is None:
-            return
-
-        l, _, _ = calculate_liveliness(self.initial_state.copy(), self.opp_state)        
-        print(f"Adding constraint 2, liveliness = {l}")
-
-        # Get state vector x_{t+k+1}
-        A, B = self.env.get_dynamics(self.model.x['x'])
-        x_k1 = self.model.x['x'] + A*config.Ts + B@self.model.u['u']*config.Ts
-
-        # Compute CBF constraints
-        h_k = self.h_v2(self.model.x['x'], self.opp_state)
-        h_k1 = self.h_v2(x_k1, self.opp_state)
-        constraint = -h_k1 + (1-config.liveliness_gamma)*h_k
-        # -h_k1 + (1 - gamma)*h_k <= 0
-        # h_k1 >= h_k - gamma*h_k
-        # (h_k1 - h_k) >= -gamma*h_k
-        print("\tHk:", h_k)
-        print("\tHk1:", h_k1)
-        print("\tConstraint:", constraint)
-        mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
-
-    def h_v2(self, x, opp_x):
-        self.A_matrix = SX.zeros(2, 2)
-        max_zeta = 0.3 / opp_x[3]
-        upper_zeta = min(max_zeta, config.zeta)
-        self.A_matrix[0, 0] = 1.0
-        self.A_matrix[0, 1] = -upper_zeta
-        self.A_matrix[1, 0] = -config.zeta
-        self.A_matrix[1, 1] = 1.0
-
-        # ego_v - 3 * opp_v >= 0.0 -> ego_v >= 3 * opp_v
-        # opp_v - 3 * ego_v >= 0.0 -> ego_v <= 1/3 * opp_v
-        # Means that agent 1 will speed up and agent 2 will slow down.
-        ego_heading = self.initial_state[2]
-
-        ego_x = x[3] * np.cos(ego_heading)
-        ego_y = x[3] * np.sin(ego_heading)
-        opp_x = self.opp_state[3] * np.cos(self.opp_state[2])
-        opp_y = self.opp_state[3] * np.sin(self.opp_state[2])
-        vel_diff_x = ego_x - opp_x
-        vel_diff_y = ego_y - opp_y
-        # pos_diff_x = x[0] - self.opp_state[0]
-        # pos_diff_y = x[1] - self.opp_state[1]
-        pos_diff_x = self.initial_state[0] - self.opp_state[0]
-        pos_diff_y = self.initial_state[1] - self.opp_state[1]
-        dot_product = pos_diff_x * vel_diff_x + pos_diff_y * vel_diff_y
-        norm = (vel_diff_x ** 2 + vel_diff_y ** 2) ** 0.5 * (pos_diff_x ** 2 + pos_diff_y ** 2) ** 0.5 + EPSILON
-        l = SX.arccos(SX.fabs(dot_product) / norm)
-        # l = np.arccos(abs(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+EPSILON))
-
-        l = l - 0.3
-        return l
-
-
-        vel_vector = vertcat(x[3], opp_x[3])
-        print(vel_vector)
-        h_vec = self.A_matrix @ vel_vector
-        h = h_vec[self.agent_idx]
-        print(h)
-        # h = mmax(h_vec)
-        return h
-
     """Sets the initial state in all components."""
     def reset_state(self, initial_state, opp_state):
         self.initial_state = initial_state
@@ -251,8 +188,9 @@ class MPC:
         ego_state = self.initial_state.copy()
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
             ego_state = np.append(ego_state, [u1[0][0]])
-        l, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
-        self.liveliness.append(l)
+        l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
+        # self.liveliness.append(l)
+        self.liveliness.append((l, pos_diff, vel_diff))
         self.u_ori.append(u1.ravel())
         if l < config.liveness_threshold:
             self.last_liveliness_iteration = self.env.sim_iteration

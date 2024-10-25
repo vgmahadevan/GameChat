@@ -9,4 +9,5 @@ def calculate_liveliness(ego_state, opp_state):
     vel_diff = ego_vel - opp_vel
     pos_diff = ego_state[:2] - opp_state[:2]
     l = np.arccos(abs(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+EPSILON))
-    return l, pos_diff, vel_diff
+    ttc = LA.norm(pos_diff) / LA.norm(vel_diff) # Time-to-collision
+    return l, ttc, pos_diff, vel_diff

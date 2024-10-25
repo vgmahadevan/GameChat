@@ -28,6 +28,7 @@ class Plotter:
         self.x_cum = np.array(x_cum)
         self.u_cum = np.array(u_cum)
         self.update(len(x_cum[0]) - 1)
+        plt.legend()
         plt.draw()
         plt.pause(0.01)
         if config.plot_live_pause:
@@ -49,7 +50,7 @@ class Plotter:
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
         try:
-            L, u0_ori, u1_ori = np.round(self.controllers[0].liveliness[frame], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
+            L, u0_ori, u1_ori = np.round(self.controllers[0].liveliness[frame][0], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
         except Exception as e:
             print(e)
             L, u0_ori, u1_ori = 0, np.array([np.nan]), np.array([np.nan])
@@ -77,6 +78,9 @@ class Plotter:
             self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
         
+        pos_diff, vel_diff = self.controllers[0].liveliness[frame][1], self.controllers[0].liveliness[frame][2]
+        self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
+        self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
         
 
         return []

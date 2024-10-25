@@ -9,7 +9,7 @@
 import config
 import numpy as np
 from mpc_cbf import MPC
-from scenarios import DoorwayScenario, IntersectionScenario
+from scenarios import DoorwayScenario, NoObstacleDoorwayScenario, IntersectionScenario
 from plotter import Plotter
 from data_logger import DataLogger, BlankLogger
 from environment import Environment
@@ -20,6 +20,7 @@ u_cum = [[], []]
 
 # Scenarios: "doorway" or "intersection"
 scenario = DoorwayScenario()
+# scenario = NoObstacleDoorwayScenario()
 # scenario = IntersectionScenario()
 
 # Matplotlib plotting handler

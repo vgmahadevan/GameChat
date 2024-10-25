@@ -10,7 +10,7 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 0.3
+liveness_threshold = 0.7
 plot_rate = 1
 plot_live = True
 plot_live_pause = True
@@ -34,6 +34,8 @@ sim_steps = int(runtime / Ts)              # Number of iteration steps for each 
 obstacle_avoidance = True
 obs_gamma = 0.2                            # CBF parameter in [0,1]
 liveliness_gamma = 0.3                     # CBF parameter in [0,1]
+# safety_dist = 0.00                         # Safety distance
+# agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
 safety_dist = 0.03                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
 zeta = 3.0
@@ -41,7 +43,7 @@ zeta = 3.0
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
 omega_limit = 0.5                          # Angular velocity limit
-accel_limit = 0.2
+accel_limit = 0.3
 
 # ------------------------------------------------------------------------------
 COST_MATRICES = {

@@ -29,7 +29,8 @@ class ModelController:
         model_input_original = np.append(self.initial_state, self.opp_state)
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
 
-        self.liveliness.append(calculate_liveliness(self.initial_state, self.opp_state)[0])
+        # self.liveliness.append(calculate_liveliness(self.initial_state, self.opp_state)[0])
+        self.liveliness.append(calculate_liveliness(self.initial_state, self.opp_state))
 
         with torch.no_grad():
             model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
