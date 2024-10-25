@@ -11,7 +11,7 @@ import numpy as np
 from mpc_cbf import MPC
 from scenarios import DoorwayScenario, IntersectionScenario
 from plotter import Plotter
-from data_logger import DataLogger
+from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from model_controller import ModelController
 
@@ -25,6 +25,7 @@ scenario = DoorwayScenario()
 # Matplotlib plotting handler
 plotter = Plotter()
 logger = DataLogger('doorway_train_data_no_liveness2.json')
+logger = BlankLogger()
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
 goals = scenario.goals.copy()
@@ -38,9 +39,9 @@ controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacl
 controllers[-1].initialize_controller(env)
 
 # Setup agent 1
-# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("model_fc_definition.json", static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("model_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("model_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 controllers[-1].initialize_controller(env)
 
 for sim_iteration in range(config.sim_steps):
@@ -55,7 +56,7 @@ for sim_iteration in range(config.sim_steps):
 
     # Plots
     if sim_iteration % config.plot_rate == 0 and config.plot_live:
-        plotter.plot_live(scenario, x_cum, u, u_proj, L)
+        plotter.plot_live(scenario, controllers, x_cum, u_cum)
 
 # Discard the first element of both x1 and x2
 x_cum = np.array(x_cum)

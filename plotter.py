@@ -22,59 +22,15 @@ class Plotter:
 
 
     # Function to update the plots
-    def plot_live(self, scenario, x_cum, u, u_proj, L):
-        self.ax.clear()
-        self.ax.set_xlim(-1, 2)
-        self.ax.set_ylim(-1, 1)
-
-        x1, x2 = x_cum
-        
-        # Draw the fading trails for agent 1
-        L, u, u_proj = np.round(L, 2), np.round(u, 2), np.round(u_proj, 2)
-        x0_state = x1[-1].T.copy()
-        x0_state[2] = np.rad2deg(x0_state[2])
-        x1_state = x2[-1].T.copy()
-        x1_state[2] = np.rad2deg(x1_state[2])
-        liveliness_text = [f'Liveliness function = {L[-1]}.',
-                           f'Agent 0 X = {x0_state}.',
-                           f'Agent 0 U = {u[-2].T}.',
-                           f'Agent 0 U_proj = {u_proj[-2].T}.',
-                           f'Agent 1 X = {x1_state}.',
-                           f'Agent 1 U = {u[-1].T}.',
-                           f'Agent 1 U_proj = {u_proj[-1].T}',
-        ]
-        self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
-
-        # Redraw static elements
-        scenario.plot(self.ax)
-
-        # Reset plot limits and other properties as needed
-        self.ax.set_xlim(-2.6, 2.2)
-        self.ax.set_ylim(-1, 1)
- 
-        # Determine the start index for the fading effect
-        frame = len(x1)
-        trail_length = 20 * config.plot_rate
-        start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
-
-        # Draw the fading trails for agent 1
-        for i in range(start_index, frame, config.plot_rate):
-            alpha = 1 - ((frame - 1 - i) / trail_length)**2
-            self.ax.scatter(x1[i][0], x1[i][1], c='r', s=25, alpha=alpha)
-            self.ax.scatter(x2[i][0], x2[i][1], c='b', s=25, alpha=alpha)
-
-        if frame > 2:
-            dp = x1[-1][:2] - x2[-1][:2]
-            v1 = x1[-1][:2] - x1[-2][:2]
-            v2 = x2[-1][:2] - x2[-2][:2]
-            dv = v1 - v2
-            
-            plt.arrow(0, 0, dp[0], dp[1], color='m', linewidth=2)
-            plt.arrow(0, 0, dv[0], dv[1], color='g', linewidth=2)
-
-
-        # Update the liveliness text
-        # Your existing code to update liveliness text
+    def plot_live(self, scenario, controllers, x_cum, u_cum):
+        self.scenario = scenario
+        self.controllers = controllers
+        self.x_cum = np.array(x_cum)
+        self.u_cum = np.array(u_cum)
+        print(len(self.u_cum), len(self.x_cum))
+        print(len(self.u_cum[0]), len(self.x_cum[0]))
+        print(self.u_cum, self.x_cum)
+        self.update(len(x_cum[0]) - 1)
         plt.draw()
         plt.pause(0.01)
         if config.plot_live_pause:
@@ -119,13 +75,10 @@ class Plotter:
         start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
 
         # Draw the fading trails for agents 1 and 2
-        for i in range(start_index, frame, config.plot_rate):
-            alpha = 1 - ((frame - i) / trail_length)**2
+        for i in range(start_index, frame - 1, config.plot_rate):
+            alpha = 1 - ((frame - 1 - i) / trail_length)**2
             self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
-
-        # Update the liveliness text
-        # Your existing code to update liveliness text
 
         return []
 

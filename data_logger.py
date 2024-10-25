@@ -79,3 +79,14 @@ class DataLogger:
         logger = DataLogger(filename)
         logger.data = json.load(open(filename))
         return logger
+
+
+class BlankLogger:
+    def __init__(self):
+        pass
+    
+    def set_obstacles(self, obstacles):
+        pass
+
+    def log_iteration(self, agent_idx, ego_state, opp_state, controls):
+        pass
