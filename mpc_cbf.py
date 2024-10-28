@@ -47,7 +47,7 @@ class MPC:
         # Set parameters
         setup_mpc = {'n_robust': 0,  # Robust horizon
                      'n_horizon': config.T_horizon,
-                     't_step': config.Ts,
+                     't_step': config.MPC_Ts,
                      'state_discretization': 'discrete',
                      'store_full_solution': True,
                      'nlpsol_opts': {'ipopt.print_level':0, 'print_time':0},
@@ -75,8 +75,9 @@ class MPC:
             mpc.bounds['lower', '_u', 'u'] = -max_u
             mpc.bounds['upper', '_u', 'u'] = max_u
 
+            min_x = np.array([-float("inf"), -float("inf"), -float("inf"), 0.0])
             max_x = np.array([float("inf"), float("inf"), float("inf"), config.v_limit])
-            mpc.bounds['lower', '_x', 'x'] = -max_x
+            mpc.bounds['lower', '_x', 'x'] = min_x
             mpc.bounds['upper', '_x', 'x'] = max_x
 
 
@@ -101,7 +102,7 @@ class MPC:
     def get_cbf_constraints(self):
         # Get state vector x_{t+k+1}
         A, B = self.env.get_dynamics(self.model.x['x'])
-        x_k1 = self.model.x['x'] + A*config.Ts + B@self.model.u['u']*config.Ts
+        x_k1 = self.model.x['x'] + A*config.MPC_Ts + B@self.model.u['u']*config.MPC_Ts
 
         # Compute CBF constraints
         cbf_constraints = []
@@ -137,7 +138,7 @@ class MPC:
 
         # Get state vector x_{t+k+1}
         A, B = self.env.get_dynamics(self.model.x['x'])
-        x_k1 = self.model.x['x'] + A*config.Ts + B@self.model.u['u']*config.Ts
+        x_k1 = self.model.x['x'] + A*config.MPC_Ts + B@self.model.u['u']*config.MPC_Ts
 
         # Compute CBF constraints
         h_k = self.h_v(self.model.x['x'], self.opp_state)
@@ -190,7 +191,7 @@ class MPC:
             ego_state = np.append(ego_state, [u1[0][0]])
         l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
         # self.liveliness.append(l)
-        self.liveliness.append((l, pos_diff, vel_diff))
+        self.liveliness.append((l, ttc, pos_diff, vel_diff))
         self.u_ori.append(u1.ravel())
         if l < config.liveness_threshold:
             self.last_liveliness_iteration = self.env.sim_iteration

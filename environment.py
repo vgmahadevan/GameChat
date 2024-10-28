@@ -30,7 +30,7 @@ class Environment:
         A, B = self.get_dynamics(_x)
 
         # Set right-hand-side of ODE for all introduced states (_x).
-        x_next = _x + A*config.Ts + B@_u*config.Ts
+        x_next = _x + A*config.sim_ts + B@_u*config.sim_ts
         model.set_rhs('x', x_next, process_noise=False)  # Set to True if adding noise
 
         # Setup model
@@ -80,7 +80,7 @@ class Environment:
     """Configures the simulator."""
     def define_simulator(self):
         simulator = do_mpc.simulator.Simulator(self.model)
-        simulator.set_param(t_step=config.Ts)
+        simulator.set_param(t_step=config.sim_ts)
         simulator.setup()
 
         return simulator
@@ -103,7 +103,7 @@ class Environment:
             opp_state = self.initial_states[1-agent_idx, :].copy()
             # If single-integrator dynamics, add velocity to this state.
             if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
-                opp_vel = 0.0 if len(self.history) < 2 else np.linalg.norm(opp_state[:2] - self.history[-2][1-agent_idx, :2]) / config.Ts
+                opp_vel = 0.0 if len(self.history) < 2 else np.linalg.norm(opp_state[:2] - self.history[-2][1-agent_idx, :2]) / config.sim_ts
                 opp_state = np.append(opp_state, [opp_vel])
             self.reset_state(initial_state)
             controller.reset_state(initial_state, opp_state)

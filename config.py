@@ -10,10 +10,11 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 0.7
+liveness_threshold = 1.0
 plot_rate = 1
 plot_live = True
-plot_live_pause = True
+plot_live_pause = False
+plot_arrows = False
 # dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 
@@ -25,11 +26,12 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 20.0                             # Total runtime [s]
+runtime = 25.0                             # Total runtime [s]
 # runtime = 5.0
-Ts = 0.2                                   # Sampling time [s]
+sim_ts = 0.2                                # Simulation Sampling time [s]
+MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps
-sim_steps = int(runtime / Ts)              # Number of iteration steps for each agent
+sim_steps = int(runtime / sim_ts)              # Number of iteration steps for each agent
 
 obstacle_avoidance = True
 obs_gamma = 0.2                            # CBF parameter in [0,1]
@@ -43,7 +45,7 @@ zeta = 3.0
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
 omega_limit = 0.5                          # Angular velocity limit
-accel_limit = 0.3
+accel_limit = 0.1
 
 # ------------------------------------------------------------------------------
 COST_MATRICES = {
@@ -53,7 +55,7 @@ COST_MATRICES = {
         "R": np.array([3, 1.5]),                  # Controls cost matrix
     },
     DynamicsModel.DOUBLE_INTEGRATOR: {
-        "Q": np.diag([15, 15, 0.005, 1]),  # State cost matrix DOORWAY
+        "Q": np.diag([15, 15, 0.005, 10.0]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
         "R": np.array([0.5, 10.0]),                  # Controls cost matrix
     }

@@ -45,28 +45,30 @@ class Plotter:
         self.scenario.plot(self.ax)
 
         # Reset plot limits and other properties as needed
-        self.ax.set_xlim(-2.6, 2.2)
+        self.ax.set_xlim(-2.6, 2.5)
         self.ax.set_ylim(-1, 1)
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
         try:
-            L, u0_ori, u1_ori = np.round(self.controllers[0].liveliness[frame][0], 2), np.round(self.controllers[0].u_ori[frame], 2), np.round(self.controllers[1].u_ori[frame], 2)
+            L = np.round(self.controllers[0].liveliness[frame][0], 2)
+            ttc= np.round(self.controllers[0].liveliness[frame][1], 2)
         except Exception as e:
             print(e)
-            L, u0_ori, u1_ori = 0, np.array([np.nan]), np.array([np.nan])
+            L = 0
+            ttc = 0
         x0_state, x1_state = self.x_cum[0][frame].T.copy(), self.x_cum[1][frame].T.copy()
         x0_state[2] = np.rad2deg(x0_state[2])
         x1_state = self.x_cum[1][frame].T.copy()
         x1_state[2] = np.rad2deg(x1_state[2])
-        liveliness_text = [f'Liveliness function = {L}.',
+        dist = np.linalg.norm(x0_state[:2] - x1_state[:2])
+        liveliness_text = [f'Liveliness function = {L}. TTC: {ttc}',
                            f'Agent 0 X = {x0_state}.',
-                           f'Agent 0 U_ori = {u0_ori.T}.',
                            f'Agent 0 U = {u0.T}.',
                            f'Agent 1 X = {x1_state}.',
-                           f'Agent 1 U_ori = {u1_ori.T}.',
                            f'Agent 1 U = {u1.T}',
-        ]
-        self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
+                           f'Agent dist: {dist}']
+        text_color = 'green' if L >= config.liveness_threshold else 'red'  # Change color based on liveliness
+        self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)
 
         # Determine the start index for the fading effect
         trail_length = 20 * config.plot_rate
@@ -78,9 +80,10 @@ class Plotter:
             self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
         
-        pos_diff, vel_diff = self.controllers[0].liveliness[frame][1], self.controllers[0].liveliness[frame][2]
-        self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
-        self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
+        if config.plot_arrows:
+            pos_diff, vel_diff = self.controllers[0].liveliness[frame][2], self.controllers[0].liveliness[frame][3]
+            self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
+            self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
         
 
         return []
@@ -125,7 +128,7 @@ class Plotter:
         speed1 = [speed1[idx] for idx in iterations]
         speed2 = [speed2[idx] for idx in iterations]
         speed2_ori = [speed2_ori[idx] for idx in iterations]
-        liveness = [liveness[idx] for idx in iterations]
+        liveness = [liveness[idx][0] for idx in iterations]
 
         # Plotting the velocities as a function of the iteration for both agents
         plt.figure(figsize=(10, 10))
