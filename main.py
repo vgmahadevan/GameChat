@@ -25,8 +25,9 @@ scenario = DoorwayScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
+# logger = BlankLogger()
 # logger = DataLogger('doorway_train_data_no_liveness2.json')
-logger = BlankLogger()
+logger = DataLogger('doorway_train_data_with_liveness.json')
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
 goals = scenario.goals.copy()
@@ -35,15 +36,17 @@ env = Environment(scenario.initial.copy())
 controllers = []
 
 # Setup agent 0
-controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
-controllers[-1].initialize_controller(env)
+# controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_liveness_0_fc_definition.json", static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_liveness_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
-controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_fc_definition.json", static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
-controllers[-1].initialize_controller(env)
+# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_liveness_1_fc_definition.json", static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
+
+controllers[0].initialize_controller(env)
+controllers[1].initialize_controller(env)
 
 for sim_iteration in range(config.sim_steps):
     print(f"\nIteration: {sim_iteration}")

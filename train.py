@@ -46,7 +46,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    logger = DataLogger.load_data('doorway_train_data_no_liveness.json')
+    logger = DataLogger.load_data(config.train_data_path)
 
     norm_inputs, input_mean, input_std = logger.get_inputs(agent_idx=config.agent_to_train, normalize=True)
     norm_outputs, output_mean, output_std = logger.get_outputs(agent_idx=config.agent_to_train, normalize=True)
@@ -138,7 +138,15 @@ if __name__ == "__main__":
     plt.xlabel('time')
 
     plt.figure(3)    
+    plt.title('Train Loss')
     plt.plot(train_losses, color = 'green', label = 'train')
+    plt.legend()
+    plt.ylabel('Loss')
+    plt.xlabel('time')
+    plt.ylim(ymin=0.)
+
+    plt.figure(4)
+    plt.title('Test Loss')
     plt.plot(test_losses, color = 'red', label = 'test')
     plt.legend()
     plt.ylabel('Loss')

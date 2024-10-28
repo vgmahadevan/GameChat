@@ -26,7 +26,7 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 25.0                             # Total runtime [s]
+runtime = 22.0                             # Total runtime [s]
 # runtime = 5.0
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
@@ -63,7 +63,10 @@ COST_MATRICES = {
 
 # Training parameters.
 use_barriernet = True
-train_batch_size = 3
+agent_to_train = 1
+# train_data_path = 'doorway_train_data_no_liveness.json'
+train_data_path = 'doorway_train_data_with_liveness.json'
+train_batch_size = 24
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
@@ -71,5 +74,4 @@ epochs = 20
 nHidden1 = 128
 nHidden21 = 32
 nHidden22 = 32
-agent_to_train = 0
-saveprefix = f'model_{agent_to_train}'
+saveprefix = f'model_liveness_{agent_to_train}'

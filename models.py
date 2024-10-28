@@ -1,3 +1,4 @@
+import os
 import torch.nn as nn
 import torch
 import config
@@ -59,6 +60,9 @@ class ModelDefinition:
     def from_json(path: str):
         with open(path, 'r') as f:
             data = json.load(f)
+            path_dir = os.path.dirname(path)
+            weights_path = os.path.join(path_dir, data['weights_path'])
+            data['weights_path'] = weights_path
             return ModelDefinition(**data)
 
 
@@ -114,7 +118,6 @@ class BarrierNet(nn.Module):
         
         # obstacles = self.static_obstacles[:5].copy()
         obstacles = self.static_obstacles.copy()
-        # obstacles = []
         obstacles.append((x0[:,OPP_X_IDX], x0[:,OPP_Y_IDX], config.agent_radius))
 
         G = []
