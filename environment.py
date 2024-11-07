@@ -5,9 +5,10 @@ from config import DynamicsModel
 import numpy as np
 
 class Environment:
-    def __init__(self, initial_states):
+    def __init__(self, initial_states, goals):
         self.num_agents = len(initial_states)
         self.initial_states = initial_states
+        self.goals = goals
         self.history = [initial_states.copy()]
 
         self.model = self.define_model()
@@ -111,7 +112,7 @@ class Environment:
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = x1.ravel()
             outputted_controls[agent_idx, :] = u1.ravel()
-            logger.log_iteration(agent_idx, initial_state, opp_state, outputted_controls[agent_idx, :])
+            logger.log_iteration(agent_idx, initial_state, opp_state, self.goals[agent_idx], outputted_controls[agent_idx, :])
             print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
 
         self.initial_states = new_states.copy()

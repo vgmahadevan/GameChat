@@ -33,8 +33,9 @@ class DataLogger:
         self.data['obstacles'] = obstacles
 
 
-    def log_iteration(self, agent_idx, ego_state, opp_state, controls):
+    def log_iteration(self, agent_idx, ego_state, opp_state, ego_goal, controls):
         inputs = np.append(ego_state, opp_state)
+        inputs = np.append(inputs, [ego_goal])
         inputs = inputs.reshape(-1).tolist()
         outputs = controls.reshape(-1).tolist()
         agent_idx = str(agent_idx)
@@ -88,5 +89,5 @@ class BlankLogger:
     def set_obstacles(self, obstacles):
         pass
 
-    def log_iteration(self, agent_idx, ego_state, opp_state, controls):
+    def log_iteration(self, agent_idx, ego_state, opp_state, ego_goal, controls):
         pass

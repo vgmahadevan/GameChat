@@ -5,6 +5,21 @@ import matplotlib.patches as patches
 
 #Add all initial and goal positions of the agents here (Format: [x, y, theta])
 
+def rotate_point(point, center, angle):
+    center_to_point = point - center
+    rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    rotated = np.dot(rotation_matrix, center_to_point)
+    return rotated + center
+
+def rotate_objs(objs, center, angle):
+    new_objs = []
+    for obj in objs:
+        new_pos = rotate_point(obj[:2], center, angle)
+        new_heading = obj[2] + angle
+        new_objs.append(np.array([new_pos[0], new_pos[1], new_heading]))
+    return np.array(new_objs)
+
+
 class DoorwayScenario:
     def __init__(self):
         self.num_agents = 2
@@ -30,13 +45,21 @@ class DoorwayScenario:
 
 
 class NoObstacleDoorwayScenario:
-    def __init__(self):
+    def __init__(self, rotation=0):
         self.num_agents = 2
         goal_y = 0.4
         self.initial = np.array([[-1, 0.5, 0],
                     [-1, -0.5, 0]])
         self.goals = np.array([[2.3, -goal_y, 0.0],
                     [2.3, goal_y, 0.0]])
+        self.plot_bounds = [[-2.6, -1], [2.5, 1]]
+
+        self.env_center = np.array([(2.3-1) / 2.0, 0.0])
+        # Perform rotation
+        self.initial = rotate_objs(self.initial, self.env_center, rotation)
+        self.goals = rotate_objs(self.goals, self.env_center, rotation)
+        self.plot_bounds = np.array([rotate_point(bound, self.env_center, rotation) for bound in self.plot_bounds])
+
         if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR:
             # Set initial state to 0 velocity and goal to 0 velocity.
             zeros = np.zeros((self.num_agents, 1))
@@ -45,7 +68,8 @@ class NoObstacleDoorwayScenario:
         self.obstacles = []
     
     def plot(self, ax):
-        pass
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
 
 
 class IntersectionScenario:

@@ -45,8 +45,8 @@ class Plotter:
         self.scenario.plot(self.ax)
 
         # Reset plot limits and other properties as needed
-        self.ax.set_xlim(-2.6, 2.5)
-        self.ax.set_ylim(-1, 1)
+        self.ax.set_xlim(min(self.scenario.plot_bounds[:, 0]), max(self.scenario.plot_bounds[:, 0]))
+        self.ax.set_ylim(min(self.scenario.plot_bounds[:, 1]), max(self.scenario.plot_bounds[:, 1]))
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
         try:

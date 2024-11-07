@@ -19,31 +19,31 @@ x_cum = [[], []]
 u_cum = [[], []]
 
 # Scenarios: "doorway" or "intersection"
-scenario = DoorwayScenario()
-# scenario = NoObstacleDoorwayScenario()
+# scenario = DoorwayScenario()
+scenario = NoObstacleDoorwayScenario(rotation=np.pi/2)
 # scenario = IntersectionScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
-# logger = BlankLogger()
+logger = BlankLogger()
 # logger = DataLogger('doorway_train_data_no_liveness2.json')
-logger = DataLogger('doorway_train_data_with_liveness.json')
+# logger = DataLogger('doorway_train_data_with_liveness.json')
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
 goals = scenario.goals.copy()
 logger.set_obstacles(scenario.obstacles.copy())
-env = Environment(scenario.initial.copy())
+env = Environment(scenario.initial.copy(), scenario.goals.copy())
 controllers = []
 
 # Setup agent 0
-# controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_0_fc_definition.json", static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model_liveness_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_liveness_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
-# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_1_fc_definition.json", static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 
 controllers[0].initialize_controller(env)
 controllers[1].initialize_controller(env)
