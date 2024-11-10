@@ -3,7 +3,7 @@ from config import DynamicsModel
 import numpy as np
 import matplotlib.patches as patches
 
-#Add all initial and goal positions of the agents here (Format: [x, y, theta])
+# Add all initial and goal positions of the agents here (Format: [x, y, theta])
 
 def rotate_point(point, center, angle):
     center_to_point = point - center
@@ -35,7 +35,8 @@ class DoorwayScenario:
             self.goals = np.hstack((self.goals, zeros))
         self.ox=1
         self.obstacles=[(self.ox, 0.3, 0.1),(self.ox, 0.4, 0.1),(self.ox, 0.5, 0.1),(self.ox, 0.6, 0.1),(self.ox, 0.7, 0.1),(self.ox, 0.8, 0.1),(self.ox, 0.9, 0.1), (self.ox, 1.0, 0.1), (self.ox, -0.3, 0.1),(self.ox, -0.4, 0.1),(self.ox, -0.5, 0.1),(self.ox, -0.6, 0.1),(self.ox, -0.7, 0.1), (self.ox, -0.8, 0.1),(self.ox, -0.9, 0.1),(self.ox, -1.0, 0.1)]
-    
+        self.plot_bounds = np.array([[-2.6, -1], [2.5, 1]])
+
     def plot(self, ax):
         rect = patches.Rectangle((self.ox-0.1,0.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
         rect1 = patches.Rectangle((self.ox-0.1,-1.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)

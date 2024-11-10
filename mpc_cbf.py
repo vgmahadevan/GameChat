@@ -154,6 +154,11 @@ class MPC:
         self.A_matrix = SX.zeros(2, 2)
         max_zeta = 0.3 / opp_x[3]
         upper_zeta = min(max_zeta, config.zeta)
+
+        # The A matrix looks like this:
+        # [[1, -zeta]
+        #  [-zeta, 1]]
+        # So that when multiplied by the velocity vector [ego_v, opp_v], the result is [ego_v - zeta*opp_v, opp_v - zeta*ego_v]
         self.A_matrix[0, 0] = 1.0
         self.A_matrix[0, 1] = -upper_zeta
         self.A_matrix[1, 0] = -config.zeta
@@ -166,7 +171,9 @@ class MPC:
         vel_vector = vertcat(x[3], opp_x[3])
         print(vel_vector)
         h_vec = self.A_matrix @ vel_vector
-        h = h_vec[self.agent_idx]
+        # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
+        h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
+        h = h_vec[h_idx]
         print(h)
         # h = mmax(h_vec)
         return h
@@ -190,40 +197,9 @@ class MPC:
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
             ego_state = np.append(ego_state, [u1[0][0]])
         l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
-        # self.liveliness.append(l)
         self.liveliness.append((l, ttc, pos_diff, vel_diff))
         self.u_ori.append(u1.ravel())
         if l < config.liveness_threshold:
             self.last_liveliness_iteration = self.env.sim_iteration
-        if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
-            # if self.agent_idx == 1 and self.env.sim_iteration < self.last_liveliness_iteration + 5:
-            if self.env.sim_iteration < self.last_liveliness_iteration + 5:
-                curr_v0_v1_point = np.array([0.0, 0.0])
-                curr_v0_v1_point[self.agent_idx] = ego_state[3]
-                curr_v0_v1_point[1 - self.agent_idx] = self.opp_state[3]
-                desired_v0_v1_vec = np.array([config.zeta, 1.0])
-                desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
-                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
-                mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
-                u1_before_proj = u1.copy()
-                # u1[0] *= mult_factor
-                u1 *= mult_factor
-                print(f"Running liveness {l}")
-                print("Position diff:", pos_diff)
-                print("Velocity diff:", vel_diff)
-                print(f"\tEgo Vel: {ego_state[3]}, Opp Vel: {self.opp_state[3]}")
-                print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
-                print(f"Original control {u1_before_proj.T}. Output control {u1.T}")
-
-                # v = (xf_minus_two - xf_two)/T
-                # norm_u1 = np.linalg.norm(u1_before_proj)
-                # norm_v = np.linalg.norm(v)
-
-                # # Special case: if u is the zero vector, return any point on the circle of radius half_norm_v   
-                # if np.allclose(u1_before_proj, np.zeros_like(u1_before_proj)):
-                #     return np.array([norm_v / 2.5, 0])
-
-                # u = (u1_before_proj / norm_u1) * (norm_u1 / 2)
-                # u1 = u
 
         return u1

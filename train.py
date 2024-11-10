@@ -2,7 +2,7 @@ import torch
 import config
 import matplotlib.pyplot as plt
 from models import FCNet, BarrierNet, ModelDefinition
-from data_logger import DataLogger, Dataset
+from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 
 def train(dataloader, model, loss_fn, optimizer, losses):
@@ -46,12 +46,12 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    logger = DataLogger.load_data(config.train_data_path)
+    generator = DataGenerator(config.train_data_paths)
 
-    norm_inputs, input_mean, input_std = logger.get_inputs(agent_idx=config.agent_to_train, normalize=True)
-    norm_outputs, output_mean, output_std = logger.get_outputs(agent_idx=config.agent_to_train, normalize=True)
+    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
+    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
 
-    X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
 
     # Generators
     training_set = Dataset(X_train, y_train)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     )
 
     if config.use_barriernet:
-        model = BarrierNet(model_definition, logger.get_obstacles()).to(config.device)
+        model = BarrierNet(model_definition, generator.get_obstacles()).to(config.device)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)

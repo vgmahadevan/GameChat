@@ -112,9 +112,9 @@ class Environment:
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = x1.ravel()
             outputted_controls[agent_idx, :] = u1.ravel()
-            logger.log_iteration(agent_idx, initial_state, opp_state, self.goals[agent_idx], outputted_controls[agent_idx, :])
             print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
 
+        logger.log_iteration(self.initial_states, self.goals, outputted_controls)
         self.initial_states = new_states.copy()
         self.history.append(new_states.copy())
         return new_states, outputted_controls

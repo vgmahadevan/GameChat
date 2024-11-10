@@ -15,19 +15,46 @@ from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from model_controller import ModelController
 
-x_cum = [[], []]
-u_cum = [[], []]
+def run_simulation(scenario, env, controllers, logger, plotter):
+    x_cum = [[], []]
+    u_cum = [[], []]
+
+    controllers[0].initialize_controller(env)
+    controllers[1].initialize_controller(env)
+
+    for sim_iteration in range(config.sim_steps):
+        print(f"\nIteration: {sim_iteration}")
+        for agent_idx in range(config.n):
+            x_cum[agent_idx].append(env.initial_states[agent_idx])
+
+        new_states, outputted_controls = env.run_simulation(sim_iteration, controllers, logger)
+
+        for agent_idx in range(config.n):
+            u_cum[agent_idx].append(outputted_controls[agent_idx])
+
+        # Plots
+        if sim_iteration % config.plot_rate == 0 and config.plot_live:
+            plotter.plot_live(scenario, controllers, x_cum, u_cum)
+
+    # Discard the first element of both x1 and x2
+    x_cum = np.array(x_cum)
+    u_cum = np.array(u_cum)
+    if config.plot_end:
+        plotter.plot(scenario, controllers, x_cum, u_cum)
+
 
 # Scenarios: "doorway" or "intersection"
-# scenario = DoorwayScenario()
-scenario = NoObstacleDoorwayScenario(rotation=np.pi/2)
+scenario = DoorwayScenario()
+# scenario = NoObstacleDoorwayScenario(rotation=np.pi/2)
+# scenario = NoObstacleDoorwayScenario()
 # scenario = IntersectionScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
-logger = BlankLogger()
-# logger = DataLogger('doorway_train_data_no_liveness2.json')
-# logger = DataLogger('doorway_train_data_with_liveness.json')
+if config.save_data_path is None:
+    logger = BlankLogger()
+else:
+    logger = DataLogger(config.save_data_path)
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
 goals = scenario.goals.copy()
@@ -37,32 +64,12 @@ controllers = []
 
 # Setup agent 0
 controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_liveness_0_fc_definition.json", static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("model_l_saf_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
-controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_liveness_1_fc_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("model_l_saf_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 
-controllers[0].initialize_controller(env)
-controllers[1].initialize_controller(env)
-
-for sim_iteration in range(config.sim_steps):
-    print(f"\nIteration: {sim_iteration}")
-    for agent_idx in range(config.n):
-        x_cum[agent_idx].append(env.initial_states[agent_idx])
-
-    new_states, outputted_controls = env.run_simulation(sim_iteration, controllers, logger)
-
-    for agent_idx in range(config.n):
-        u_cum[agent_idx].append(outputted_controls[agent_idx])
-
-    # Plots
-    if sim_iteration % config.plot_rate == 0 and config.plot_live:
-        plotter.plot_live(scenario, controllers, x_cum, u_cum)
-
-# Discard the first element of both x1 and x2
-x_cum = np.array(x_cum)
-u_cum = np.array(u_cum)
-plotter.plot(scenario, controllers, x_cum, u_cum)
+run_simulation(scenario, env, controllers, logger, plotter)

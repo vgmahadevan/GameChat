@@ -10,13 +10,18 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 1.0
+liveness_threshold = 0.8
 plot_rate = 1
 plot_live = True
 plot_live_pause = False
 plot_arrows = False
+plot_end = False
+save_data_path = None
+# save_data_path = 'doorway_train_data_with_liveness_1_faster.json'
+
 # dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
+mpc_p0_faster = True
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
@@ -40,7 +45,7 @@ liveliness_gamma = 0.3                     # CBF parameter in [0,1]
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
 safety_dist = 0.03                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
-zeta = 3.0
+zeta = 2.0
 
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
@@ -65,13 +70,15 @@ COST_MATRICES = {
 use_barriernet = True
 agent_to_train = 1
 # train_data_path = 'doorway_train_data_no_liveness.json'
-train_data_path = 'doorway_train_data_with_liveness.json'
+train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
 train_batch_size = 24
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 20
+epochs = 10
 nHidden1 = 128
 nHidden21 = 32
 nHidden22 = 32
-saveprefix = f'model_liveness_{agent_to_train}'
+# l = liveness, nl = no liveness
+# saf = trained on both slow and fast variations.
+saveprefix = f'model_l_saf_{agent_to_train}'
