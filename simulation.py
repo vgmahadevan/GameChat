@@ -19,12 +19,12 @@ def run_simulation(scenario, env, controllers, logger, plotter):
             u_cum[agent_idx].append(outputted_controls[agent_idx])
 
         # Plots
-        if sim_iteration % config.plot_rate == 0 and config.plot_live:
+        if sim_iteration % config.plot_rate == 0 and config.plot_live and plotter is not None:
             plotter.plot_live(scenario, controllers, x_cum, u_cum)
 
     # Discard the first element of both x1 and x2
     x_cum = np.array(x_cum)
     u_cum = np.array(u_cum)
-    if config.plot_end:
+    if config.plot_end and plotter is not None:
         plotter.plot(scenario, controllers, x_cum, u_cum)
 
