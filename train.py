@@ -46,7 +46,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths)
+    generator = DataGenerator(config.train_data_paths, config.include_goal)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     model_definition = ModelDefinition(
         is_barriernet=config.use_barriernet,
         weights_path=None,
+        include_goal=config.include_goal,
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,

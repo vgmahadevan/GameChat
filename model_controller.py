@@ -1,13 +1,14 @@
 import torch
 import config
 import numpy as np
-from models import FCNet, BarrierNet, ModelDefinition, N_FEATURES
+from models import FCNet, BarrierNet, ModelDefinition
 from util import calculate_liveliness
 
 
 class ModelController:
-    def __init__(self, model_definition_filepath, static_obs):
+    def __init__(self, model_definition_filepath, goal, static_obs):
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
+        self.goal = goal
         self.u_ori = []
         self.liveliness = []
         if self.model_definition.is_barriernet:
@@ -24,16 +25,20 @@ class ModelController:
         self.initial_state = initial_state
         self.opp_state = opp_state
     
-    def make_step(self, initial_state):
+    def make_step(self, timestamp, initial_state):
         self.initial_state = initial_state
         model_input_original = np.append(self.initial_state, self.opp_state)
+        if self.model_definition.include_goal:
+            dx = self.goal[0] - self.initial_state[0]
+            dy = self.goal[1] - self.initial_state[1]
+            model_input_original = np.append(model_input_original, [dx, dy])
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
 
         self.liveliness.append(calculate_liveliness(self.initial_state, self.opp_state))
 
         with torch.no_grad():
             model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
-            model_input = torch.reshape(model_input, (1, N_FEATURES)).to(config.device)
+            model_input = torch.reshape(model_input, (1, self.model.n_features)).to(config.device)
             model_output = self.model(model_input, 0)
             if self.model_definition.is_barriernet:
                 model_output = np.array([model_output[0], model_output[1]])

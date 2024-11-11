@@ -16,12 +16,18 @@ plot_live = True
 plot_live_pause = False
 plot_arrows = False
 plot_end = False
-save_data_path = None
-# save_data_path = 'doorway_train_data_with_liveness_1_faster.json'
 
 # dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
+agent_zero_offset = -7
+
+# save_data_path = None
+save_data_path = f'doorway_train_data_with_liveness_{0 if mpc_p0_faster else 1}_faster_off{agent_zero_offset}.json'
+
+
+
+
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
@@ -32,7 +38,6 @@ else:
 
 n = 2                                      # Number of agents
 runtime = 22.0                             # Total runtime [s]
-# runtime = 5.0
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps
@@ -68,8 +73,9 @@ COST_MATRICES = {
 
 # Training parameters.
 use_barriernet = True
+# include_goal = True
+include_goal = False
 agent_to_train = 1
-# train_data_path = 'doorway_train_data_no_liveness.json'
 train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
 train_batch_size = 24
 use_cuda = torch.cuda.is_available()
@@ -80,5 +86,9 @@ nHidden1 = 128
 nHidden21 = 32
 nHidden22 = 32
 # l = liveness, nl = no liveness
+# g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'model_l_saf_{agent_to_train}'
+saveprefix = f'model2_l_saf_'
+if include_goal:
+    saveprefix += "g_"
+saveprefix += str(agent_to_train)

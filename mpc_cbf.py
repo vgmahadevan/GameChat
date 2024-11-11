@@ -3,7 +3,7 @@ from casadi import *
 import config
 from config import DynamicsModel
 import numpy as np
-from util import calculate_liveliness, EPSILON
+from util import calculate_all_metrics
 
 class MPC:
     """MPC-CBF Optimization problem:
@@ -18,16 +18,16 @@ class MPC:
 
     where x'_k = x_{des_k} - x_k
     """
-    def __init__(self, agent_idx, goal, static_obs = [], opp_state = None):
+    def __init__(self, agent_idx, goal, static_obs = [], delay_start = 0.0):
         self.agent_idx = agent_idx
         self.goal = goal
         self.static_obs = static_obs
-        self.opp_state = opp_state
+        self.delay_start = delay_start
+        self.opp_state = None
         self.Q = config.COST_MATRICES[config.dynamics]['Q']
         self.R = config.COST_MATRICES[config.dynamics]['R']
         self.u_ori = []
         self.liveliness = []
-        self.last_liveliness_iteration = -10
 
     def initialize_controller(self, env):
         self.model = env.define_model()
@@ -130,11 +130,11 @@ class MPC:
         if self.opp_state is None:
             return
 
-        l, ttc, _, _ = calculate_liveliness(self.initial_state.copy(), self.opp_state)
-        if l > config.liveness_threshold:
+        l, _, _, _, intersecting = calculate_all_metrics(self.initial_state.copy(), self.opp_state)
+        if l > config.liveness_threshold or not intersecting:
             return
-        
-        print(f"Adding constraint, liveliness = {l}")
+
+        print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
 
         # Get state vector x_{t+k+1}
         A, B = self.env.get_dynamics(self.model.x['x'])
@@ -147,7 +147,6 @@ class MPC:
         # -h_k1 + (1 - gamma)*h_k <= 0
         # h_k1 >= h_k - gamma*h_k
         # (h_k1 - h_k) >= -gamma*h_k
-        print("\tConstraint:", constraint)
         mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
 
     def h_v(self, x, opp_x):
@@ -169,12 +168,10 @@ class MPC:
         # Means that agent 1 will speed up and agent 2 will slow down.
     
         vel_vector = vertcat(x[3], opp_x[3])
-        print(vel_vector)
         h_vec = self.A_matrix @ vel_vector
         # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
         h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
         h = h_vec[h_idx]
-        print(h)
         # h = mmax(h_vec)
         return h
 
@@ -189,17 +186,17 @@ class MPC:
         self.mpc.u0 = np.zeros_like(self.mpc.u0['u'])
         self.mpc.set_initial_guess()
 
-    def make_step(self, x0):
+    def make_step(self, timestamp, x0):
+        if timestamp < self.delay_start:
+            return np.zeros((config.num_controls, 1))
+
         u1 = self.mpc.make_step(x0)
 
         # Add liveliness condition here
         ego_state = self.initial_state.copy()
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
             ego_state = np.append(ego_state, [u1[0][0]])
-        l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
-        self.liveliness.append((l, ttc, pos_diff, vel_diff))
+        self.liveliness.append(calculate_all_metrics(ego_state, self.opp_state))
         self.u_ori.append(u1.ravel())
-        if l < config.liveness_threshold:
-            self.last_liveliness_iteration = self.env.sim_iteration
 
         return u1

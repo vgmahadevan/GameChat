@@ -52,10 +52,12 @@ class Plotter:
         try:
             L = np.round(self.controllers[0].liveliness[frame][0], 2)
             ttc= np.round(self.controllers[0].liveliness[frame][1], 2)
+            intersects = self.controllers[0].liveliness[frame][4]
         except Exception as e:
             print(e)
             L = 0
             ttc = 0
+            intersects = False
         x0_state, x1_state = self.x_cum[0][frame].T.copy(), self.x_cum[1][frame].T.copy()
         x0_state[2] = np.rad2deg(x0_state[2])
         x1_state = self.x_cum[1][frame].T.copy()
@@ -68,7 +70,9 @@ class Plotter:
                            f'Agent 1 X = {x1_state}.',
                            f'Agent 1 U = {u1.T}',
                            f'Agent dist: {dist}']
-        text_color = 'green' if L >= config.liveness_threshold else 'red'  # Change color based on liveliness
+
+        invalid = L < config.liveness_threshold and intersects
+        text_color = 'red' if invalid else 'green'
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)
 
         # Determine the start index for the fading effect

@@ -94,6 +94,7 @@ class Environment:
     def run_simulation(self, sim_iteration, controllers, logger):
         """Runs a closed-loop control simulation."""
         self.sim_iteration = sim_iteration
+        sim_time = self.sim_iteration * config.sim_ts
 
         new_states = np.zeros((self.num_agents, config.num_states))
         outputted_controls = np.zeros((self.num_agents, config.num_controls))
@@ -108,13 +109,14 @@ class Environment:
                 opp_state = np.append(opp_state, [opp_vel])
             self.reset_state(initial_state)
             controller.reset_state(initial_state, opp_state)
-            u1 = controller.make_step(initial_state)
+            u1 = controller.make_step(sim_time, initial_state)
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = x1.ravel()
             outputted_controls[agent_idx, :] = u1.ravel()
             print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
 
-        logger.log_iteration(self.initial_states, self.goals, outputted_controls)
+        if sim_time >= abs(config.agent_zero_offset):
+            logger.log_iteration(self.initial_states, self.goals, outputted_controls)
         self.initial_states = new_states.copy()
         self.history.append(new_states.copy())
         return new_states, outputted_controls

@@ -13,7 +13,6 @@ from typing import Optional
 
 # Indices to make reading the code easier.
 
-N_FEATURES = 8
 EGO_X_IDX = 0
 EGO_Y_IDX = 1
 EGO_THETA_IDX = 2
@@ -22,6 +21,8 @@ OPP_X_IDX = 4
 OPP_Y_IDX = 5
 OPP_THETA_IDX = 6
 OPP_V_IDX = 7
+GOAL_DX_IDX = 8
+GOAL_DY_IDX = 9
 
 N_CL = 2
 LINEAR_ACCEL_IDX = 0
@@ -44,6 +45,7 @@ def solver(Q, p, G, h):
 class ModelDefinition:
     is_barriernet: bool
     weights_path: Optional[str]
+    include_goal: bool
     nHidden1: int
     nHidden21: int
     nHidden22: Optional[int]
@@ -63,6 +65,8 @@ class ModelDefinition:
             path_dir = os.path.dirname(path)
             weights_path = os.path.join(path_dir, data['weights_path'])
             data['weights_path'] = weights_path
+            if 'include_goal' not in data:
+                data['include_goal'] = False
             return ModelDefinition(**data)
 
 
@@ -78,8 +82,12 @@ class BarrierNet(nn.Module):
         # QP Parameters
         self.p1 = 0
         self.p2 = 0
+
+        self.n_features = 8
+        if model_definition.include_goal:
+            self.n_features += 2
         
-        self.fc1 = nn.Linear(N_FEATURES, model_definition.nHidden1).double()
+        self.fc1 = nn.Linear(self.n_features, model_definition.nHidden1).double()
         self.fc21 = nn.Linear(model_definition.nHidden1, model_definition.nHidden21).double()
         self.fc22 = nn.Linear(model_definition.nHidden1, model_definition.nHidden22).double()
         self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
@@ -107,12 +115,14 @@ class BarrierNet(nn.Module):
         return x
 
     def dCBF(self, x0, x31, x32, sgn, nBatch):
-        Q = Variable(torch.eye(N_CL))
-        Q = Q.unsqueeze(0).expand(nBatch, N_CL, N_CL).to(config.device)
         px = x0[:,EGO_X_IDX]
         py = x0[:,EGO_Y_IDX]
         theta = x0[:,EGO_THETA_IDX]
         v = x0[:,EGO_V_IDX]
+        # dx = x0[:,GOAL_DX_IDX]
+        # dy = x0[:,GOAL_DY_IDX]
+        Q = Variable(torch.eye(N_CL))
+        Q = Q.unsqueeze(0).expand(nBatch, N_CL, N_CL).to(config.device)
         sin_theta = torch.sin(theta)
         cos_theta = torch.cos(theta)
         
