@@ -1,3 +1,4 @@
+import os
 import torch
 import config
 import matplotlib.pyplot as plt
@@ -94,8 +95,9 @@ if __name__ == "__main__":
 
     # Save the model.
     saveprefix = config.saveprefix + ('_bn' if config.use_barriernet else '_fc')
-    model_definition.weights_path = saveprefix + '.pth'
-    torch.save(model.state_dict(), model_definition.weights_path)
+    weights_path = saveprefix + '.pth'
+    torch.save(model.state_dict(), weights_path)
+    model_definition.weights_path = os.path.basename(weights_path)
     model_definition.save(saveprefix + '_definition.json')
     print(f"Saved PyTorch Model and Definition to {saveprefix}")
 
@@ -131,12 +133,16 @@ if __name__ == "__main__":
     plt.ylabel('Angular speed (control)')
     plt.xlabel('time')
 
+    plt.savefig('train_results/angular_speed_control.pdf')
+
     plt.figure(2)
     plt.plot(tr, ctrl2_real, color = 'red', label = 'actual(optimal)')
     plt.plot(tr, ctrl2, color = 'blue', label = 'implemented')
     plt.legend()
     plt.ylabel('Acceleration (control)')
     plt.xlabel('time')
+
+    plt.savefig('train_results/acceleration_control.pdf')
 
     plt.figure(3)    
     plt.title('Train Loss')
@@ -146,6 +152,8 @@ if __name__ == "__main__":
     plt.xlabel('time')
     plt.ylim(ymin=0.)
 
+    plt.savefig('train_results/train_loss.pdf')
+
     plt.figure(4)
     plt.title('Test Loss')
     plt.plot(test_losses, color = 'red', label = 'test')
@@ -154,4 +162,4 @@ if __name__ == "__main__":
     plt.xlabel('time')
     plt.ylim(ymin=0.)
 
-    plt.show()
+    plt.savefig('train_results/test_loss.pdf')

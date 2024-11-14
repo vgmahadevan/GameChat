@@ -22,13 +22,6 @@ dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
 agent_zero_offset = -7
 
-# save_data_path = None
-save_data_path = f'doorway_train_data_with_liveness_{0 if mpc_p0_faster else 1}_faster_off{agent_zero_offset}.json'
-
-
-
-
-
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
     num_controls = 2 # (v, omega)
@@ -76,7 +69,12 @@ use_barriernet = True
 # include_goal = True
 include_goal = False
 agent_to_train = 1
+
 train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
+# train_data_paths = ['all_data_with_offsets/']
+# train_data_paths = ['all_data_with_offsets/doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/doorway_train_data_with_liveness_1_faster_off0.json']
+# train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/test_doorway_train_data_with_liveness_1_faster_off0.json']
+
 train_batch_size = 24
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -88,7 +86,5 @@ nHidden22 = 32
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'model2_l_saf_'
-if include_goal:
-    saveprefix += "g_"
+saveprefix = f'weights/model3_l_saf_'
 saveprefix += str(agent_to_train)

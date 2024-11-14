@@ -75,6 +75,7 @@ class BarrierNet(nn.Module):
     # Output controls: 2. [linear vel, angular vel].
     def __init__(self, model_definition, static_obstacles):
         super().__init__()
+        self.model_definition = model_definition
         self.mean = torch.from_numpy(np.array(model_definition.input_mean)).to(config.device)
         self.std = torch.from_numpy(np.array(model_definition.input_std)).to(config.device)
         self.static_obstacles = static_obstacles

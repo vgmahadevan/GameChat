@@ -26,8 +26,6 @@ class MPC:
         self.opp_state = None
         self.Q = config.COST_MATRICES[config.dynamics]['Q']
         self.R = config.COST_MATRICES[config.dynamics]['R']
-        self.u_ori = []
-        self.liveliness = []
 
     def initialize_controller(self, env):
         self.model = env.define_model()
@@ -133,6 +131,8 @@ class MPC:
         l, _, _, _, intersecting = calculate_all_metrics(self.initial_state.copy(), self.opp_state)
         if l > config.liveness_threshold or not intersecting:
             return
+        # if l > config.liveness_threshold:
+        #     return
 
         print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
 
@@ -196,7 +196,5 @@ class MPC:
         ego_state = self.initial_state.copy()
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
             ego_state = np.append(ego_state, [u1[0][0]])
-        self.liveliness.append(calculate_all_metrics(ego_state, self.opp_state))
-        self.u_ori.append(u1.ravel())
 
         return u1

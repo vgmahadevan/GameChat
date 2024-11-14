@@ -9,12 +9,11 @@ class ModelController:
     def __init__(self, model_definition_filepath, goal, static_obs):
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.goal = goal
-        self.u_ori = []
-        self.liveliness = []
         if self.model_definition.is_barriernet:
             self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
         else:
             self.model = FCNet(self.model_definition).to(config.device)
+        print(self.model_definition.weights_path)
         self.model.load_state_dict(torch.load(self.model_definition.weights_path))
         self.model.eval()
 
@@ -34,8 +33,6 @@ class ModelController:
             model_input_original = np.append(model_input_original, [dx, dy])
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
 
-        self.liveliness.append(calculate_liveliness(self.initial_state, self.opp_state))
-
         with torch.no_grad():
             model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
             model_input = torch.reshape(model_input, (1, self.model.n_features)).to(config.device)
@@ -47,5 +44,4 @@ class ModelController:
 
         output = model_output * self.model_definition.label_std + self.model_definition.label_mean
         output = output.reshape(-1, 1)
-        self.u_ori.append(output)
         return output

@@ -24,10 +24,7 @@ scenario = DoorwayScenario()
 
 # Matplotlib plotting handler
 plotter = Plotter()
-if config.save_data_path is None:
-    logger = BlankLogger()
-else:
-    logger = DataLogger(config.save_data_path)
+logger = BlankLogger()
 
 # Add all initial and goal positions of the agents here (Format: [x, y, theta])
 goals = scenario.goals.copy()
@@ -36,15 +33,20 @@ env = Environment(scenario.initial.copy(), scenario.goals.copy())
 controllers = []
 
 # Setup agent 0
-controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy(), delay_start=max(config.agent_zero_offset, 0.0)))
+# controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy(), delay_start=max(config.agent_zero_offset, 0.0)))
+controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy(), delay_start=0.0))
 # controllers.append(ModelController("weights/model_liveness_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_l_saf_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_l_saf_g_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_l_saf_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_l_saf_g_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_o_l_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model2_l_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
-controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
+# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
 # controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_l_saf_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("model_l_saf_g_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_l_saf_g_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_o_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model3_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 run_simulation(scenario, env, controllers, logger, plotter)

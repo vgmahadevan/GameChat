@@ -1,3 +1,4 @@
+import os
 import json
 import torch
 import numpy as np
@@ -66,7 +67,20 @@ class BlankLogger:
 class DataGenerator:
     def __init__(self, filenames, include_goal):
         self.include_goal = include_goal
-        self.data_streams = [json.load(open(filename)) for filename in filenames]
+        self.data_streams = []
+        for filename in filenames:
+            if os.path.isdir(filename):
+                folder = filename
+                for subfile in os.listdir(folder):
+                    if not subfile.endswith('.json'):
+                        continue
+                    print(os.path.join(folder, subfile))
+                    self.data_streams.append(json.load(open(os.path.join(folder, subfile))))
+            else:
+                print(filename)
+                self.data_streams.append(json.load(open(filename)))
+        print(len(self.data_streams))
+
 
     def get_inputs(self, agent_idx, normalize):
         data = []

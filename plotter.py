@@ -22,11 +22,11 @@ class Plotter:
 
 
     # Function to update the plots
-    def plot_live(self, scenario, controllers, x_cum, u_cum):
+    def plot_live(self, scenario, x_cum, u_cum, metrics):
         self.scenario = scenario
-        self.controllers = controllers
         self.x_cum = np.array(x_cum)
         self.u_cum = np.array(u_cum)
+        self.metrics = metrics
         self.update(len(x_cum[0]) - 1)
         plt.legend()
         plt.draw()
@@ -50,9 +50,9 @@ class Plotter:
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
         try:
-            L = np.round(self.controllers[0].liveliness[frame][0], 2)
-            ttc= np.round(self.controllers[0].liveliness[frame][1], 2)
-            intersects = self.controllers[0].liveliness[frame][4]
+            L = np.round(self.metrics[frame][0], 2)
+            ttc= np.round(self.metrics[frame][1], 2)
+            intersects = self.metrics[frame][4]
         except Exception as e:
             print(e)
             L = 0
@@ -86,7 +86,7 @@ class Plotter:
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
         
         if config.plot_arrows:
-            pos_diff, vel_diff = self.controllers[0].liveliness[frame][2], self.controllers[0].liveliness[frame][3]
+            pos_diff, vel_diff = self.metrics[frame][2], self.metrics[frame][3]
             self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
             self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
         
@@ -94,12 +94,12 @@ class Plotter:
         return []
 
 
-    def plot(self, scenario, controllers, x_cum, u_cum):
+    def plot(self, scenario, x_cum, u_cum, metrics):
         self.scenario = scenario
         self.scenario.plot(self.ax)
-        self.controllers = controllers
         self.x_cum = x_cum
         self.u_cum = u_cum
+        self.metrics = metrics
 
         # Create an animation
         ani = FuncAnimation(self.fig, lambda frame: self.update(frame), frames=len(self.x_cum[0]) // config.plot_rate, init_func=lambda: self.init(), blit=False)
@@ -114,17 +114,12 @@ class Plotter:
 
         if config.dynamics == config.DynamicsModel.SINGLE_INTEGRATOR:
             speed1, speed2 = u_cum.copy()
-            speed2_ori = controllers[1].u_ori.copy()
             speed1 = [control[0] for control in speed1]
             speed2 = [control[0] for control in speed2]
-            speed2_ori = [control[0] for control in speed2_ori]
         else:
             agent_1_states, agent_2_states = x_cum.copy()
             speed1 = [state[3] for state in agent_1_states]
             speed2 = [state[3] for state in agent_2_states]
-            speed2_ori = speed2
-
-        liveness = controllers[0].liveliness.copy()
 
         # Creating iteration indices for each agent based on the number of velocity points
         iterations = range(0, len(speed1), config.plot_rate)
@@ -132,8 +127,7 @@ class Plotter:
 
         speed1 = [speed1[idx] for idx in iterations]
         speed2 = [speed2[idx] for idx in iterations]
-        speed2_ori = [speed2_ori[idx] for idx in iterations]
-        liveness = [liveness[idx][0] for idx in iterations]
+        liveness = [metrics[idx][0] for idx in iterations]
 
         # Plotting the velocities as a function of the iteration for both agents
         plt.figure(figsize=(10, 10))
@@ -142,14 +136,11 @@ class Plotter:
         plt.subplot(2, 1, 1)
         sns.lineplot(x=iterations, y=speed1, label='Agent 1 speed', marker='o',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
         sns.lineplot(x=iterations, y=speed2, label='Agent 2 speed', marker='o',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        sns.lineplot(x=iterations, y=speed2_ori, label='Agent 2 speed original', marker='P',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
         plt.xlabel('Iteration', fontsize = fontsize)
         plt.ylabel('Velocity', fontsize = fontsize)
         plt.legend(loc='upper left', ncol=1, fontsize = fontsize)
         plt.xlim(0, max(iterations))
-        plt.ylim(min(speed1 + speed2 + speed2_ori), max(speed1 + speed2 + speed2_ori))
         plt.xticks(np.arange(0, max(iterations)+1, 4*config.plot_rate), fontsize = fontsize)
-        plt.yticks(np.arange(round(min(speed1 + speed2 + speed2_ori), 1), round(max(speed1 + speed2 + speed2_ori), 1), .2), fontsize = fontsize)
         plt.grid(which='major', color='#CCCCCC', linestyle='--')
         plt.grid(which='minor', color='#CCCCCC', linestyle='-', axis='both')
         plt.minorticks_on()
