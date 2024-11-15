@@ -2,7 +2,8 @@ import os
 import torch
 import config
 import matplotlib.pyplot as plt
-from models import FCNet, BarrierNet, ModelDefinition
+from model_utils import ModelDefinition
+from models import FCNet, BarrierNet, BarrierNetDOpp
 from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 
@@ -77,7 +78,10 @@ if __name__ == "__main__":
     )
 
     if config.use_barriernet:
-        model = BarrierNet(model_definition, generator.get_obstacles()).to(config.device)
+        if config.bn_model == "barriernet":
+            model = BarrierNet(model_definition, generator.get_obstacles()).to(config.device)
+        else:
+            model = BarrierNetDOpp(model_definition, generator.get_obstacles()).to(config.device)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)

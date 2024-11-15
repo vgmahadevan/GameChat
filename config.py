@@ -13,7 +13,7 @@ liveliness = True
 liveness_threshold = 1.0
 plot_rate = 1
 plot_live = True
-plot_live_pause = False
+plot_live_pause = True
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
@@ -68,6 +68,8 @@ COST_MATRICES = {
 }
 
 # Training parameters.
+bn_model = "barriernet"
+# bn_model = "barriernetdopp"
 use_barriernet = True
 # include_goal = True
 include_goal = False
@@ -94,9 +96,11 @@ train_data_paths = [
     'obs_doorway_with_offsets/l_0_faster_off0.json',
     # 'obs_doorway_with_offsets/l_0_faster_off5.json',
     # 'obs_doorway_with_offsets/l_0_faster_off7.json',
+    'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
+    # 'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
-train_batch_size = 64
+train_batch_size = 32
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
@@ -107,5 +111,5 @@ nHidden22 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_test_obs_l_f_'
+saveprefix = f'weights/model_dopp_obs_l_saf_'
 saveprefix += str(agent_to_train)

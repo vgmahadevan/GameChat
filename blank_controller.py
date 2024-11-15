@@ -1,9 +1,4 @@
-import torch
-import config
 import numpy as np
-from models import FCNet, BarrierNet, ModelDefinition
-from util import calculate_liveliness
-
 
 class BlankController:
     def __init__(self):

@@ -1,7 +1,8 @@
 import torch
 import config
 import numpy as np
-from models import FCNet, BarrierNet, ModelDefinition
+from model_utils import ModelDefinition
+from models import FCNet, BarrierNet, BarrierNetDOpp
 from util import calculate_liveliness
 
 
@@ -10,7 +11,10 @@ class ModelController:
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.goal = goal
         if self.model_definition.is_barriernet:
-            self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
+            if config.bn_model == "barriernet":
+                self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
+            else:
+                self.model = BarrierNetDOpp(self.model_definition, static_obs).to(config.device)
         else:
             self.model = FCNet(self.model_definition).to(config.device)
         print(self.model_definition.weights_path)
@@ -43,5 +47,6 @@ class ModelController:
                 model_output = model_output.reshape(-1).cpu().detach().numpy()
 
         output = model_output * self.model_definition.label_std + self.model_definition.label_mean
+        print("Outputted controls:", output)
         output = output.reshape(-1, 1)
         return output

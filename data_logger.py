@@ -1,6 +1,7 @@
 import os
 import json
 import torch
+import config
 import numpy as np
 
 class Dataset(torch.utils.data.Dataset):
@@ -87,12 +88,22 @@ class DataGenerator:
         for data_stream in self.data_streams:
             for iteration in data_stream['iterations']:
                 # 4 + 4 = 8 inputs.
-                inputs = iteration['states'][agent_idx] + iteration['states'][1 - agent_idx]
-                # 4 + 4 + 4 = 10 inputs.
-                if self.include_goal:
-                    dx = iteration['goals'][agent_idx][0] - iteration['states'][agent_idx][0]
-                    dy = iteration['goals'][agent_idx][1] - iteration['states'][agent_idx][1]
-                    inputs = inputs + [dx, dy]
+                if config.bn_model == "barriernet":
+                    inputs = iteration['states'][agent_idx] + iteration['states'][1 - agent_idx]
+                    # 4 + 4 + 4 = 10 inputs.
+                    if self.include_goal:
+                        dx = iteration['goals'][agent_idx][0] - iteration['states'][agent_idx][0]
+                        dy = iteration['goals'][agent_idx][1] - iteration['states'][agent_idx][1]
+                        inputs = inputs + [dx, dy]
+                else:
+                    dx = iteration['states'][1 - agent_idx][0] - iteration['states'][agent_idx][0]
+                    dy = iteration['states'][1 - agent_idx][1] - iteration['states'][agent_idx][1]
+                    dtheta = iteration['states'][1 - agent_idx][2] - iteration['states'][agent_idx][2]
+                    dtheta %= (np.pi * 2.0)
+                    if dtheta > np.pi:
+                        dtheta -= np.pi * 2.0
+                    dv = iteration['states'][1 - agent_idx][3] - iteration['states'][agent_idx][3]
+                    inputs = iteration['states'][agent_idx] + [dx, dy, dtheta, dv]
                 data.append(np.array(inputs))
         data = np.array(data)
 

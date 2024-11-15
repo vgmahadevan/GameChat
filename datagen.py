@@ -18,8 +18,8 @@ from simulation import run_simulation
 
 folder_to_save_to = 'obs_doorway_with_offsets/'
 
-offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
-# offset = [0]
+# offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
+offset = [0]
 zero_faster = [True, False]
 for z in zero_faster:
     for o in offset:
@@ -31,7 +31,7 @@ for z in zero_faster:
 
         config.agent_zero_offset = o
         config.mpc_p0_faster = z
-        config.save_data_path = f'l_{0 if z else 1}_faster_off{o}.json'
+        logger = DataLogger(os.path.join(folder_to_save_to, f'l_{0 if z else 1}_faster_off{o}.json'))
 
         scenario = DoorwayScenario()
         # scenario = NoObstacleDoorwayScenario()
@@ -39,10 +39,6 @@ for z in zero_faster:
         # Matplotlib plotting handler
         # plotter = Plotter()
         plotter = None
-        if config.save_data_path is None:
-            logger = BlankLogger()
-        else:
-            logger = DataLogger(os.path.join(folder_to_save_to, config.save_data_path))
 
         # Add all initial and goal positions of the agents here (Format: [x, y, theta])
         goals = scenario.goals.copy()
