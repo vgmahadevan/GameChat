@@ -6,6 +6,7 @@
 # N is number of iterations for one time horizon
 # mpc_cbf.py containst eh code for the Game thereotic MPC controllers for agent 1 and 2 respectively
 
+import os
 import numpy as np
 import config
 import matplotlib.pyplot as plt
@@ -14,18 +15,19 @@ from plotter import Plotter
 from data_logger import DataLogger, BlankLogger
 from util import calculate_all_metrics
 
-bags = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off1.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off3.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off5.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off7.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-1.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-3.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
-        'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
+# dirname = 'all_data_with_offsets'
+dirname = 'obs_doorway_with_offsets'
+
+bags = []
+for filename in os.listdir(dirname):
+    bags.append(os.path.join(dirname, filename))
+bags.sort()
 
 for bag in bags:
-    scenario = NoObstacleDoorwayScenario()
+    print("Viewing", bag)
+    scenario = DoorwayScenario()
+    config.ani_save_name = os.path.basename(bag).rstrip('json') + '.mp4'
+    # scenario = NoObstacleDoorwayScenario()
 
     # Matplotlib plotting handler
     plotter = Plotter()

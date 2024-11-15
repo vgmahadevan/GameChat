@@ -68,7 +68,7 @@ class DataGenerator:
     def __init__(self, filenames, include_goal):
         self.include_goal = include_goal
         self.data_streams = []
-        for filename in filenames:
+        for filename in sorted(filenames):
             if os.path.isdir(filename):
                 folder = filename
                 for subfile in os.listdir(folder):

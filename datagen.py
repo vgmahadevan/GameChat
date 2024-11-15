@@ -16,19 +16,25 @@ from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from simulation import run_simulation
 
-folder_to_save_to = 'all_data_with_offsets/'
+folder_to_save_to = 'obs_doorway_with_offsets/'
 
 offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
 # offset = [0]
 zero_faster = [True, False]
 for z in zero_faster:
     for o in offset:
+        # Don't include situations that won't happen.
+        if o == 1 and z:
+            continue
+        if o == -1 and not z:
+            continue
+
         config.agent_zero_offset = o
         config.mpc_p0_faster = z
-        config.save_data_path = f'test_doorway_train_data_with_liveness_{0 if z else 1}_faster_off{o}.json'
+        config.save_data_path = f'l_{0 if z else 1}_faster_off{o}.json'
 
-        # scenario = DoorwayScenario()
-        scenario = NoObstacleDoorwayScenario()
+        scenario = DoorwayScenario()
+        # scenario = NoObstacleDoorwayScenario()
 
         # Matplotlib plotting handler
         # plotter = Plotter()

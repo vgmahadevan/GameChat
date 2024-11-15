@@ -14,7 +14,7 @@ class Environment:
         self.model = self.define_model()
         self.simulator = self.define_simulator()
 
-    def define_model(self):
+    def define_model(self, call_setup=True):
         """Configures the dynamical model of the system (and part of the objective function).
 
         x_{k+1} = x_k + B*u_k*T_s
@@ -35,7 +35,8 @@ class Environment:
         model.set_rhs('x', x_next, process_noise=False)  # Set to True if adding noise
 
         # Setup model
-        model.setup()
+        if call_setup:
+            model.setup()
         return model
 
     @staticmethod

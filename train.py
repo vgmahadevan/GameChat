@@ -54,6 +54,8 @@ if __name__ == "__main__":
 
     X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
 
+    print("Train size:", len(X_train), "Test size:", len(X_test))
+
     # Generators
     training_set = Dataset(X_train, y_train)
     train_dataloader = torch.utils.data.DataLoader(training_set, **params)

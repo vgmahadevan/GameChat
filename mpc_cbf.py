@@ -1,3 +1,4 @@
+import math
 import do_mpc
 from casadi import *
 import config
@@ -28,7 +29,10 @@ class MPC:
         self.R = config.COST_MATRICES[config.dynamics]['R']
 
     def initialize_controller(self, env):
-        self.model = env.define_model()
+        self.model = env.define_model(call_setup = False)
+        self.model.set_variable('_tvp', 'x_moving_obs')
+        self.model.set_variable('_tvp', 'y_moving_obs')
+        self.model.setup()
         self.env = env
 
     """Defines the objective function wrt the state cost depending on the type of control."""
@@ -77,7 +81,8 @@ class MPC:
             max_x = np.array([float("inf"), float("inf"), float("inf"), config.v_limit])
             mpc.bounds['lower', '_x', 'x'] = min_x
             mpc.bounds['upper', '_x', 'x'] = max_x
-
+        
+        mpc = self.set_tvp_for_mpc(mpc)
 
         # MPC-CBF: Add CBF safety constraints
         if config.obstacle_avoidance:
@@ -104,8 +109,7 @@ class MPC:
 
         # Compute CBF constraints
         cbf_constraints = []
-        opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
-        for obs in self.static_obs + [opponent_obs]:
+        for obs in self.static_obs:
             # delta_h_k + gamma*h_k >= 0
             # h_k1 - h_k + gamma*h_k >= 0
             # -h_k1 + h_k - gamma*h_k <= 0
@@ -113,6 +117,12 @@ class MPC:
             h_k = self.h_obs(self.model.x['x'], obs)
             h_k1 = self.h_obs(x_k1, obs)
             cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
+
+        obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)
+        obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
+        h_k = self.h_obs(self.model.x['x'], obs)
+        h_k1 = self.h_obs(x_k1, obs)
+        cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
 
         return cbf_constraints
     
@@ -122,6 +132,26 @@ class MPC:
         h = (x[0] - x_obs)**2 + (x[1] - y_obs)**2 - (config.agent_radius + r_obs + config.safety_dist)**2
         return h
     
+    def set_tvp_for_mpc(self, mpc):
+        """Sets the trajectory for trajectory tracking and/or the moving obstacles' trajectory.
+
+        Inputs:
+          - mpc(do_mpc.controller.MPC): The mpc controller
+        Returns:
+          - mpc(do_mpc.controller.MPC): The mpc model with time-varying parameters added
+        """
+        tvp_struct_mpc = mpc.get_tvp_template()
+
+        def tvp_fun_mpc(t_now):
+            # Moving obstacles trajectory
+            tvp_struct_mpc['_tvp', :, 'x_moving_obs'] = self.opp_state[0] + self.opp_state[3] * math.cos(self.opp_state[2]) * t_now
+            tvp_struct_mpc['_tvp', :, 'y_moving_obs'] = self.opp_state[1] + self.opp_state[3] * math.sin(self.opp_state[2]) * t_now
+
+            return tvp_struct_mpc
+
+        mpc.set_tvp_fun(tvp_fun_mpc)
+        return mpc
+
     # Assumes that the double-integrator dynamic model is being used
     def add_liveliness_constraint(self, mpc):
         if self.opp_state is None:
@@ -173,7 +203,6 @@ class MPC:
         # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
         h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
         h = h_vec[h_idx]
-        # h = mmax(h_vec)
         return h
 
     """Sets the initial state in all components."""

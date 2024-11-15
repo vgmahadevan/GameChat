@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 import config
@@ -77,16 +78,20 @@ class Plotter:
                            f'Agent 1 U = {u1.T}',
                            f'Agent dist: {dist}']
 
-        valid = False
+        is_live = False
         if config.consider_intersects:
             if L > config.liveness_threshold or not intersects:
-                valid = True
-                return
+                is_live = True
         else:
             if L > config.liveness_threshold:
-                valid = True
-
-        text_color = 'green' if valid else 'red'
+                is_live = True
+        
+        collides = dist < config.agent_radius * 2 + config.safety_dist
+        for state in [x0_state, x1_state]:
+            for obs in self.scenario.obstacles:
+                if np.linalg.norm(state[:2] - np.array(obs[:2])) < config.agent_radius + obs[2] + config.safety_dist:
+                    collides = True
+        text_color = 'red' if collides else 'green' if is_live else 'magenta'
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)
 
         # Determine the start index for the fading effect
@@ -104,7 +109,6 @@ class Plotter:
             self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
             self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
         
-
         return []
 
 
@@ -119,7 +123,9 @@ class Plotter:
         ani = FuncAnimation(self.fig, lambda frame: self.update(frame), frames=len(self.x_cum[0]) // config.plot_rate, init_func=lambda: self.init(), blit=False)
 
         # Save the animation
-        ani.save('agents_animation.mp4', writer='ffmpeg')
+        ani.save(os.path.join('animations/', config.ani_save_name), writer='ffmpeg')
+        if config.plot_end_ani_only:
+            return
 
         # Set the color palette to "deep"
         sns.set_palette("deep")

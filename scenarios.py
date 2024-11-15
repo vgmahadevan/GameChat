@@ -23,7 +23,7 @@ def rotate_objs(objs, center, angle):
 class DoorwayScenario:
     def __init__(self):
         self.num_agents = 2
-        goal_y = 0.2
+        goal_y = 0.15
         self.initial = np.array([[-1, 0.5, 0],
                     [-1, -0.5, 0]])
         self.goals = np.array([[2, -goal_y, 0.0],
@@ -33,16 +33,21 @@ class DoorwayScenario:
             zeros = np.zeros((self.num_agents, 1))
             self.initial = np.hstack((self.initial, zeros))
             self.goals = np.hstack((self.goals, zeros))
-        self.ox=1
-        self.obstacles=[(self.ox, 0.3, 0.1),(self.ox, 0.4, 0.1),(self.ox, 0.5, 0.1),(self.ox, 0.6, 0.1),(self.ox, 0.7, 0.1),(self.ox, 0.8, 0.1),(self.ox, 0.9, 0.1), (self.ox, 1.0, 0.1), (self.ox, -0.3, 0.1),(self.ox, -0.4, 0.1),(self.ox, -0.5, 0.1),(self.ox, -0.6, 0.1),(self.ox, -0.7, 0.1), (self.ox, -0.8, 0.1),(self.ox, -0.9, 0.1),(self.ox, -1.0, 0.1)]
+        self.ox = 1
+        self.obstacles = []
+        self.starting_y = 0.25
+        self.obs_length = 1.0
+        for y in np.arange(self.starting_y, 1.15, 0.1):
+            self.obstacles.append((self.ox, y, 0.1))
+            self.obstacles.append((self.ox, -y, 0.1))
         self.plot_bounds = np.array([[-2.6, -1], [2.5, 1]])
 
     def plot(self, ax):
-        rect = patches.Rectangle((self.ox-0.1,0.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect1 = patches.Rectangle((self.ox-0.1,-1.3),0.2,1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        ax.add_patch(rect)
-        ax.add_patch(rect1)
-        pass
+        for obs_x, obs_y, r in self.obstacles:
+            circle = patches.Circle((obs_x, obs_y), r, linewidth=1,edgecolor='k',facecolor='k',fill=True)
+            ax.add_patch(circle)
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
 
 
 class NoObstacleDoorwayScenario:

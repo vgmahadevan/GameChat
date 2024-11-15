@@ -16,12 +16,13 @@ plot_live = True
 plot_live_pause = False
 plot_arrows = False
 plot_end = False
+plot_end_ani_only = False
+ani_save_name = 'agents_animation.mp4'
 
-# dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
 agent_zero_offset = 0
-consider_intersects = False
+consider_intersects = True
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
@@ -34,7 +35,7 @@ n = 2                                      # Number of agents
 runtime = 22.0                             # Total runtime [s]
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
-T_horizon = 4                              # Prediction horizon time steps
+T_horizon = 6                              # Prediction horizon time steps
 sim_steps = int(runtime / sim_ts)              # Number of iteration steps for each agent
 
 obstacle_avoidance = True
@@ -60,9 +61,9 @@ COST_MATRICES = {
         "R": np.array([3, 1.5]),                  # Controls cost matrix
     },
     DynamicsModel.DOUBLE_INTEGRATOR: {
-        "Q": np.diag([20.0, 20.0, 0.0, 10.0]),  # State cost matrix DOORWAY
+        "Q": np.diag([20.0, 20.0, 0.0, 20.0]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
-        "R": np.array([0.5, 5.0]),                  # Controls cost matrix
+        "R": np.array([2.0, 5.0]),                  # Controls cost matrix
     }
 }
 
@@ -70,33 +71,41 @@ COST_MATRICES = {
 use_barriernet = True
 # include_goal = True
 include_goal = False
-agent_to_train = 1
+agent_to_train = 0
 
 # train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
 # train_data_paths = ['all_data_with_offsets/']
 # train_data_paths = ['all_data_with_offsets/doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/doorway_train_data_with_liveness_1_faster_off0.json']
-train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/test_doorway_train_data_with_liveness_1_faster_off0.json']
-train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off1.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off3.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off5.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off7.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-1.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-3.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
-                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
-# train_data_paths = [train_data_paths[0]]
+# train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/test_doorway_train_data_with_liveness_1_faster_off0.json']
+# train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off3.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off5.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off7.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-1.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-3.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
+#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
+# train_data_paths = ['obs_doorway_with_offsets/']
+train_data_paths = [
+    'obs_doorway_with_offsets/l_0_faster_off-1.json',
+    'obs_doorway_with_offsets/l_0_faster_off-3.json',
+    'obs_doorway_with_offsets/l_0_faster_off-5.json',
+    'obs_doorway_with_offsets/l_0_faster_off-7.json',
+    'obs_doorway_with_offsets/l_0_faster_off0.json',
+    'obs_doorway_with_offsets/l_0_faster_off5.json',
+    'obs_doorway_with_offsets/l_0_faster_off7.json',
+]
 
-train_batch_size = 24
+train_batch_size = 64
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 10
-nHidden1 = 128
-nHidden21 = 32
-nHidden22 = 32
+epochs = 20
+nHidden1 = 256
+nHidden21 = 64
+nHidden22 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model4_l_s_'
+saveprefix = f'weights/model_obs_l_f_'
 saveprefix += str(agent_to_train)
