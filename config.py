@@ -98,7 +98,7 @@ train_data_paths = [
     # 'obs_doorway_with_offsets/l_0_faster_off5.json',
     # 'obs_doorway_with_offsets/l_0_faster_off7.json',
     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    'obs_doorway_with_offsets/l_1_faster_off0.json',
+    # 'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
 train_batch_size = 32
@@ -109,8 +109,9 @@ epochs = 20
 nHidden1 = 256
 nHidden21 = 64
 nHidden22 = 64
+nHidden23 = 32
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_test2_obs_l_saf_'
+saveprefix = f'weights/model_smg_obs_l_s_'
 saveprefix += str(agent_to_train)

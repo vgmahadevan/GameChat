@@ -28,6 +28,7 @@ class ModelDefinition:
     nHidden1: int
     nHidden21: int
     nHidden22: Optional[int]
+    nHidden23: Optional[int]
     input_mean: float
     input_std: float
     label_mean: float

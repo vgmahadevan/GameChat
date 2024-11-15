@@ -47,7 +47,7 @@ def calculate_all_metrics(ego_state, opp_state):
     else:
         egoanglediff = abs(angle_between_vectors(intersect_point - ego_state[:2], ego_vel_vec))
         oppanglediff = abs(angle_between_vectors(intersect_point - opp_state[:2], opp_vel_vec))
-        print(f"Ego angle diff: {egoanglediff}, Opp angle diff: {oppanglediff}")
+        # print(f"Ego angle diff: {egoanglediff}, Opp angle diff: {oppanglediff}")
         intersecting = (egoanglediff <= np.pi/2) and (oppanglediff <= np.pi/2)
 
     return l, ttc, pos_diff, vel_diff, intersecting

@@ -71,6 +71,7 @@ if __name__ == "__main__":
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
+        nHidden23=config.nHidden23,
         input_mean=input_mean.tolist(),
         input_std=input_std.tolist(),
         label_mean=output_mean.tolist(),
