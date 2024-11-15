@@ -72,6 +72,7 @@ bn_model = "barriernet"
 # bn_model = "barriernetdopp"
 use_barriernet = True
 # include_goal = True
+smg_barriernet = True
 include_goal = False
 agent_to_train = 1
 
@@ -97,7 +98,7 @@ train_data_paths = [
     # 'obs_doorway_with_offsets/l_0_faster_off5.json',
     # 'obs_doorway_with_offsets/l_0_faster_off7.json',
     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    # 'obs_doorway_with_offsets/l_1_faster_off0.json',
+    'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
 train_batch_size = 32
@@ -111,5 +112,5 @@ nHidden22 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_dopp_obs_l_saf_'
+saveprefix = f'weights/model_test2_obs_l_saf_'
 saveprefix += str(agent_to_train)

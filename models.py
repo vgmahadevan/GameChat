@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from qpth.qp import QPFunction
 from model_utils import solver
+from util import calculate_all_metrics
 
 # Indices to make reading the code easier.
 
@@ -84,7 +85,7 @@ class BarrierNet(nn.Module):
         
         # obstacles = self.static_obstacles[:5].copy()
         obstacles = self.static_obstacles.copy()
-        obstacles = []
+        # obstacles = []
         obstacles.append((x0[:,OPP_X_IDX], x0[:,OPP_Y_IDX], config.agent_radius))
 
         G = []
@@ -95,11 +96,12 @@ class BarrierNet(nn.Module):
             dy = (py - obs_y)
             obs_v = x0[:, OPP_V_IDX]
             obs_theta = x0[:, OPP_THETA_IDX]
-            obs_sin_theta = torch.sin(theta)
-            obs_cos_theta = torch.cos(theta)
+            obs_sin_theta = torch.sin(obs_theta)
+            obs_cos_theta = torch.cos(obs_theta)
 
             barrier = dx**2 + dy**2 - R**2
             barrier_dot = 2*dx*v*cos_theta + 2*dy*v*sin_theta
+            # barrier_dot = 2*dx*(v*cos_theta - obs_v*obs_cos_theta) + 2*dy*(v*sin_theta - obs_v*obs_sin_theta)
             Lf2b = 2*v**2
             LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1)) 
             LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
@@ -112,6 +114,34 @@ class BarrierNet(nn.Module):
         print(len(G), len(h))
         # print(G[0].shape, h[0].shape)
         # print(1/0)
+
+        # Add in liveness CBF
+        if config.smg_barriernet:
+            for i in range(len(x0)):
+                ego_state = np.array([px[i], py[i], theta[i], v[i]])
+                opp_state = np.array([x0[i][OPP_X_IDX], x0[i][OPP_Y_IDX], x0[i][OPP_THETA_IDX], x0[i][OPP_V_IDX]])
+                l, _, _, _, intersecting = calculate_all_metrics(ego_state, opp_state)
+                if l < config.liveness_threshold and intersecting:
+                    print("USING LIVENESS FILTER!!! FOR NOW FORCING IT TO SLOW DOWN")
+                    # opp_v - 3 * ego_v >= 0.0
+                    barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
+                    barrier_dot = 2*dx*v*cos_theta + 2*dy*v*sin_theta
+                    Lf2b = 2*v**2
+                    LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1)) 
+                    LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
+                    obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
+                    obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
+                    obs_h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0]*x32[:,1])*barrier, (nBatch, 1)))
+                    
+                    G_live.append(live_G)
+                    h_live.append(live_h)
+                else:
+                    G_live.append(dummy_G)
+                    h_live.append(dummy_h)
+
+            G.append(G_live)
+            h.append(h_live)
+        
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
@@ -119,8 +149,8 @@ class BarrierNet(nn.Module):
         assert(h.shape == (nBatch, len(obstacles)))
         e = Variable(torch.Tensor()).to(config.device)
         
-        label_std, label_mean = np.array(self.model_definition.label_std), np.array(self.model_definition.label_mean)
-        print("Reference controls:", x31.cpu() * label_std + label_mean)
+        # label_std, label_mean = np.array(self.model_definition.label_std), np.array(self.model_definition.label_mean)
+        # print("Reference controls:", x31.cpu() * label_std + label_mean)
 
         if self.training or sgn == 1:    
             x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
