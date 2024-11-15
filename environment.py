@@ -70,8 +70,8 @@ class Environment:
         A[1] = x[3] * sin(x[2]) # y_dot = v * sin(theta)
 
         B = SX.zeros(4, 2)
-        B[3, 0] = 1 # dv = a
-        B[2, 1] = 1 # dtheta = omega
+        B[2, 0] = 1 # dtheta = omega
+        B[3, 1] = 1 # dv = a
 
         a = 1e-9  # Small positive constant so system has relative degree 1
         B[0, 1] = -a*sin(x[2])

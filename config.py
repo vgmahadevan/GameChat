@@ -10,7 +10,7 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 0.8
+liveness_threshold = 1.0
 plot_rate = 1
 plot_live = True
 plot_live_pause = False
@@ -20,7 +20,8 @@ plot_end = False
 # dynamics = DynamicsModel.SINGLE_INTEGRATOR
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
-agent_zero_offset = -7
+agent_zero_offset = 0
+consider_intersects = False
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
@@ -37,13 +38,14 @@ T_horizon = 4                              # Prediction horizon time steps
 sim_steps = int(runtime / sim_ts)              # Number of iteration steps for each agent
 
 obstacle_avoidance = True
-obs_gamma = 0.2                            # CBF parameter in [0,1]
+# Gamma, in essence, is the leniancy on how much we can deprove the CBF.
+obs_gamma = 0.6                            # CBF parameter in [0,1]
 liveliness_gamma = 0.3                     # CBF parameter in [0,1]
 # safety_dist = 0.00                         # Safety distance
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
 safety_dist = 0.03                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
-zeta = 2.0
+zeta = 3.0
 
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
@@ -58,9 +60,9 @@ COST_MATRICES = {
         "R": np.array([3, 1.5]),                  # Controls cost matrix
     },
     DynamicsModel.DOUBLE_INTEGRATOR: {
-        "Q": np.diag([15, 15, 0.005, 10.0]),  # State cost matrix DOORWAY
+        "Q": np.diag([20.0, 20.0, 0.0, 10.0]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
-        "R": np.array([0.5, 10.0]),                  # Controls cost matrix
+        "R": np.array([0.5, 5.0]),                  # Controls cost matrix
     }
 }
 
@@ -70,10 +72,20 @@ use_barriernet = True
 include_goal = False
 agent_to_train = 1
 
-train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
+# train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
 # train_data_paths = ['all_data_with_offsets/']
 # train_data_paths = ['all_data_with_offsets/doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/doorway_train_data_with_liveness_1_faster_off0.json']
-# train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/test_doorway_train_data_with_liveness_1_faster_off0.json']
+train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/test_doorway_train_data_with_liveness_1_faster_off0.json']
+train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off1.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off3.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off5.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off7.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-1.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-3.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
+                    'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
+# train_data_paths = [train_data_paths[0]]
 
 train_batch_size = 24
 use_cuda = torch.cuda.is_available()
@@ -86,5 +98,5 @@ nHidden22 = 32
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model3_l_saf_'
+saveprefix = f'weights/model4_l_s_'
 saveprefix += str(agent_to_train)

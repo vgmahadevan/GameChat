@@ -25,8 +25,8 @@ GOAL_DX_IDX = 8
 GOAL_DY_IDX = 9
 
 N_CL = 2
-LINEAR_ACCEL_IDX = 0
-ANGULAR_VEL_IDX = 1
+ANGULAR_VEL_IDX = 0
+LINEAR_ACCEL_IDX = 1
 
 
 def solver(Q, p, G, h):
@@ -145,6 +145,9 @@ class BarrierNet(nn.Module):
             obs_h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0]*x32[:,1])*barrier, (nBatch, 1)))
             G.append(obs_G)
             h.append(obs_h)
+        
+        print(len(G), len(h))
+        print(G[0].shape, h[0].shape)
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)

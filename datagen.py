@@ -18,8 +18,8 @@ from simulation import run_simulation
 
 folder_to_save_to = 'all_data_with_offsets/'
 
-# offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
-offset = [0]
+offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
+# offset = [0]
 zero_faster = [True, False]
 for z in zero_faster:
     for o in offset:
@@ -27,7 +27,8 @@ for z in zero_faster:
         config.mpc_p0_faster = z
         config.save_data_path = f'test_doorway_train_data_with_liveness_{0 if z else 1}_faster_off{o}.json'
 
-        scenario = DoorwayScenario()
+        # scenario = DoorwayScenario()
+        scenario = NoObstacleDoorwayScenario()
 
         # Matplotlib plotting handler
         # plotter = Plotter()

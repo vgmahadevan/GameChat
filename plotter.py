@@ -1,3 +1,4 @@
+import sys
 import math
 import config
 import numpy as np
@@ -5,13 +6,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+def quit_figure(event):
+    if event.key == 'q':
+        plt.close(event.canvas.figure)
+        sys.exit(0)
+
 class Plotter:
     def __init__(self):
         self.fig, self.ax = plt.subplots()
         # Create a figure and axis object for the plot
         self.liveliness_text = self.ax.text(0.05, 0.95, '', transform=self.ax.transAxes, fontsize=14,
             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-
+        plt.gcf().canvas.mpl_connect('key_press_event', quit_figure)
 
     def init(self):
         # Reset plot limits and other properties as needed
@@ -30,7 +36,7 @@ class Plotter:
         self.update(len(x_cum[0]) - 1)
         plt.legend()
         plt.draw()
-        plt.pause(0.01)
+        plt.pause(0.05)
         if config.plot_live_pause:
             plt.waitforbuttonpress()
 
@@ -71,8 +77,16 @@ class Plotter:
                            f'Agent 1 U = {u1.T}',
                            f'Agent dist: {dist}']
 
-        invalid = L < config.liveness_threshold and intersects
-        text_color = 'red' if invalid else 'green'
+        valid = False
+        if config.consider_intersects:
+            if L > config.liveness_threshold or not intersects:
+                valid = True
+                return
+        else:
+            if L > config.liveness_threshold:
+                valid = True
+
+        text_color = 'green' if valid else 'red'
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)
 
         # Determine the start index for the fading effect

@@ -79,7 +79,7 @@ class DataGenerator:
             else:
                 print(filename)
                 self.data_streams.append(json.load(open(filename)))
-        print(len(self.data_streams))
+        print("Number of file streams:", len(self.data_streams))
 
 
     def get_inputs(self, agent_idx, normalize):

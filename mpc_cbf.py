@@ -69,7 +69,7 @@ class MPC:
             mpc.bounds['lower', '_u', 'u'] = -max_u
             mpc.bounds['upper', '_u', 'u'] = max_u
         else:
-            max_u = np.array([config.accel_limit, config.omega_limit])
+            max_u = np.array([config.omega_limit, config.accel_limit])
             mpc.bounds['lower', '_u', 'u'] = -max_u
             mpc.bounds['upper', '_u', 'u'] = max_u
 
@@ -116,7 +116,6 @@ class MPC:
 
         return cbf_constraints
     
-
     """Computes the Control Barrier Function for an obstacle."""
     def h_obs(self, x, obstacle):
         x_obs, y_obs, r_obs = obstacle
@@ -129,10 +128,12 @@ class MPC:
             return
 
         l, _, _, _, intersecting = calculate_all_metrics(self.initial_state.copy(), self.opp_state)
-        if l > config.liveness_threshold or not intersecting:
-            return
-        # if l > config.liveness_threshold:
-        #     return
+        if config.consider_intersects:
+            if l > config.liveness_threshold or not intersecting:
+                return
+        else:
+            if l > config.liveness_threshold:
+                return
 
         print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
 
