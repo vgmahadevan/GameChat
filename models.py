@@ -49,6 +49,7 @@ class BarrierNet(nn.Module):
         self.fc22 = nn.Linear(model_definition.nHidden1, model_definition.nHidden22).double()
         self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
         self.fc32 = nn.Linear(model_definition.nHidden22, N_CL).double()
+        self.fc33 = nn.Linear(model_definition.nHidden23, N_CL).double()
     
 
     def forward(self, x, sgn):
@@ -61,10 +62,13 @@ class BarrierNet(nn.Module):
         
         x21 = F.relu(self.fc21(x))
         x22 = F.relu(self.fc22(x))
+        x23 = F.relu(self.fc23(x))
         
         x31 = self.fc31(x21)
         x32 = self.fc32(x22)
         x32 = 4*nn.Sigmoid()(x32)  # ensure CBF parameters are positive
+        x33 = self.fc32(x23)
+        x33 = 4*nn.Sigmoid()(x33)  # ensure CBF parameters are positive
         
         # BarrierNet
         x = self.dCBF(x0, x31, x32, sgn, nBatch)
@@ -124,12 +128,15 @@ class BarrierNet(nn.Module):
                 if l < config.liveness_threshold and intersecting:
                     print("USING LIVENESS FILTER!!! FOR NOW FORCING IT TO SLOW DOWN")
                     # opp_v - 3 * ego_v >= 0.0
+                    # b(x) = opp_v - 3 * ego_v
+                    # u(t) <= p1(z)(opp_v - 3 * ego_v)
                     barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
+                    
                     barrier_dot = 2*dx*v*cos_theta + 2*dy*v*sin_theta
                     Lf2b = 2*v**2
                     LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1)) 
                     LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
-                    obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
+                    obs_G = torch.cat([0.0, 1.0], dim=1)
                     obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
                     obs_h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0]*x32[:,1])*barrier, (nBatch, 1)))
                     
