@@ -148,7 +148,7 @@ class BarrierNet(nn.Module):
         
         print(len(G), len(h))
         print(G[0].shape, h[0].shape)
-        print(1/0)
+        # print(1/0)
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)

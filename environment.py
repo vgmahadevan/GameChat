@@ -91,6 +91,24 @@ class Environment:
     def reset_state(self, x0):
         self.simulator.reset_history()
         self.simulator.x0 = x0
+    
+    def apply_state_lims(self, state):
+        if state[3] > config.v_limit:
+            state[3] = config.v_limit
+        if state[3] < -config.v_limit:
+            state[3] = -config.v_limit
+        return state
+
+    def apply_control_lims(self, control):
+        if control[0] > config.omega_limit:
+            control[0] = config.omega_limit
+        if control[0] < -config.omega_limit:
+            control[0] = -config.omega_limit
+        if control[1] > config.accel_limit:
+            control[1] = config.accel_limit
+        if control[1] < -config.accel_limit:
+            control[1] = -config.accel_limit
+        return control
 
     def run_simulation(self, sim_iteration, controllers, logger):
         """Runs a closed-loop control simulation."""
@@ -110,9 +128,9 @@ class Environment:
                 opp_state = np.append(opp_state, [opp_vel])
             self.reset_state(initial_state)
             controller.reset_state(initial_state, opp_state)
-            u1 = controller.make_step(sim_time, initial_state)
+            u1 = self.apply_control_lims(controller.make_step(sim_time, initial_state))
             x1 = self.simulator.make_step(u1)
-            new_states[agent_idx, :] = x1.ravel()
+            new_states[agent_idx, :] = self.apply_state_lims(x1.ravel())
             outputted_controls[agent_idx, :] = u1.ravel()
             print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
 

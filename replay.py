@@ -23,6 +23,8 @@ for filename in os.listdir(dirname):
     bags.append(os.path.join(dirname, filename))
 bags.sort()
 
+bags = ['obs_doorway_with_offsets/l_0_faster_off0.json']
+
 for bag in bags:
     print("Viewing", bag)
     scenario = DoorwayScenario()

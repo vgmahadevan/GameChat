@@ -55,11 +55,11 @@ accel_limit = 0.1
 
 # ------------------------------------------------------------------------------
 COST_MATRICES = {
-    DynamicsModel.SINGLE_INTEGRATOR: {
-        "Q": np.diag([15, 15, 0.005]),  # State cost matrix DOORWAY
-        # "Q": np.diag([100, 100, 11]), # State cost matrix INTERSECTION
-        "R": np.array([3, 1.5]),                  # Controls cost matrix
-    },
+    # DynamicsModel.SINGLE_INTEGRATOR: {
+    #     "Q": np.diag([15, 15, 0.005]),  # State cost matrix DOORWAY
+    #     # "Q": np.diag([100, 100, 11]), # State cost matrix INTERSECTION
+    #     "R": np.array([3, 1.5]),                  # Controls cost matrix
+    # },
     DynamicsModel.DOUBLE_INTEGRATOR: {
         "Q": np.diag([20.0, 20.0, 0.0, 20.0]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
@@ -71,7 +71,7 @@ COST_MATRICES = {
 use_barriernet = True
 # include_goal = True
 include_goal = False
-agent_to_train = 0
+agent_to_train = 1
 
 # train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
 # train_data_paths = ['all_data_with_offsets/']
@@ -87,13 +87,13 @@ agent_to_train = 0
 #                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
 # train_data_paths = ['obs_doorway_with_offsets/']
 train_data_paths = [
-    'obs_doorway_with_offsets/l_0_faster_off-1.json',
-    'obs_doorway_with_offsets/l_0_faster_off-3.json',
-    'obs_doorway_with_offsets/l_0_faster_off-5.json',
-    'obs_doorway_with_offsets/l_0_faster_off-7.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off-1.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off-3.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off-5.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off-7.json',
     'obs_doorway_with_offsets/l_0_faster_off0.json',
-    'obs_doorway_with_offsets/l_0_faster_off5.json',
-    'obs_doorway_with_offsets/l_0_faster_off7.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off5.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off7.json',
 ]
 
 train_batch_size = 64
@@ -107,5 +107,5 @@ nHidden22 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_obs_l_f_'
+saveprefix = f'weights/model_test_obs_l_f_'
 saveprefix += str(agent_to_train)
