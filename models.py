@@ -3,6 +3,7 @@ import torch
 import config
 import numpy as np
 from torch.autograd import Variable
+from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 from qpth.qp import QPFunction
 from model_utils import solver
@@ -51,6 +52,10 @@ class BarrierNet(nn.Module):
         self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
         self.fc32 = nn.Linear(model_definition.nHidden22, N_CL).double()
         self.fc33 = nn.Linear(model_definition.nHidden23, 1).double()
+
+        self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
+        self.s1 = Parameter(torch.ones(1).cuda()).to(config.device)
+
     
 
     def forward(self, x, sgn):
@@ -122,42 +127,80 @@ class BarrierNet(nn.Module):
 
         # Add in liveness CBF
         if config.smg_barriernet:
-            G_live, h_live = [], []
+            G_lims, h_lims = [], []
             for i in range(len(x0)):
-                ego_state = np.array([px[i].item(), py[i].item(), theta[i].item(), v[i].item()])
-                opp_state = np.array([x0[i][OPP_X_IDX].item(), x0[i][OPP_Y_IDX].item(), x0[i][OPP_THETA_IDX].item(), x0[i][OPP_V_IDX].item()])
-                l, _, _, _, intersecting = calculate_all_metrics(ego_state, opp_state)
-                if l < config.liveness_threshold and intersecting:
-                    print("USING LIVENESS FILTER!!! FOR NOW FORCING IT TO SLOW DOWN")
-                    # opp_v - 3 * ego_v >= 0.0
-                    # b(x) = opp_v - 3 * ego_v
-                    # u(t) <= p1(z)(opp_v - 3 * ego_v)
-                    barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
-                    live_G = Variable(torch.tensor([0.0, 1.0])).to(config.device)
-                    live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                    live_h = torch.reshape((x33[i,0])*barrier, (1, 1)).to(config.device)
+                lim_G = Variable(torch.tensor([0.0, 1.0]))
+                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s0
+                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                G_lims.append(lim_G)
+                h_lims.append(lim_h)
 
-                    G_live.append(live_G)
-                    h_live.append(live_h)
-                else:
-                    live_G = Variable(torch.tensor([0.0, 0.0])).to(config.device)
-                    live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                    live_h = torch.reshape(torch.tensor([0.0]), (1, 1)).to(config.device)
-                    G_live.append(live_G)
-                    h_live.append(live_h)
+            G_lims = torch.cat(G_lims)
+            h_lims = torch.cat(h_lims)
+            G.append(G_lims)
+            h.append(h_lims)
 
-            G_live = torch.cat(G_live)
-            h_live = torch.cat(h_live)
-            print(G_live.shape, h_live.shape)
-            G.append(G_live)
-            h.append(h_live)
+            G_lims, h_lims = [], []
+            for i in range(len(x0)):
+                lim_G = Variable(torch.tensor([0.0, -1.0]))
+                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                lim_h = Variable(torch.tensor([0.0])).to(config.device) + self.s1
+                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                G_lims.append(lim_G)
+                h_lims.append(lim_h)
+
+            G_lims = torch.cat(G_lims)
+            h_lims = torch.cat(h_lims)
+            G.append(G_lims)
+            h.append(h_lims)
+
+
+            # G_live, h_live = [], []
+            # for i in range(len(x0)):
+            #     ego_state = np.array([px[i].item(), py[i].item(), theta[i].item(), v[i].item()])
+            #     opp_state = np.array([x0[i][OPP_X_IDX].item(), x0[i][OPP_Y_IDX].item(), x0[i][OPP_THETA_IDX].item(), x0[i][OPP_V_IDX].item()])
+            #     l, _, _, _, intersecting = calculate_all_metrics(ego_state, opp_state)
+            #     if False:
+            #     # if l < config.liveness_threshold and intersecting:
+            #         print("USING LIVENESS FILTER!!! FOR NOW FORCING IT TO SLOW DOWN", i)
+            #         ego_v <= opp_v * smth
+            #         acceleration_output <= p1(z)(opp_v - 3 * ego_v)
+            #         # opp_v - 3 * ego_v >= 0.0
+            #         # b(x) = opp_v - 3 * ego_v
+            #         # u(t) <= p1(z)(opp_v - 3 * ego_v)
+            #         barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
+            #         live_G = Variable(torch.tensor([0.0, 1.0])).to(config.device)
+            #         live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+            #         live_h = torch.reshape((x33[i,0])*barrier, (1, 1)).to(config.device)
+
+            #         G_live.append(live_G)
+            #         h_live.append(live_h)
+            #     else:
+            #         # live_G = Variable(torch.Tensor()).to(config.device)
+            #         # live_G = Variable(torch.tensor([0.0, 0.0])).to(config.device)
+            #         live_G = Variable(torch.tensor([0.0, 1.0]))
+            #         live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+            #         live_h = Variable(torch.tensor([config.accel_limit * 2.0]))
+            #         # live_h = Variable(torch.Tensor()).to(config.device)
+            #         live_h = torch.reshape(live_h, (1, 1)).to(config.device)
+            #         G_live.append(live_G)
+            #         h_live.append(live_h)
+
+            # G_live = torch.cat(G_live)
+            # h_live = torch.cat(h_live)
+            # print(G_live.shape, h_live.shape)
+            # G.append(G_live)
+            # h.append(h_live)
+
+
         
         print(len(G), len(h))
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
-        assert(G.shape == (nBatch, len(obstacles) + config.smg_barriernet, N_CL))
-        assert(h.shape == (nBatch, len(obstacles) + config.smg_barriernet))
+        # assert(G.shape == (nBatch, len(obstacles) + config.smg_barriernet, N_CL))
+        # assert(h.shape == (nBatch, len(obstacles) + config.smg_barriernet))
         e = Variable(torch.Tensor()).to(config.device)
         
         # label_std, label_mean = np.array(self.model_definition.label_std), np.array(self.model_definition.label_mean)
@@ -168,6 +211,7 @@ class BarrierNet(nn.Module):
         else:
             self.p1 = x32[0,0]
             self.p2 = x32[0,1]
+            print(x31[0].cpu())
             x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
         
         return x

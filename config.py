@@ -13,11 +13,11 @@ liveliness = True
 liveness_threshold = 1.0
 plot_rate = 1
 plot_live = True
-plot_live_pause = True
+plot_live_pause = False
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
-ani_save_name = 'agents_animation.mp4'
+ani_save_name = 'base_barriernet_model.mp4'
 
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
