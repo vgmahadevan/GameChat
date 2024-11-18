@@ -71,18 +71,18 @@ if __name__ == "__main__":
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
-        nHidden23=config.nHidden23,
+        nHidden23=config.nHidden23 if config.add_control_limits else None,
         input_mean=input_mean.tolist(),
         input_std=input_std.tolist(),
         label_mean=output_mean.tolist(),
-        label_std=output_std.tolist()
+        label_std=output_std.tolist(),
+        add_control_limits=config.add_control_limits,
+        add_liveness_filter=config.add_liveness_filter,
+        separate_penalty_for_opp=config.separate_penalty_for_opp
     )
 
     if config.use_barriernet:
-        if config.bn_model == "barriernet":
-            model = BarrierNet(model_definition, generator.get_obstacles()).to(config.device)
-        else:
-            model = BarrierNetDOpp(model_definition, generator.get_obstacles()).to(config.device)
+        model = BarrierNet(model_definition, generator.get_obstacles()).to(config.device)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)

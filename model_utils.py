@@ -24,7 +24,7 @@ def solver(Q, p, G, h):
 class ModelDefinition:
     is_barriernet: bool
     weights_path: Optional[str]
-    include_goal: bool
+    include_goal: bool # Defaults = false
     nHidden1: int
     nHidden21: int
     nHidden22: Optional[int]
@@ -33,6 +33,11 @@ class ModelDefinition:
     input_std: float
     label_mean: float
     label_std: float
+    add_control_limits: bool # Default = false
+    add_liveness_filter: bool # Default = false
+    separate_penalty_for_opp: bool # Default = false
+    x_is_d_goal: bool # Default = false
+
 
     def save(self, path: str):
         with open(path, 'w') as f:
@@ -47,4 +52,10 @@ class ModelDefinition:
             data['weights_path'] = weights_path
             if 'include_goal' not in data:
                 data['include_goal'] = False
+            if 'add_control_limits' not in data:
+                data['add_control_limits'] = False
+            if 'add_liveness_filter' not in data:
+                data['add_liveness_filter'] = False
+            if 'separate_penalty_for_opp' not in data:
+                data['separate_penalty_for_opp'] = False
             return ModelDefinition(**data)

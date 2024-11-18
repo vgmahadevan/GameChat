@@ -11,10 +11,7 @@ class ModelController:
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.goal = goal
         if self.model_definition.is_barriernet:
-            if config.bn_model == "barriernet":
-                self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
-            else:
-                self.model = BarrierNetDOpp(self.model_definition, static_obs).to(config.device)
+            self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
         else:
             self.model = FCNet(self.model_definition).to(config.device)
         print(self.model_definition.weights_path)
