@@ -24,7 +24,7 @@ class STEFunction(torch.autograd.Function):
 
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2) / (LA.norm(v1) * LA.norm(v2) + EPSILON)
-    # print("\tNumpy dot product:", dot_product)
+    print("\tNumpy dot product:", dot_product)
     return np.arccos(np.clip(dot_product, -1, 1))
 
 # dx and dy are opp_pos - ego_pos
@@ -40,7 +40,8 @@ def calculate_is_not_live_torch(dx, dy, ego_theta, ego_vel, opp_theta, opp_vel):
     # pos_diff = ego_state[:2] - opp_state[:2]
     pos_diff = torch.tensor([dx, dy]).to(config.device)
     dot_product = torch.linalg.vecdot(pos_diff, vel_diff) / (opp_v * ego_v + EPSILON)
-    l = torch.pi - torch.arccos(torch.clamp(dot_product, min=-1.0, max=1.0))
+    angle_between = torch.arccos(torch.clamp(dot_product, min=-1.0, max=1.0))
+    l = torch.pi - angle_between
 
     # Check intersection
     ego_vel_uvec = ego_vel / ego_v
@@ -49,8 +50,9 @@ def calculate_is_not_live_torch(dx, dy, ego_theta, ego_vel, opp_theta, opp_vel):
     u = (dy * opp_vel_uvec[0] - dx * opp_vel_uvec[1]) * det
     v = (dy * ego_vel_uvec[0] - dx * ego_vel_uvec[1]) * det
 
-    # print("Torch pos diff:", pos_diff, vel_diff, dot_product)
-    # print("LIVELINESS_TORCH:", l, u, v)
+    print("Torch pos diff:", pos_diff, vel_diff, dot_product)
+    print("\t", angle_between)
+    print("LIVELINESS_TORCH:", l, u, v)
 
     # is_not_live = l < config.liveness_threshold and u > 0 and v > 0
     # l < config.liveness_threshold
@@ -64,8 +66,8 @@ def calculate_is_not_live_torch(dx, dy, ego_theta, ego_vel, opp_theta, opp_vel):
 def calculate_liveliness(ego_pos, opp_pos, ego_vel, opp_vel):
     vel_diff = ego_vel - opp_vel
     pos_diff = ego_pos - opp_pos
-    # print("Numpy pos diff:", pos_diff, vel_diff)
-    # print("Angle between:", angle_between_vectors(pos_diff, vel_diff))
+    print("Numpy pos diff:", pos_diff, vel_diff)
+    print("\tAngle between:", angle_between_vectors(pos_diff, vel_diff))
     l = np.pi - angle_between_vectors(pos_diff, vel_diff)
     ttc = LA.norm(pos_diff) / LA.norm(vel_diff) # Time-to-collision
     # Liveness should only matter if you're both moving towards the collision point.

@@ -209,6 +209,18 @@ class BarrierNet(nn.Module):
                     print(calculate_all_metrics(ego_state, opp_state))
                     print(1/0)
 
+                ego_state = np.array([px[i].cpu().item(), py[i].cpu().item(), theta[i].cpu().item(), v[i].cpu().item()])
+                opp_state = np.array([(px[i] + x0[i,OPP_X_IDX]).cpu().item(), (py[i] + x0[i,OPP_Y_IDX]).cpu().item(), x0[i,OPP_THETA_IDX].cpu().item(), x0[i,OPP_V_IDX].cpu().item()])
+                metrics = calculate_all_metrics(ego_state, opp_state)
+                if metrics[-1]:
+                    print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
+                    print(is_not_live)
+                    print("UNLIVE!", metrics)
+                    print(ego_state)
+                    print(opp_state)
+                    print(1/0)
+
+
                 # If we're going faster, use the speeding up CBF.
                 # Otherwise, use the slowing down CBF.
 #                if v[i] > x0[i][OPP_V_IDX]:
@@ -221,6 +233,8 @@ class BarrierNet(nn.Module):
                     # b(x) = opp_v - zeta * ego_v
                     barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
 
+                # u(x) <= p(x) * b(x)
+                is_not_live -= 0.00001
                 live_G = Variable(is_not_live*torch.tensor([0.0, 1.0]).to(config.device)).to(config.device)
                 live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                 live_h = torch.reshape(is_not_live*(x34[i,0])*barrier, (1, 1)).to(config.device)
