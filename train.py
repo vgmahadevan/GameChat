@@ -53,7 +53,16 @@ if __name__ == "__main__":
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
 
-    X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
+    # TODO: UNCOMMENT THIS
+    # X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=False)
+    # print("ALL INPUTS")
+    # print(norm_inputs[:10] * input_std + input_mean)
+    # print("TRAIN INPUTS")
+    # print(X_train[:10] * input_std + input_mean)
+    # print("TEST INPUTS")
+    # print(X_test[:10] * input_std + input_mean)
+    # print(1/0)
 
     print("Train size:", len(X_train), "Test size:", len(X_test))
 
@@ -71,6 +80,7 @@ if __name__ == "__main__":
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
         nHidden23=config.nHidden23 if config.add_control_limits else None,
+        nHidden24=config.nHidden24 if config.add_liveness_filter else None,
         input_mean=input_mean.tolist(),
         input_std=input_std.tolist(),
         label_mean=output_mean.tolist(),

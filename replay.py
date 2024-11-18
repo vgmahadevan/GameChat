@@ -57,7 +57,7 @@ for bag in bags:
 
         # Plots
         if sim_iteration % config.plot_rate == 0 and config.plot_live and plotter is not None:
-            plotter.plot_live(scenario, x_cum, u_cum, metrics)
+            plotter.plot_live(sim_iteration, scenario, x_cum, u_cum, metrics)
 
     # Discard the first element of both x1 and x2
     x_cum = np.array(x_cum)

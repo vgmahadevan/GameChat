@@ -29,7 +29,7 @@ class Plotter:
 
 
     # Function to update the plots
-    def plot_live(self, scenario, x_cum, u_cum, metrics):
+    def plot_live(self, iteration, scenario, x_cum, u_cum, metrics):
         self.scenario = scenario
         self.x_cum = np.array(x_cum)
         self.u_cum = np.array(u_cum)
@@ -38,7 +38,7 @@ class Plotter:
         plt.legend()
         plt.draw()
         plt.pause(0.05)
-        if config.plot_live_pause:
+        if config.plot_live_pause_iteration is not None and iteration >= config.plot_live_pause_iteration:
             plt.waitforbuttonpress()
 
 
@@ -60,11 +60,13 @@ class Plotter:
             L = np.round(self.metrics[frame][0], 2)
             ttc= np.round(self.metrics[frame][1], 2)
             intersects = self.metrics[frame][4]
+            is_live = self.metrics[frame][5]
         except Exception as e:
             print(e)
             L = 0
             ttc = 0
             intersects = False
+            is_live = False
         x0_state, x1_state = self.x_cum[0][frame].T.copy(), self.x_cum[1][frame].T.copy()
         x0_state[2] = np.rad2deg(x0_state[2])
         x1_state = self.x_cum[1][frame].T.copy()
@@ -77,14 +79,6 @@ class Plotter:
                            f'Agent 1 X = {x1_state}.',
                            f'Agent 1 U = {u1.T}',
                            f'Agent dist: {dist}']
-
-        is_live = False
-        if config.consider_intersects:
-            if L > config.liveness_threshold or not intersects:
-                is_live = True
-        else:
-            if L > config.liveness_threshold:
-                is_live = True
         
         collides = dist < config.agent_radius * 2 + config.safety_dist
         for state in [x0_state, x1_state]:
@@ -105,7 +99,8 @@ class Plotter:
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
         
         if config.plot_arrows:
-            pos_diff, vel_diff = self.metrics[frame][2], self.metrics[frame][3]
+            pos_diff, vel_diff = self.metrics[frame][2], self.metrics[frame][3] * -3.0
+            print(pos_diff, vel_diff)
             self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
             self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
         

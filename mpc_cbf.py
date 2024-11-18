@@ -157,13 +157,9 @@ class MPC:
         if self.opp_state is None:
             return
 
-        l, _, _, _, intersecting = calculate_all_metrics(self.initial_state.copy(), self.opp_state)
-        if config.consider_intersects:
-            if l > config.liveness_threshold or not intersecting:
-                return
-        else:
-            if l > config.liveness_threshold:
-                return
+        l, _, _, _, intersecting, is_live = calculate_all_metrics(self.initial_state.copy(), self.opp_state)
+        if is_live:
+            return
 
         print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
 

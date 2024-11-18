@@ -3,7 +3,7 @@ import config
 import numpy as np
 from model_utils import ModelDefinition
 from models import FCNet, BarrierNet
-from util import calculate_liveliness, get_x_is_d_goal_input
+from util import get_x_is_d_goal_input
 
 
 class ModelController:

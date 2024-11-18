@@ -13,7 +13,9 @@ liveliness = True
 liveness_threshold = 1.0
 plot_rate = 1
 plot_live = True
-plot_live_pause = False
+plot_live_pause_iteration = None
+# plot_live_pause_iteration = 0
+# plot_live_pause_iteration = 60
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
@@ -98,7 +100,7 @@ train_data_paths = [
 
 add_control_limits = True
 separate_penalty_for_opp = True
-add_liveness_filter = False
+add_liveness_filter = True
 x_is_d_goal = True
 train_batch_size = 64
 use_cuda = torch.cuda.is_available()
@@ -113,5 +115,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_base_w_lims_opp_pen_dgoal_obs_l_s_'
+saveprefix = f'weights/model_smg_w_lims_opp_pen_dgoal_obs_l_s_'
 saveprefix += str(agent_to_train)

@@ -1,56 +1,105 @@
+import torch
+import config
 import numpy as np
 import numpy.linalg as LA
 
 EPSILON = 0.001
 
+class STEFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input):
+        return (input > 0).float()
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return torch.nn.functional.hardtanh(grad_output)
+
+# class StraightThroughEstimator(torch.nn.Module):
+#     def __init__(self):
+#         super(StraightThroughEstimator, self).__init__()
+
+#     def forward(self, x):
+#         x = STEFunction.apply(x)
+#         return x
+
 def angle_between_vectors(v1, v2):
-    return np.arccos(np.dot(v1, v2) / (LA.norm(v1) * LA.norm(v2) + EPSILON))
+    dot_product = np.dot(v1, v2) / (LA.norm(v1) * LA.norm(v2) + EPSILON)
+    # print("\tNumpy dot product:", dot_product)
+    return np.arccos(np.clip(dot_product, -1, 1))
 
-def intersect_lines(A, d1, C, d2):
-    # Convert points and directions to NumPy arrays
-    A, d1, C, d2 = map(np.array, (A, d1, C, d2))
+# dx and dy are opp_pos - ego_pos
+def calculate_is_not_live_torch(dx, dy, ego_theta, ego_vel, opp_theta, opp_vel):
+    ego_vel = torch.tensor([torch.cos(ego_theta), torch.sin(ego_theta)]).to(config.device) * ego_vel
+    opp_vel = torch.tensor([torch.cos(opp_theta), torch.sin(opp_theta)]).to(config.device) * opp_vel
 
-    # Construct the coefficient matrix and the right-hand side vector
-    matrix = np.array([[d1[0], -d2[0]], [d1[1], -d2[1]]])
-    rhs = C - A
+    ego_v = torch.linalg.vector_norm(ego_vel)
+    opp_v = torch.linalg.vector_norm(opp_vel)
 
-    # Check if the matrix is invertible
-    if np.linalg.det(matrix) == 0:
-        return None  # Lines are parallel or coincident
-
-    # Solve for t and u
-    t, u = np.linalg.solve(matrix, rhs)
-
-    # Compute the intersection point using t
-    intersection = A + t * d1
-    return tuple(intersection)
-
-def calculate_liveliness(ego_state, opp_state):
-    v_ego = np.round(ego_state[3], 2)
-    v_opp = np.round(opp_state[3], 2)
-    ego_vel = np.array([v_ego * np.cos(ego_state[2]), v_ego * np.sin(ego_state[2])])
-    opp_vel = np.array([v_opp * np.cos(opp_state[2]), v_opp * np.sin(opp_state[2])])
+    # Calculate liveness
     vel_diff = ego_vel - opp_vel
-    pos_diff = ego_state[:2] - opp_state[:2]
-    l = np.arccos(-(np.dot(vel_diff,pos_diff))/(LA.norm(vel_diff)*LA.norm(pos_diff)+EPSILON))
+    # pos_diff = ego_state[:2] - opp_state[:2]
+    pos_diff = torch.tensor([dx, dy]).to(config.device)
+    dot_product = torch.linalg.vecdot(pos_diff, vel_diff) / (opp_v * ego_v + EPSILON)
+    l = torch.pi - torch.arccos(torch.clamp(dot_product, min=-1.0, max=1.0))
+
+    # Check intersection
+    ego_vel_uvec = ego_vel / ego_v
+    opp_vel_uvec = opp_vel / opp_v
+    det = opp_vel_uvec[0] * ego_vel_uvec[1] - opp_vel_uvec[1] * ego_vel_uvec[0]
+    u = (dy * opp_vel_uvec[0] - dx * opp_vel_uvec[1]) * det
+    v = (dy * ego_vel_uvec[0] - dx * ego_vel_uvec[1]) * det
+
+    # print("Torch pos diff:", pos_diff, vel_diff, dot_product)
+    # print("LIVELINESS_TORCH:", l, u, v)
+
+    # is_not_live = l < config.liveness_threshold and u > 0 and v > 0
+    # l < config.liveness_threshold
+    # config.liveness_threshold > l
+    # config.liveness_threshold - l > 0
+
+    is_not_live = STEFunction.apply(config.liveness_threshold - l) * STEFunction.apply(u) * STEFunction.apply(v)
+    return is_not_live
+
+
+def calculate_liveliness(ego_pos, opp_pos, ego_vel, opp_vel):
+    vel_diff = ego_vel - opp_vel
+    pos_diff = ego_pos - opp_pos
+    # print("Numpy pos diff:", pos_diff, vel_diff)
+    # print("Angle between:", angle_between_vectors(pos_diff, vel_diff))
+    l = np.pi - angle_between_vectors(pos_diff, vel_diff)
     ttc = LA.norm(pos_diff) / LA.norm(vel_diff) # Time-to-collision
     # Liveness should only matter if you're both moving towards the collision point.
     return l, ttc, pos_diff, vel_diff
 
+
+def check_intersection(ego_pos, opp_pos, ego_vel, opp_vel):
+    ego_vel_uvec = ego_vel / np.linalg.norm(ego_vel)
+    opp_vel_uvec = opp_vel / np.linalg.norm(opp_vel)
+    dx = opp_pos[0] - ego_pos[0]
+    dy = opp_pos[1] - ego_pos[1]
+    det = opp_vel_uvec[0] * ego_vel_uvec[1] - opp_vel_uvec[1] * ego_vel_uvec[0]
+    u = (dy * opp_vel_uvec[0] - dx * opp_vel_uvec[1]) * det
+    v = (dy * ego_vel_uvec[0] - dx * ego_vel_uvec[1]) * det
+
+    return u > 0 and v > 0
+
+
 def calculate_all_metrics(ego_state, opp_state):
-    l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state, opp_state)
     ego_vel_vec = np.array([np.cos(ego_state[2]), np.sin(ego_state[2])]) * ego_state[3]
     opp_vel_vec = np.array([np.cos(opp_state[2]), np.sin(opp_state[2])]) * opp_state[3]
-    intersect_point = intersect_lines(ego_state[:2], ego_vel_vec, opp_state[:2], opp_vel_vec)
-    if intersect_point is None:
-        intersecting = False
-    else:
-        egoanglediff = abs(angle_between_vectors(intersect_point - ego_state[:2], ego_vel_vec))
-        oppanglediff = abs(angle_between_vectors(intersect_point - opp_state[:2], opp_vel_vec))
-        # print(f"Ego angle diff: {egoanglediff}, Opp angle diff: {oppanglediff}")
-        intersecting = (egoanglediff <= np.pi/2) and (oppanglediff <= np.pi/2)
+    l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state[:2], opp_state[:2], ego_vel_vec, opp_vel_vec)
 
-    return l, ttc, pos_diff, vel_diff, intersecting
+    intersecting = check_intersection(ego_state[:2], opp_state[:2], ego_vel_vec, opp_vel_vec)
+
+    is_live = False
+    if config.consider_intersects:
+        if l > config.liveness_threshold or not intersecting:
+            is_live = True
+    else:
+        if l > config.liveness_threshold:
+            is_live = True
+
+    return l, ttc, pos_diff, vel_diff, intersecting, is_live
 
 
 def get_x_is_d_goal_input(inputs, goal):
@@ -58,8 +107,8 @@ def get_x_is_d_goal_input(inputs, goal):
     y = goal[1] - inputs[1]
     theta = inputs[2]
     v = inputs[3]
-    opp_x = inputs[4] - inputs[0]
-    opp_y = inputs[5] - inputs[1]
+    opp_x = inputs[4] - inputs[0] # opp_x - ego_x (ego frame)
+    opp_y = inputs[5] - inputs[1] # opp_y - ego_y (ego frame)
     opp_theta = inputs[6]
     opp_v = inputs[7]
     inputs = np.array([x, y, theta, v, opp_x, opp_y, opp_theta, opp_v])
