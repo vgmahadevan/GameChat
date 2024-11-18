@@ -42,6 +42,8 @@ def calculate_is_not_live_torch(dx, dy, ego_theta, ego_v, opp_theta, opp_v):
     angle_between = torch.arccos(torch.clamp(dot_product, min=-1.0, max=1.0))
     l = torch.pi - angle_between
 
+    # b(x) = ((x_0 - )) + config.liveness_threshold - torch.pi
+
     # Check intersection
     ego_vel_uvec = ego_vel / ego_v
     opp_vel_uvec = opp_vel / opp_v

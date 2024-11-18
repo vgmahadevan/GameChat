@@ -46,7 +46,7 @@ controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacl
 
 # Setup agent 1
 # controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
-controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_g_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
@@ -57,6 +57,10 @@ controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacl
 # controllers.append(ModelController("weights/model_smg_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model4_base_w_lims_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_w_lims_opp_pen_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_w_lims_opp_pen_dgoal_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_smg_w_lims_opp_pen_dgoal_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_w_lims_opp_pen_dgoal_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_smg_w_lims_opp_pen_dgoal_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model2_smg_w_lims_opp_pen_dgoal_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model20_smg_w_lims_opp_pen_dgoal_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 run_simulation(scenario, env, controllers, logger, plotter)

@@ -130,14 +130,16 @@ if __name__ == "__main__":
             x = x.to(config.device)
             ctrl = model(x, 0)
             
+            unnorm_ctrl = ctrl * output_std + output_mean
             if config.use_barriernet:
-                ctrl1.append(ctrl[0])
-                ctrl2.append(ctrl[1])
+                ctrl1.append(unnorm_ctrl[0])
+                ctrl2.append(unnorm_ctrl[1])
             else:
-                ctrl1.append(ctrl[0,0].item())
-                ctrl2.append(ctrl[0,1].item())
-            ctrl1_real.append(y[0])
-            ctrl2_real.append(y[1])
+                ctrl1.append(unnorm_ctrl[0,0].item())
+                ctrl2.append(unnorm_ctrl[0,1].item())
+            unnorm_y = y * output_std + output_mean
+            ctrl1_real.append(unnorm_y[0])
+            ctrl2_real.append(unnorm_y[1])
             tr.append(t0)
             t0 = t0 + 0.2
 

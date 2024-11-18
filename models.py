@@ -57,7 +57,7 @@ class BarrierNet(nn.Module):
         if self.model_definition.separate_penalty_for_opp:
             self.fc33 = nn.Linear(model_definition.nHidden23, N_CL).double()
         if self.model_definition.add_liveness_filter:
-            self.fc34 = nn.Linear(model_definition.nHidden24, 2).double()
+            self.fc34 = nn.Linear(model_definition.nHidden24, 1).double()
 
         if model_definition.add_control_limits:
             self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
@@ -159,10 +159,7 @@ class BarrierNet(nn.Module):
             G.append(obs_G)
             h.append(obs_h)
 
-        print(len(G), len(h))
-        print(G[0].shape, h[0].shape)
-        # print(1/0)
-
+        # Add control limits as soft inequality constraints.
         if self.model_definition.add_control_limits:
             G_lims, h_lims = [], []
             for i in range(len(x0)):
@@ -220,41 +217,55 @@ class BarrierNet(nn.Module):
                         print(opp_state)
                         print(1/0)
 
-
                 # If we're going faster, use the speeding up CBF.
                 # Otherwise, use the slowing down CBF.
-#                if v[i] > x0[i][OPP_V_IDX]:
-                if False: # For now force it to slow down, just for testing purposes.
+                if v[i] > x0[i][OPP_V_IDX]:
+                # if False: # For now force it to slow down, just for testing purposes.
                     # ego_v - zeta * opp_v >= 0.0
-                    # b(x) = opp_v - zeta * ego_v
+                    # b(x) = ego_v - zeta * opp_v
+                    # F_g b(x) = 1.0
+                    # -1.0 * u(x) <= p(x) * (opp_v - zeta * ego_v)
                     barrier = v[i] - config.zeta * x0[i][OPP_V_IDX]
+                    control_scalar_factor = -1.0
                 else:
                     # opp_v - zeta * ego_v >= 0.0
                     # b(x) = opp_v - zeta * ego_v
+                    # F_g b(x) = -zeta
+                    # zeta * u(x) <= p(x) * (opp_v - zeta * ego_v)
+                    control_scalar_factor = config.zeta
                     barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
 
+                if is_not_live.item() == 0:
+                    control_scalar_factor = 1.0
+
                 # u(x) <= p(x) * b(x)
-                is_not_live -= 0.00001
+                is_not_live *= 0.998 + 0.001
                 # is_not_live = torch.tensor(0.99999)
-                live_G = Variable(is_not_live*torch.tensor([0.0, 1.0]).to(config.device)).to(config.device)
+                live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
                 live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                live_h = torch.reshape(is_not_live*(x34[i,0])*(barrier + x34[i,1]), (1, 1)).to(config.device)
-                if is_not_live.item() > 0:
-                    print(live_G, live_h)
-                    print("\t", barrier, x34[i,0], x34[i,1])
+                h_val_live = torch.tensor([config.accel_limit]).to(config.device) + self.s1
+                h_val_unlive = (x34[i,0])*(barrier)
+                live_h = torch.reshape(is_not_live*h_val_unlive + (1.0 - is_not_live)*h_val_live, (1, 1)).to(config.device)
+                # if is_not_live.item() > 0:
+                # print("Is not live:", is_not_live.item())
+                # print("\tH live:", h_val_live)
+                # print("\tH unlive:", h_val_unlive)
+                # print("\tBarrier:", barrier, x34[i,0])
+                # # print("\tBarrier:", barrier, x34[i,0], x34[i,1])
+                # print("\tLiveness ineq:", live_G, live_h)
 
                 G_live.append(live_G)
                 h_live.append(live_h)
 
             G_live = torch.cat(G_live)
             h_live = torch.cat(h_live)
-            print(G_live.shape, h_live.shape)
+            print("Shapes:", G_live.shape, h_live.shape)
             G.append(G_live)
             h.append(h_live)
 
 
         
-        print(len(G), len(h))
+        print("Num ineq", len(G), len(h))
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)

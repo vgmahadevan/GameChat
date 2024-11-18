@@ -87,15 +87,15 @@ agent_to_train = 1
 #                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
 # train_data_paths = ['obs_doorway_with_offsets/']
 train_data_paths = [
-    # 'obs_doorway_with_offsets/l_0_faster_off-1.json',
-    # 'obs_doorway_with_offsets/l_0_faster_off-3.json',
-    # 'obs_doorway_with_offsets/l_0_faster_off-5.json',
-    # 'obs_doorway_with_offsets/l_0_faster_off-7.json',
+    'obs_doorway_with_offsets/l_0_faster_off-1.json',
+    'obs_doorway_with_offsets/l_0_faster_off-3.json',
+    'obs_doorway_with_offsets/l_0_faster_off-5.json',
+    'obs_doorway_with_offsets/l_0_faster_off-7.json',
     'obs_doorway_with_offsets/l_0_faster_off0.json',
-    # 'obs_doorway_with_offsets/l_0_faster_off5.json',
-    # 'obs_doorway_with_offsets/l_0_faster_off7.json',
+    'obs_doorway_with_offsets/l_0_faster_off5.json',
+    'obs_doorway_with_offsets/l_0_faster_off7.json',
     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    # 'obs_doorway_with_offsets/l_1_faster_off0.json',
+    'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
 add_control_limits = True
@@ -106,7 +106,7 @@ train_batch_size = 64
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 30
+epochs = 20
 nHidden1 = 256
 nHidden21 = 64
 nHidden22 = 64
@@ -115,5 +115,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_smg_w_lims_opp_pen_dgoal_obs_l_s_'
+saveprefix = f'weights/model20_smg_w_lims_opp_pen_dgoal_obs_l_saf_'
 saveprefix += str(agent_to_train)
