@@ -57,7 +57,7 @@ class BarrierNet(nn.Module):
         if self.model_definition.separate_penalty_for_opp:
             self.fc33 = nn.Linear(model_definition.nHidden23, N_CL).double()
         if self.model_definition.add_liveness_filter:
-            self.fc34 = nn.Linear(model_definition.nHidden24, 1).double()
+            self.fc34 = nn.Linear(model_definition.nHidden24, 2).double()
 
         if model_definition.add_control_limits:
             self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
@@ -182,7 +182,7 @@ class BarrierNet(nn.Module):
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, -1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([0.0])).to(config.device) + self.s1
+                lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s1
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
                 G_lims.append(lim_G)
                 h_lims.append(lim_h)
@@ -200,25 +200,25 @@ class BarrierNet(nn.Module):
                 # is_not_live will be 1 if it's not live, and 0 if it is live.
                 is_not_live = calculate_is_not_live_torch(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
                 if is_not_live.item() != 0:
-                    print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
-                    print(is_not_live)
+                    # print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
+                    # print(is_not_live)
                     print("USING LIVENESS FILTER!!!", i)
+                    # ego_state = np.array([px[i].cpu().item(), py[i].cpu().item(), theta[i].cpu().item(), v[i].cpu().item()])
+                    # opp_state = np.array([(px[i] + x0[i,OPP_X_IDX]).cpu().item(), (py[i] + x0[i,OPP_Y_IDX]).cpu().item(), x0[i,OPP_THETA_IDX].cpu().item(), x0[i,OPP_V_IDX].cpu().item()])
+                    # print(ego_state, opp_state)
+                    # print(calculate_all_metrics(ego_state, opp_state))
+                    # print(1/0)
+                else:
                     ego_state = np.array([px[i].cpu().item(), py[i].cpu().item(), theta[i].cpu().item(), v[i].cpu().item()])
                     opp_state = np.array([(px[i] + x0[i,OPP_X_IDX]).cpu().item(), (py[i] + x0[i,OPP_Y_IDX]).cpu().item(), x0[i,OPP_THETA_IDX].cpu().item(), x0[i,OPP_V_IDX].cpu().item()])
-                    print(ego_state, opp_state)
-                    print(calculate_all_metrics(ego_state, opp_state))
-                    print(1/0)
-
-                ego_state = np.array([px[i].cpu().item(), py[i].cpu().item(), theta[i].cpu().item(), v[i].cpu().item()])
-                opp_state = np.array([(px[i] + x0[i,OPP_X_IDX]).cpu().item(), (py[i] + x0[i,OPP_Y_IDX]).cpu().item(), x0[i,OPP_THETA_IDX].cpu().item(), x0[i,OPP_V_IDX].cpu().item()])
-                metrics = calculate_all_metrics(ego_state, opp_state)
-                if metrics[-1]:
-                    print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
-                    print(is_not_live)
-                    print("UNLIVE!", metrics)
-                    print(ego_state)
-                    print(opp_state)
-                    print(1/0)
+                    metrics = calculate_all_metrics(ego_state, opp_state)
+                    if not metrics[-1]:
+                        print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
+                        print(is_not_live)
+                        print("UNLIVE!", metrics)
+                        print(ego_state)
+                        print(opp_state)
+                        print(1/0)
 
 
                 # If we're going faster, use the speeding up CBF.
@@ -235,9 +235,13 @@ class BarrierNet(nn.Module):
 
                 # u(x) <= p(x) * b(x)
                 is_not_live -= 0.00001
+                # is_not_live = torch.tensor(0.99999)
                 live_G = Variable(is_not_live*torch.tensor([0.0, 1.0]).to(config.device)).to(config.device)
                 live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                live_h = torch.reshape(is_not_live*(x34[i,0])*barrier, (1, 1)).to(config.device)
+                live_h = torch.reshape(is_not_live*(x34[i,0])*(barrier + x34[i,1]), (1, 1)).to(config.device)
+                if is_not_live.item() > 0:
+                    print(live_G, live_h)
+                    print("\t", barrier, x34[i,0], x34[i,1])
 
                 G_live.append(live_G)
                 h_live.append(live_h)
