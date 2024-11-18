@@ -160,6 +160,11 @@ class BarrierNet(nn.Module):
             h.append(obs_h)
 
         # Add control limits as soft inequality constraints.
+        is_not_lives = [calculate_is_not_live_torch(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX]) for i in range(len(x0))]
+        upper_G_lims = []
+        upper_h_lims = []
+        lower_G_lims = []
+        lower_h_lims = []
         if self.model_definition.add_control_limits:
             G_lims, h_lims = [], []
             for i in range(len(x0)):
@@ -167,13 +172,9 @@ class BarrierNet(nn.Module):
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                 lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s0
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                G_lims.append(lim_G)
-                h_lims.append(lim_h)
+                upper_G_lims.append(lim_G)
+                upper_h_lims.append(lim_h)
 
-            G_lims = torch.cat(G_lims)
-            h_lims = torch.cat(h_lims)
-            G.append(G_lims)
-            h.append(h_lims)
 
             G_lims, h_lims = [], []
             for i in range(len(x0)):
@@ -181,21 +182,16 @@ class BarrierNet(nn.Module):
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                 lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s1
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                G_lims.append(lim_G)
-                h_lims.append(lim_h)
-
-            G_lims = torch.cat(G_lims)
-            h_lims = torch.cat(h_lims)
-            G.append(G_lims)
-            h.append(h_lims)
+                lower_G_lims.append(lim_G)
+                lower_h_lims.append(lim_h)
 
 
         # Add in liveness CBF
         if self.model_definition.add_liveness_filter:
-            G_live, h_live = [], []
+            # G_live, h_live = [], []
             for i in range(len(x0)):
                 # is_not_live will be 1 if it's not live, and 0 if it is live.
-                is_not_live = calculate_is_not_live_torch(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
+                is_not_live = is_not_lives[i]
                 if is_not_live.item() != 0:
                     # print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
                     # print(is_not_live)
@@ -217,35 +213,58 @@ class BarrierNet(nn.Module):
                         print(opp_state)
                         print(1/0)
 
-                # If we're going faster, use the speeding up CBF.
-                # Otherwise, use the slowing down CBF.
-                if v[i] > x0[i][OPP_V_IDX]:
-                # if False: # For now force it to slow down, just for testing purposes.
-                    # ego_v - zeta * opp_v >= 0.0
-                    # b(x) = ego_v - zeta * opp_v
-                    # F_g b(x) = 1.0
-                    # -1.0 * u(x) <= p(x) * (opp_v - zeta * ego_v)
-                    barrier = v[i] - config.zeta * x0[i][OPP_V_IDX]
-                    control_scalar_factor = -1.0
-                else:
-                    # opp_v - zeta * ego_v >= 0.0
-                    # b(x) = opp_v - zeta * ego_v
-                    # F_g b(x) = -zeta
-                    # zeta * u(x) <= p(x) * (opp_v - zeta * ego_v)
-                    control_scalar_factor = config.zeta
-                    barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
+                if is_not_live.item() != 0:
+                    # If we're going faster, use the speeding up CBF.
+                    # Otherwise, use the slowing down CBF.
+                    if v[i] > x0[i][OPP_V_IDX]:
+                    # if False: # For now force it to slow down, just for testing purposes.
+                        # ego_v - zeta * opp_v >= 0.0
+                        # b(x) = ego_v - zeta * opp_v
+                        # F_g b(x) = 1.0
+                        # -1.0 * u(x) <= p(x) * (opp_v - zeta * ego_v)
+                        barrier = v[i] - config.zeta * x0[i][OPP_V_IDX]
+                        control_scalar_factor = -1.0
+                        penalty = x34[i,0]
+                    else:
+                        # opp_v - zeta * ego_v >= 0.0
+                        # b(x) = opp_v - zeta * ego_v
+                        # F_g b(x) = -zeta
+                        # zeta * u(x) <= p(x) * (opp_v - zeta * ego_v)
+                        control_scalar_factor = config.zeta
+                        barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
+                        penalty = x34[i,0]
 
-                if is_not_live.item() == 0:
-                    control_scalar_factor = 1.0
+                    # factor * u(x) <= p(x) * b(x)
+                    live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
+                    live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                    live_h = torch.reshape((penalty)*(barrier), (1, 1)).to(config.device)
 
-                # u(x) <= p(x) * b(x)
-                is_not_live *= 0.998 + 0.001
-                # is_not_live = torch.tensor(0.99999)
-                live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
-                live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                h_val_live = torch.tensor([config.accel_limit]).to(config.device) + self.s1
-                h_val_unlive = (x34[i,0])*(barrier)
-                live_h = torch.reshape(is_not_live*h_val_unlive + (1.0 - is_not_live)*h_val_live, (1, 1)).to(config.device)
+                    if control_scalar_factor > 0:
+                        upper_G_lims[i] = live_G
+                        upper_h_lims[i] = live_h
+                    else:
+                        lower_G_lims[i] = live_G
+                        lower_h_lims[i] = live_h
+
+                # else:
+
+                #     control_scalar_factor = 1.0
+
+                #     lim_G = Variable(torch.tensor([0.0, 1.0]))
+                #     lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                #     lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s0
+                #     lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                #     G_lims.append(lim_G)
+                #     h_lims.append(lim_h)
+
+
+                # is_not_live *= 0.998 + 0.001
+                # live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
+                # live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                # h_val_live = torch.tensor([config.accel_limit]).to(config.device) + self.s1
+                # h_val_unlive = (x34[i,0])*(barrier)
+                # live_h = torch.reshape(is_not_live*h_val_unlive + (1.0 - is_not_live)*h_val_live, (1, 1)).to(config.device)
+
                 # if is_not_live.item() > 0:
                 # print("Is not live:", is_not_live.item())
                 # print("\tH live:", h_val_live)
@@ -254,22 +273,28 @@ class BarrierNet(nn.Module):
                 # # print("\tBarrier:", barrier, x34[i,0], x34[i,1])
                 # print("\tLiveness ineq:", live_G, live_h)
 
-                G_live.append(live_G)
-                h_live.append(live_h)
+                # G_live.append(live_G)
+                # h_live.append(live_h)
 
-            G_live = torch.cat(G_live)
-            h_live = torch.cat(h_live)
-            print("Shapes:", G_live.shape, h_live.shape)
-            G.append(G_live)
-            h.append(h_live)
+            # G_live = torch.cat(G_live)
+            # h_live = torch.cat(h_live)
+            # print("Shapes:", G_live.shape, h_live.shape)
+            # G.append(G_live)
+            # h.append(h_live)
 
+        G.append(torch.cat(upper_G_lims))
+        h.append(torch.cat(upper_h_lims))
+
+        G.append(torch.cat(lower_G_lims))
+        h.append(torch.cat(lower_h_lims))
 
         
         print("Num ineq", len(G), len(h))
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
-        num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2 + self.model_definition.add_liveness_filter
+        # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2 + self.model_definition.add_liveness_filter
+        num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2
         assert(G.shape == (nBatch, num_ineq, N_CL))
         assert(h.shape == (nBatch, num_ineq))
         e = Variable(torch.Tensor()).to(config.device)

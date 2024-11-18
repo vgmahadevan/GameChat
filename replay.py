@@ -24,17 +24,6 @@ for filename in os.listdir(dirname):
 bags.sort()
 
 # bags = ['obs_doorway_with_offsets/l_0_faster_off0.json']
-bags = [
-    'obs_doorway_with_offsets/l_0_faster_off-1.json',
-    'obs_doorway_with_offsets/l_0_faster_off-3.json',
-    'obs_doorway_with_offsets/l_0_faster_off-5.json',
-    'obs_doorway_with_offsets/l_0_faster_off-7.json',
-    'obs_doorway_with_offsets/l_0_faster_off0.json',
-    'obs_doorway_with_offsets/l_0_faster_off5.json',
-    'obs_doorway_with_offsets/l_0_faster_off7.json',
-    'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    'obs_doorway_with_offsets/l_1_faster_off0.json',
-]
 
 for bag in bags:
     print("Viewing", bag)

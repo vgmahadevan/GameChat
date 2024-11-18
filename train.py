@@ -1,6 +1,7 @@
 import os
 import torch
 import config
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from model_utils import ModelDefinition
 from models import FCNet, BarrierNet
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     loss_fn = torch.nn.MSELoss()
 
     train_losses, test_losses = [], []
-    for t in range(config.epochs):
+    for t in tqdm(range(config.epochs)):
         print(f"Epoch {t+1}\n-------------------------------")
         train_losses = train(train_dataloader, model, loss_fn, optimizer, train_losses)
         print("Finished training epoch")
@@ -143,7 +144,7 @@ if __name__ == "__main__":
             tr.append(t0)
             t0 = t0 + 0.2
 
-    print("Test done!")    
+    print("Test done!")
 
     plt.figure(1)
     plt.plot(tr, ctrl1_real, color = 'red', label = 'actual(optimal)')
