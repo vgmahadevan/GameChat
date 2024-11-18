@@ -3,6 +3,7 @@ import json
 import torch
 import config
 import numpy as np
+from util import get_x_is_d_goal_input
 
 class Dataset(torch.utils.data.Dataset):
     # Characterizes a dataset for PyTorch
@@ -66,8 +67,8 @@ class BlankLogger:
 
 # Extracts inputs and outputs from data files.
 class DataGenerator:
-    def __init__(self, filenames, model_definition):
-        self.model_definition = model_definition
+    def __init__(self, filenames, x_is_d_goal):
+        self.x_is_d_goal = x_is_d_goal
         self.data_streams = []
         for filename in sorted(filenames):
             if os.path.isdir(filename):
@@ -88,23 +89,10 @@ class DataGenerator:
         for data_stream in self.data_streams:
             for iteration in data_stream['iterations']:
                 # 4 + 4 = 8 inputs.
-                # if self.model_definition.
                 inputs = iteration['states'][agent_idx] + iteration['states'][1 - agent_idx]
+                if self.x_is_d_goal:
+                    inputs = get_x_is_d_goal_input(inputs, iteration['goals'][agent_idx])
 
-                # 4 + 4 + 4 = 10 inputs.
-                if self.model_definition.include_goal:
-                    dx = iteration['goals'][agent_idx][0] - iteration['states'][agent_idx][0]
-                    dy = iteration['goals'][agent_idx][1] - iteration['states'][agent_idx][1]
-                    inputs = inputs + [dx, dy]
-                else:
-                    dx = iteration['states'][1 - agent_idx][0] - iteration['states'][agent_idx][0]
-                    dy = iteration['states'][1 - agent_idx][1] - iteration['states'][agent_idx][1]
-                    dtheta = iteration['states'][1 - agent_idx][2] - iteration['states'][agent_idx][2]
-                    dtheta %= (np.pi * 2.0)
-                    if dtheta > np.pi:
-                        dtheta -= np.pi * 2.0
-                    dv = iteration['states'][1 - agent_idx][3] - iteration['states'][agent_idx][3]
-                    inputs = iteration['states'][agent_idx] + [dx, dy, dtheta, dv]
                 data.append(np.array(inputs))
         data = np.array(data)
 

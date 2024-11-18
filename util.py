@@ -51,3 +51,17 @@ def calculate_all_metrics(ego_state, opp_state):
         intersecting = (egoanglediff <= np.pi/2) and (oppanglediff <= np.pi/2)
 
     return l, ttc, pos_diff, vel_diff, intersecting
+
+
+def get_x_is_d_goal_input(inputs, goal):
+    x = goal[0] - inputs[0]
+    y = goal[1] - inputs[1]
+    theta = inputs[2]
+    v = inputs[3]
+    opp_x = inputs[4] - inputs[0]
+    opp_y = inputs[5] - inputs[1]
+    opp_theta = inputs[6]
+    opp_v = inputs[7]
+    inputs = np.array([x, y, theta, v, opp_x, opp_y, opp_theta, opp_v])
+    return inputs
+

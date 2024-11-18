@@ -43,8 +43,6 @@ class BarrierNet(nn.Module):
         self.p2 = 0
 
         self.n_features = 8
-        if model_definition.include_goal:
-            self.n_features += 2
         
         self.fc1 = nn.Linear(self.n_features, model_definition.nHidden1).double()
         self.fc21 = nn.Linear(model_definition.nHidden1, model_definition.nHidden21).double()
@@ -106,6 +104,9 @@ class BarrierNet(nn.Module):
     def dCBF(self, x0, x31, x32, x33, x34, sgn, nBatch):
         px = x0[:,EGO_X_IDX]
         py = x0[:,EGO_Y_IDX]
+        if self.model_definition.x_is_d_goal:
+            px = self.goal[0] - px
+            py = self.goal[1] - py
         theta = x0[:,EGO_THETA_IDX]
         v = x0[:,EGO_V_IDX]
         # dx = x0[:,GOAL_DX_IDX]
@@ -138,8 +139,11 @@ class BarrierNet(nn.Module):
 
         for opp_x, opp_y, opp_theta, opp_vel in opps:
             R = config.agent_radius + config.agent_radius + config.safety_dist
-            dx = (px - opp_x)
-            dy = (py - opp_y)
+            if self.model_definition.x_is_d_goal:
+                dx, dy = -opp_x, -opp_y
+            else:
+                dx = (px - opp_x)
+                dy = (py - opp_y)
             opp_sin_theta = torch.sin(opp_theta)
             opp_cos_theta = torch.cos(opp_theta)
         
@@ -248,8 +252,12 @@ class BarrierNet(nn.Module):
             self.p1 = x32[0,0]
             self.p2 = x32[0,1]
             print(x31[0].cpu())
-            x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
-        
+            try:
+                x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
+            except Exception as e:
+                print("ERROR WHEN SOLVING FOR OPTIMIZER, USING REFERENCE CONTROL INSTEAD:", x31)
+                x = x31[0].cpu()
+       
         return x
 
 

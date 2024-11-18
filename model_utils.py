@@ -24,7 +24,6 @@ def solver(Q, p, G, h):
 class ModelDefinition:
     is_barriernet: bool
     weights_path: Optional[str]
-    include_goal: bool # Defaults = false
     nHidden1: int
     nHidden21: int
     nHidden22: Optional[int]
@@ -50,12 +49,12 @@ class ModelDefinition:
             path_dir = os.path.dirname(path)
             weights_path = os.path.join(path_dir, data['weights_path'])
             data['weights_path'] = weights_path
-            if 'include_goal' not in data:
-                data['include_goal'] = False
             if 'add_control_limits' not in data:
                 data['add_control_limits'] = False
             if 'add_liveness_filter' not in data:
                 data['add_liveness_filter'] = False
             if 'separate_penalty_for_opp' not in data:
                 data['separate_penalty_for_opp'] = False
+            if 'x_is_d_goal' not in data:
+                data['x_is_d_goal'] = False
             return ModelDefinition(**data)

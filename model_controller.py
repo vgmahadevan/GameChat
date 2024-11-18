@@ -2,8 +2,8 @@ import torch
 import config
 import numpy as np
 from model_utils import ModelDefinition
-from models import FCNet, BarrierNet, BarrierNetDOpp
-from util import calculate_liveliness
+from models import FCNet, BarrierNet
+from util import calculate_liveliness, get_x_is_d_goal_input
 
 
 class ModelController:
@@ -11,7 +11,7 @@ class ModelController:
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.goal = goal
         if self.model_definition.is_barriernet:
-            self.model = BarrierNet(self.model_definition, static_obs).to(config.device)
+            self.model = BarrierNet(self.model_definition, static_obs, goal).to(config.device)
         else:
             self.model = FCNet(self.model_definition).to(config.device)
         print(self.model_definition.weights_path)
@@ -28,10 +28,8 @@ class ModelController:
     def make_step(self, timestamp, initial_state):
         self.initial_state = initial_state
         model_input_original = np.append(self.initial_state, self.opp_state)
-        if self.model_definition.include_goal:
-            dx = self.goal[0] - self.initial_state[0]
-            dy = self.goal[1] - self.initial_state[1]
-            model_input_original = np.append(model_input_original, [dx, dy])
+        if self.model_definition.x_is_d_goal:
+            model_input_original = get_x_is_d_goal_input(model_input_original, self.goal)
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
 
         with torch.no_grad():

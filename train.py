@@ -3,7 +3,7 @@ import torch
 import config
 import matplotlib.pyplot as plt
 from model_utils import ModelDefinition
-from models import FCNet, BarrierNet, BarrierNetDOpp
+from models import FCNet, BarrierNet
 from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.include_goal)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
@@ -67,7 +67,6 @@ if __name__ == "__main__":
     model_definition = ModelDefinition(
         is_barriernet=config.use_barriernet,
         weights_path=None,
-        include_goal=config.include_goal,
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
@@ -78,11 +77,12 @@ if __name__ == "__main__":
         label_std=output_std.tolist(),
         add_control_limits=config.add_control_limits,
         add_liveness_filter=config.add_liveness_filter,
-        separate_penalty_for_opp=config.separate_penalty_for_opp
+        separate_penalty_for_opp=config.separate_penalty_for_opp,
+        x_is_d_goal=config.x_is_d_goal
     )
 
     if config.use_barriernet:
-        model = BarrierNet(model_definition, generator.get_obstacles()).to(config.device)
+        model = BarrierNet(model_definition, generator.get_obstacles(), generator.data_streams[0]["iterations"][0]["goals"][config.agent_to_train]).to(config.device)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)

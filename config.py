@@ -69,9 +69,6 @@ COST_MATRICES = {
 
 # Training parameters.
 use_barriernet = True
-# include_goal = True
-smg_barriernet = True
-include_goal = False
 agent_to_train = 1
 
 # train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
@@ -96,18 +93,18 @@ train_data_paths = [
     # 'obs_doorway_with_offsets/l_0_faster_off5.json',
     # 'obs_doorway_with_offsets/l_0_faster_off7.json',
     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    'obs_doorway_with_offsets/l_1_faster_off0.json',
+    # 'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
 add_control_limits = True
 separate_penalty_for_opp = True
 add_liveness_filter = False
-x_is_d_goal = False
-train_batch_size = 32
+x_is_d_goal = True
+train_batch_size = 64
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 20
+epochs = 30
 nHidden1 = 256
 nHidden21 = 64
 nHidden22 = 64
@@ -116,5 +113,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_base_w_lims_opp_pen_obs_l_saf_'
+saveprefix = f'weights/model_base_w_lims_opp_pen_dgoal_obs_l_s_'
 saveprefix += str(agent_to_train)

@@ -56,6 +56,7 @@ controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacl
 # controllers.append(ModelController("weights/model_test2_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_smg_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model4_base_w_lims_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model_base_w_lims_opp_pen_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_w_lims_opp_pen_obs_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_base_w_lims_opp_pen_dgoal_obs_l_s_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 run_simulation(scenario, env, controllers, logger, plotter)
