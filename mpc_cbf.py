@@ -19,12 +19,16 @@ class MPC:
 
     where x'_k = x_{des_k} - x_k
     """
-    def __init__(self, agent_idx, goal, static_obs = [], delay_start = 0.0):
+    def __init__(self, agent_idx, opp_gamma, obs_gamma, live_gamma, liveness_thresh, goal, static_obs = [], delay_start = 0.0):
         self.agent_idx = agent_idx
         self.goal = goal
         self.static_obs = static_obs
         self.delay_start = delay_start
         self.opp_state = None
+        self.opp_gamma = opp_gamma
+        self.obs_gamma = obs_gamma
+        self.live_gamma = live_gamma
+        self.liveness_thresh = liveness_thresh
         self.Q = config.COST_MATRICES[config.dynamics]['Q']
         self.R = config.COST_MATRICES[config.dynamics]['R']
 
@@ -116,13 +120,13 @@ class MPC:
             # -h_k1 + (1 - gamma)*h_k <= 0
             h_k = self.h_obs(self.model.x['x'], obs)
             h_k1 = self.h_obs(x_k1, obs)
-            cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
+            cbf_constraints.append(-h_k1 + (1-self.obs_gamma)*h_k)
 
         obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)
         obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
         h_k = self.h_obs(self.model.x['x'], obs)
         h_k1 = self.h_obs(x_k1, obs)
-        cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
+        cbf_constraints.append(-h_k1 + (1-self.opp_gamma)*h_k)
 
         return cbf_constraints
     
@@ -157,11 +161,11 @@ class MPC:
         if self.opp_state is None:
             return
 
-        l, _, _, _, intersecting, is_live = calculate_all_metrics(self.initial_state.copy(), self.opp_state)
+        l, _, _, _, intersecting, is_live = calculate_all_metrics(self.initial_state.copy(), self.opp_state, self.liveness_thresh)
         if is_live:
             return
 
-        print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
+        # print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
 
         # Get state vector x_{t+k+1}
         A, B = self.env.get_dynamics(self.model.x['x'])
@@ -170,7 +174,7 @@ class MPC:
         # Compute CBF constraints
         h_k = self.h_v(self.model.x['x'], self.opp_state)
         h_k1 = self.h_v(x_k1, self.opp_state)
-        constraint = -h_k1 + (1-config.liveliness_gamma)*h_k
+        constraint = -h_k1 + (1-self.live_gamma)*h_k
         # -h_k1 + (1 - gamma)*h_k <= 0
         # h_k1 >= h_k - gamma*h_k
         # (h_k1 - h_k) >= -gamma*h_k
@@ -214,7 +218,9 @@ class MPC:
 
     def make_step(self, timestamp, x0):
         if timestamp < self.delay_start:
+            self.use_for_training = False
             return np.zeros((config.num_controls, 1))
+        self.use_for_training = True
 
         u1 = self.mpc.make_step(x0)
 

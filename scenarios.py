@@ -21,13 +21,16 @@ def rotate_objs(objs, center, angle):
 
 
 class DoorwayScenario:
-    def __init__(self):
+    def __init__(self, initial_x=-1, initial_y=0.5, goal_x=2, goal_y=0.15):
         self.num_agents = 2
-        goal_y = 0.15
-        self.initial = np.array([[-1, 0.5, 0],
-                    [-1, -0.5, 0]])
-        self.goals = np.array([[2, -goal_y, 0.0],
-                    [2, goal_y, 0.0]])
+        self.initial_x = initial_x
+        self.initial_y = initial_y
+        self.goal_x = goal_x
+        self.goal_y = goal_y
+        self.initial = np.array([[self.initial_x, self.initial_y, 0],
+                    [self.initial_x, -self.initial_y, 0]])
+        self.goals = np.array([[self.goal_x, -self.goal_y, 0.0],
+                    [self.goal_x, self.goal_y, 0.0]])
         if config.dynamics == DynamicsModel.DOUBLE_INTEGRATOR:
             # Set initial state to 0 velocity and goal to 0 velocity.
             zeros = np.zeros((self.num_agents, 1))
@@ -35,9 +38,9 @@ class DoorwayScenario:
             self.goals = np.hstack((self.goals, zeros))
         self.ox = 1
         self.obstacles = []
-        self.starting_y = 0.25
+        self.obs_starting_y = 0.25
         self.obs_length = 1.0
-        for y in np.arange(self.starting_y, 1.15, 0.1):
+        for y in np.arange(self.obs_starting_y, 1.15, 0.1):
             self.obstacles.append((self.ox, y, 0.1))
             self.obstacles.append((self.ox, -y, 0.1))
         self.plot_bounds = np.array([[-2.6, -1], [2.5, 1]])

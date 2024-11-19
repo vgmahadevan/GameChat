@@ -46,14 +46,13 @@ for bag in bags:
     u_cum = [[], []]
     metrics = []
     for sim_iteration, iteration in enumerate(logger.data['iterations']):
-        print(f"\nIteration: {sim_iteration}")
         for agent_idx, state in enumerate(iteration['states']):
             x_cum[agent_idx].append(np.array(state))
 
         for agent_idx, controls in enumerate(iteration['controls']):
             u_cum[agent_idx].append(np.array(controls))
 
-        metrics.append(calculate_all_metrics(x_cum[0][-1], x_cum[1][-1]))
+        metrics.append(calculate_all_metrics(x_cum[0][-1], x_cum[1][-1]), config.liveness_threshold)
 
         # Plots
         if sim_iteration % config.plot_rate == 0 and config.plot_live and plotter is not None:

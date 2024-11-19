@@ -117,8 +117,9 @@ class Environment:
 
         new_states = np.zeros((self.num_agents, config.num_states))
         outputted_controls = np.zeros((self.num_agents, config.num_controls))
+        use_for_training = []
         for agent_idx in range(self.num_agents):
-            print(f"\nRunning Agent: {agent_idx}")
+            # print(f"\nRunning Agent: {agent_idx}")
             controller = controllers[agent_idx]
             initial_state = self.initial_states[agent_idx, :]
             opp_state = self.initial_states[1-agent_idx, :].copy()
@@ -132,10 +133,11 @@ class Environment:
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = self.apply_state_lims(x1.ravel())
             outputted_controls[agent_idx, :] = u1.ravel()
-            print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
+            # print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
+            use_for_training.append(controller.use_for_training)
 
-        if sim_time >= abs(config.agent_zero_offset):
-            logger.log_iteration(self.initial_states, self.goals, outputted_controls)
+        # if sim_time >= abs(config.agent_zero_offset):
+        logger.log_iteration(self.initial_states, self.goals, outputted_controls, use_for_training)
         self.initial_states = new_states.copy()
         self.history.append(new_states.copy())
         return new_states, outputted_controls

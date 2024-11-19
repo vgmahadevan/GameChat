@@ -1,6 +1,8 @@
 import os
+import json
 import torch
 import config
+import shutil
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from model_utils import ModelDefinition
@@ -146,6 +148,29 @@ if __name__ == "__main__":
 
     print("Test done!")
 
+    savefolder = f"train_results/{config.saveprefix.lstrip('weights/')}/"
+    if os.path.exists(savefolder):
+        shutil.rmtree(savefolder, ignore_errors=True)
+    os.mkdir(savefolder)
+    config_json = {
+        'use_barriernet': config.use_barriernet,
+        'agent_to_train': config.agent_to_train,
+        'train_data_paths': config.train_data_paths,
+        'add_control_limits': config.add_control_limits,
+        'separate_penalty_for_opp': config.separate_penalty_for_opp,
+        'add_liveness_filter': config.add_liveness_filter,
+        'x_is_d_goal': config.x_is_d_goal,
+        'train_batch_size': config.train_batch_size,
+        'learning_rate': config.learning_rate,
+        'nHidden1': config.nHidden1,
+        'nHidden21': config.nHidden21,
+        'nHidden22': config.nHidden22,
+        'nHidden23': config.nHidden23,
+        'nHidden24': config.nHidden24,
+        'saveprefix': config.saveprefix,
+    }
+    json.dump(config_json, open(os.path.join(savefolder, "config.json"), "w+"))
+
     plt.figure(1)
     plt.plot(tr, ctrl1_real, color = 'red', label = 'actual(optimal)')
     plt.plot(tr, ctrl1, color = 'blue', label = 'implemented')
@@ -153,7 +178,7 @@ if __name__ == "__main__":
     plt.ylabel('Angular speed (control)')
     plt.xlabel('time')
 
-    plt.savefig('train_results/angular_speed_control.pdf')
+    plt.savefig(os.path.join(savefolder, 'angular_speed_control.pdf'))
 
     plt.figure(2)
     plt.plot(tr, ctrl2_real, color = 'red', label = 'actual(optimal)')
@@ -162,7 +187,7 @@ if __name__ == "__main__":
     plt.ylabel('Acceleration (control)')
     plt.xlabel('time')
 
-    plt.savefig('train_results/acceleration_control.pdf')
+    plt.savefig(os.path.join(savefolder, 'acceleration_control.pdf'))
 
     plt.figure(3)    
     plt.title('Train Loss')
@@ -172,7 +197,7 @@ if __name__ == "__main__":
     plt.xlabel('time')
     plt.ylim(ymin=0.)
 
-    plt.savefig('train_results/train_loss.pdf')
+    plt.savefig(os.path.join(savefolder, 'train_loss.pdf'))
 
     plt.figure(4)
     plt.title('Test Loss')
@@ -182,4 +207,4 @@ if __name__ == "__main__":
     plt.xlabel('time')
     plt.ylim(ymin=0.)
 
-    plt.savefig('train_results/test_loss.pdf')
+    plt.savefig(os.path.join(savefolder, 'test_loss.pdf'))

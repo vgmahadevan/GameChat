@@ -26,6 +26,7 @@ class ModelController:
         self.opp_state = opp_state
     
     def make_step(self, timestamp, initial_state):
+        self.use_for_training = False
         self.initial_state = initial_state
         model_input_original = np.append(self.initial_state, self.opp_state)
         if self.model_definition.x_is_d_goal:

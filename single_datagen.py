@@ -95,8 +95,8 @@ for (starting_0, starting_1, runtime) in starting_states:
     controllers = []
 
     # Setup agents
-    controllers.append(MPC(agent_idx=0, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-    controllers.append(MPC(agent_idx=1, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+    controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+    controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 
     run_simulation(scenario, env, controllers, logger, plotter)
     plt.close()

@@ -72,7 +72,7 @@ class Plotter:
         x1_state = self.x_cum[1][frame].T.copy()
         x1_state[2] = np.rad2deg(x1_state[2])
         dist = np.linalg.norm(x0_state[:2] - x1_state[:2])
-        liveliness_text = [f'Timestamp: {frame * config.sim_ts}',
+        liveliness_text = [f'Iteration: {frame}, Timestamp: {frame * config.sim_ts}',
                            f'Liveliness function = {L}. TTC: {ttc}',
                            f'Agent 0 X = {x0_state}.',
                            f'Agent 0 U = {u0.T}.',

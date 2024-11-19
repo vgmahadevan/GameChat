@@ -42,7 +42,8 @@ sim_steps = int(runtime / sim_ts)              # Number of iteration steps for e
 
 obstacle_avoidance = True
 # Gamma, in essence, is the leniancy on how much we can deprove the CBF.
-obs_gamma = 0.6                            # CBF parameter in [0,1]
+opp_gamma = 0.5                            # CBF parameter in [0,1]
+obs_gamma = 0.3                            # CBF parameter in [0,1]
 liveliness_gamma = 0.3                     # CBF parameter in [0,1]
 # safety_dist = 0.00                         # Safety distance
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
@@ -107,13 +108,14 @@ train_data_paths = [
 
 add_control_limits = True
 separate_penalty_for_opp = True
-add_liveness_filter = True
+add_liveness_filter = False
 x_is_d_goal = True
 train_batch_size = 64
+# train_batch_size = 1
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 30
+epochs = 25
 nHidden1 = 256
 nHidden21 = 64
 nHidden22 = 64
@@ -122,5 +124,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_30_smgbin_w_lims_opp_pen_dgoal_obs_l_all_'
+saveprefix = f'weights/model_25_smgbin_w_lims_opp_pen_dgoal_fixo_obs_l_all_more_'
 saveprefix += str(agent_to_train)

@@ -33,8 +33,12 @@ class BarrierNet(nn.Module):
     def __init__(self, model_definition, static_obstacles, goal):
         super().__init__()
         self.model_definition = model_definition
-        self.mean = torch.from_numpy(np.array(model_definition.input_mean)).to(config.device)
-        self.std = torch.from_numpy(np.array(model_definition.input_std)).to(config.device)
+        self.input_mean = torch.from_numpy(np.array(model_definition.input_mean)).to(config.device)
+        self.input_std = torch.from_numpy(np.array(model_definition.input_std)).to(config.device)
+        self.output_mean_np = np.array(model_definition.label_mean)
+        self.output_std_np = np.array(model_definition.label_std)
+        self.output_mean = torch.from_numpy(self.output_mean_np).to(config.device)
+        self.output_std = torch.from_numpy(self.output_std_np).to(config.device)
         self.static_obstacles = static_obstacles
         self.goal = goal
 
@@ -57,7 +61,7 @@ class BarrierNet(nn.Module):
         if self.model_definition.separate_penalty_for_opp:
             self.fc33 = nn.Linear(model_definition.nHidden23, N_CL).double()
         if self.model_definition.add_liveness_filter:
-            self.fc34 = nn.Linear(model_definition.nHidden24, 1).double()
+            self.fc34 = nn.Linear(model_definition.nHidden24, 2).double()
 
         if model_definition.add_control_limits:
             self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
@@ -70,7 +74,7 @@ class BarrierNet(nn.Module):
 
         # Normal FC network.
         x = x.view(nBatch, -1)
-        x0 = x*self.std + self.mean
+        x0 = x*self.input_std + self.input_mean
         x = F.relu(self.fc1(x))
         
         x21 = F.relu(self.fc21(x))
@@ -204,7 +208,7 @@ class BarrierNet(nn.Module):
                 else:
                     ego_state = np.array([px[i].cpu().item(), py[i].cpu().item(), theta[i].cpu().item(), v[i].cpu().item()])
                     opp_state = np.array([(px[i] + x0[i,OPP_X_IDX]).cpu().item(), (py[i] + x0[i,OPP_Y_IDX]).cpu().item(), x0[i,OPP_THETA_IDX].cpu().item(), x0[i,OPP_V_IDX].cpu().item()])
-                    metrics = calculate_all_metrics(ego_state, opp_state)
+                    metrics = calculate_all_metrics(ego_state, opp_state, config.liveness_threshold)
                     if not metrics[-1]:
                         print(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX])
                         print(is_not_live)
@@ -232,7 +236,7 @@ class BarrierNet(nn.Module):
                         # zeta * u(x) <= p(x) * (opp_v - zeta * ego_v)
                         control_scalar_factor = config.zeta
                         barrier = x0[i][OPP_V_IDX] - config.zeta * v[i]
-                        penalty = x34[i,0]
+                        penalty = x34[i,1]
 
                     # factor * u(x) <= p(x) * b(x)
                     live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
@@ -288,32 +292,47 @@ class BarrierNet(nn.Module):
         G.append(torch.cat(lower_G_lims))
         h.append(torch.cat(lower_h_lims))
 
-        
-        print("Num ineq", len(G), len(h))
+        # NOTE: All of these guys are with respect to the output accel, but doesn't consider that model_output = (actual_output - mean) / std since the output data is normalized.
+        # Thus, actual_output = (model_output * std) + mean
+        # Thus, if our barrier function is Gu <= h
+        # What it currently is is G((actual_output - mean) / std) <= h  -----> G(actual_output - mean) / std <= h
+        # -------> G(actual_output - mean) <= h * std
+
+        # print("Num ineq", len(G), len(h))
+        # for i in range(len(G)):
+        #     print(f"Inequality {i}", G[i], h[i])
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
         # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2 + self.model_definition.add_liveness_filter
         num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2
-        assert(G.shape == (nBatch, num_ineq, N_CL))
-        assert(h.shape == (nBatch, num_ineq))
+        # assert(G.shape == (nBatch, num_ineq, N_CL))
+        # assert(h.shape == (nBatch, num_ineq))
         e = Variable(torch.Tensor()).to(config.device)
         
         # label_std, label_mean = np.array(self.model_definition.label_std), np.array(self.model_definition.label_mean)
         # print("Reference controls:", x31.cpu() * label_std + label_mean)
 
-        if self.training or sgn == 1:    
-            x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
+        x31_actual = x31*self.output_std + self.output_mean
+        # print("X31 actual:", x31_actual)
+        if self.training or sgn == 1:
+            x = QPFunction(verbose = -1)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
+            # x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
+            x = (x - self.output_mean) / self.output_std
         else:
-            self.p1 = x32[0,0]
-            self.p2 = x32[0,1]
-            print(x31[0].cpu())
+            # self.p1 = x32[0,0]
+            # self.p2 = x32[0,1]
+            # print(x31[0].cpu())
             try:
-                x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
+                # x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
+                x = solver(Q[0].double(), x31_actual[0].double(), G[0].double(), h[0].double())
+                x = np.array([x[0], x[1]])
             except Exception as e:
                 print("ERROR WHEN SOLVING FOR OPTIMIZER, USING REFERENCE CONTROL INSTEAD:", x31)
-                x = x31[0].cpu()
-       
+                x = x31_actual[0].cpu()
+
+            x = (x - self.output_mean_np) / self.output_std_np
+
         return x
 
 
