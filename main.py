@@ -113,7 +113,7 @@ controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config
 
 # Setup agent 1
 # controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
-controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_g_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
@@ -133,6 +133,7 @@ controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model_30_smg_w_lims_opp_pen_dgoal_obs_l_all_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_30_smgbin_w_lims_opp_pen_dgoal_obs_l_all_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_25_smgbin_w_lims_opp_pen_dgoal_fixo_obs_l_all_more_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_25_smgbin_suite_w_lims_opp_pen_dgoal_fixo_obs_l_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

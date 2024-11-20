@@ -90,6 +90,7 @@ class DataGenerator:
         data = []
         total_count = 0
         num_unlive = 0
+        goals = []
         for data_stream in self.data_streams:
             for iteration in data_stream['iterations']:
                 if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
@@ -105,17 +106,23 @@ class DataGenerator:
                 if self.x_is_d_goal:
                     inputs = get_x_is_d_goal_input(inputs, iteration['goals'][agent_idx])
 
+                goals.append(np.array(iteration['goals'][agent_idx][:2]))
                 data.append(np.array(inputs))
         data = np.array(data)
+        goals = np.array(goals)
         print(f"Num unlive: {num_unlive}, total count: {total_count}")
         # print(1/0)
 
         if not normalize:
+            if config.train_append_goal_xy:
+                return np.hstack((data, goals))
             return data
 
         data_mean = np.mean(data, axis=0)
         data_std = np.std(data, axis=0)
         data_normalized = (data - data_mean) / data_std
+        if config.train_append_goal_xy:
+            return np.hstack((data_normalized, goals)), data_mean, data_std
         return data_normalized, data_mean, data_std
 
 

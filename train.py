@@ -15,6 +15,9 @@ def train(dataloader, model, loss_fn, optimizer, losses):
     model.train()
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(config.device), y.to(config.device)
+        if config.train_append_goal_xy:
+            X, goals = X[:, :-2], X[:, -2:]
+            model.goals = goals
         
         # Compute prediction error
         pred = model(X, 1)
@@ -38,6 +41,10 @@ def test(dataloader, model, loss_fn, losses):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(config.device), y.to(config.device)
+            if config.train_append_goal_xy:
+                X, goals = X[:, :-2], X[:, -2:]
+                model.goals = goals
+
             pred = model(X, 1)
             loss = loss_fn(pred, y)
             test_loss += loss.item()
@@ -56,7 +63,6 @@ if __name__ == "__main__":
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
 
-    # TODO: UNCOMMENT THIS
     X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
     # X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=False)
     # print("ALL INPUTS")
@@ -128,6 +134,9 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for X, y in zip(X_test, y_test):
+            if config.train_append_goal_xy:
+                X, goals = X[:-2], torch.reshape(torch.from_numpy(X[-2:]), (1, 2)).to(config.device)
+                model.goals = goals
             x = torch.autograd.Variable(torch.from_numpy(X), requires_grad=False)
             x = torch.reshape(x, (1, len(X)))
             x = x.to(config.device)

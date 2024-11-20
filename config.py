@@ -1,5 +1,6 @@
 """Configurations for the MPC controller."""
 
+import os
 import torch
 import numpy as np
 from enum import Enum, auto
@@ -87,7 +88,7 @@ agent_to_train = 1
 #                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
 #                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
 # train_data_paths = ['obs_doorway_with_offsets/']
-# train_data_paths = [
+train_data_paths = [
 #     # No liveness cases
 #     'obs_doorway_with_offsets/l_0_faster_off-1.json',
 #     'obs_doorway_with_offsets/l_0_faster_off-3.json',
@@ -98,21 +99,34 @@ agent_to_train = 1
 #     'obs_doorway_with_offsets/l_1_faster_off5.json',
 #     'obs_doorway_with_offsets/l_1_faster_off7.json',
 #     # Liveness cases
-#     'obs_doorway_with_offsets/l_0_faster_off0.json',
+    'obs_doorway_with_offsets/l_0_faster_off0.json',
 #     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
 #     'obs_doorway_with_offsets/l_1_faster_off0.json',
 #     'obs_doorway_with_offsets/l_0_faster_off0.json',
 #     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
 #     'obs_doorway_with_offsets/l_1_faster_off0.json',
-# ]
+]
 
-train_data_paths = ['doorway_scenario_suite/']
+# train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
+#                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
+
+
+# train_data_paths = ['doorway_scenario_suite/']
+
+# train_data_paths = []
+# for filename in os.listdir('doorway_scenario_suite'):
+#     if '0_faster' in filename:
+#     # if '1_faster' in filename:
+#         train_data_paths.append(os.path.join('doorway_scenario_suite', filename))
+
+
 
 add_control_limits = True
 separate_penalty_for_opp = True
-add_liveness_filter = False
+add_liveness_filter = True
 x_is_d_goal = True
 train_batch_size = 64
+train_append_goal_xy = False
 # train_batch_size = 1
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -126,5 +140,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_25_smgbin_suite_w_lims_opp_pen_dgoal_fixo_obs_l_'
+saveprefix = f'weights/model3_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_s_OG_'
 saveprefix += str(agent_to_train)
