@@ -24,6 +24,7 @@ def solver(Q, p, G, h):
 class ModelDefinition:
     is_barriernet: bool
     weights_path: Optional[str]
+    nInputs: int
     nHidden1: int
     nHidden21: int
     nHidden22: Optional[int]
@@ -37,6 +38,9 @@ class ModelDefinition:
     add_liveness_filter: bool # Default = false
     separate_penalty_for_opp: bool # Default = false
     x_is_d_goal: bool # Default = false
+    vx_vy_inputs: bool
+    ax_ay_output: bool
+    add_liveness_as_input: bool
 
 
     def save(self, path: str):
@@ -50,6 +54,8 @@ class ModelDefinition:
             path_dir = os.path.dirname(path)
             weights_path = os.path.join(path_dir, data['weights_path'])
             data['weights_path'] = weights_path
+            if 'nInputs' not in data:
+                data['nInputs'] = 8
             if 'add_control_limits' not in data:
                 data['add_control_limits'] = False
             if 'add_liveness_filter' not in data:
@@ -58,4 +64,10 @@ class ModelDefinition:
                 data['separate_penalty_for_opp'] = False
             if 'x_is_d_goal' not in data:
                 data['x_is_d_goal'] = False
+            if 'vx_vy_inputs' not in data:
+                data['vx_vy_inputs'] = False
+            if 'add_liveness_as_input' not in data:
+                data['add_liveness_as_input'] = False
+            if 'ax_ay_output' not in data:
+                data['ax_ay_output'] = False
             return ModelDefinition(**data)

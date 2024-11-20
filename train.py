@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 
 def train(dataloader, model, loss_fn, optimizer, losses):
     size = len(dataloader.dataset)
+    num_batches = len(dataloader)
     model.train()
     train_loss = 0
     for batch, (X, y) in enumerate(dataloader):
@@ -34,7 +35,7 @@ def train(dataloader, model, loss_fn, optimizer, losses):
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
-    train_loss /= size
+    train_loss /= num_batches
     losses.append(train_loss)
     return losses
 
@@ -62,7 +63,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.vx_vy_inputs, config.ax_ay_output, config.add_liveness_as_input)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
@@ -89,6 +90,7 @@ if __name__ == "__main__":
     model_definition = ModelDefinition(
         is_barriernet=config.use_barriernet,
         weights_path=None,
+        nInputs=config.nInputs,
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
@@ -101,7 +103,10 @@ if __name__ == "__main__":
         add_control_limits=config.add_control_limits,
         add_liveness_filter=config.add_liveness_filter,
         separate_penalty_for_opp=config.separate_penalty_for_opp,
-        x_is_d_goal=config.x_is_d_goal
+        x_is_d_goal=config.x_is_d_goal,
+        vx_vy_inputs=config.vx_vy_inputs,
+        ax_ay_output=config.ax_ay_output,
+        add_liveness_as_input=config.add_liveness_as_input,
     )
 
     if config.use_barriernet:

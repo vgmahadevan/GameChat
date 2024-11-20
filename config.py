@@ -125,13 +125,17 @@ add_control_limits = True
 separate_penalty_for_opp = True
 add_liveness_filter = False
 x_is_d_goal = True
+vx_vy_inputs = True
+ax_ay_output = True
+add_liveness_as_input = True
 train_batch_size = 32
-train_append_goal_xy = True
+train_append_goal_xy = False
 # train_batch_size = 1
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
 epochs = 30
+nInputs = 8 + add_liveness_as_input
 nHidden1 = 256
 nHidden21 = 64
 nHidden22 = 64
@@ -140,7 +144,7 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model4_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_suite_multi_'
+saveprefix = f'weights/model_30_multi_vxvy_axay_blim_li_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 
-description = "All 4 lims (upper / lower, accel / omega)"
+description = "Vx Vy input data with ax,ay control output, bad limits, with liveness input"

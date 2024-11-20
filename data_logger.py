@@ -3,7 +3,7 @@ import json
 import torch
 import config
 import numpy as np
-from util import get_x_is_d_goal_input, calculate_all_metrics
+from util import perturb_model_input, calculate_all_metrics, aw_to_axay_control
 
 class Dataset(torch.utils.data.Dataset):
     # Characterizes a dataset for PyTorch
@@ -68,8 +68,11 @@ class BlankLogger:
 
 # Extracts inputs and outputs from data files.
 class DataGenerator:
-    def __init__(self, filenames, x_is_d_goal):
+    def __init__(self, filenames, x_is_d_goal, vx_vy_inputs, ax_ay_output, add_liveness_as_input):
         self.x_is_d_goal = x_is_d_goal
+        self.vx_vy_inputs = vx_vy_inputs
+        self.ax_ay_output = ax_ay_output
+        self.add_liveness_as_input = add_liveness_as_input
         self.data_streams = []
         self.filenames = filenames
         for filename in filenames:
@@ -104,8 +107,14 @@ class DataGenerator:
                         num_unlive += 1
 
                     total_count += 1
-                    if self.x_is_d_goal:
-                        inputs = get_x_is_d_goal_input(inputs, iteration['goals'][agent_idx])
+                    inputs = perturb_model_input(
+                        inputs,
+                        self.x_is_d_goal,
+                        self.vx_vy_inputs,
+                        self.add_liveness_as_input,
+                        iteration['goals'][agent_idx],
+                        metrics
+                    )
 
                     goals.append(np.array(iteration['goals'][agent_idx][:2]))
                     data.append(np.array(inputs))
@@ -134,7 +143,10 @@ class DataGenerator:
                 for agent_idx in agent_idxs:
                     if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
                         continue
-                    data.append(iteration['controls'][agent_idx])
+                    controls = iteration['controls'][agent_idx]
+                    if self.ax_ay_output:
+                        controls = aw_to_axay_control(iteration['states'][agent_idx], controls)
+                    data.append(controls)
         data = np.array(data)
 
         if not normalize:

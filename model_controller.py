@@ -3,7 +3,7 @@ import config
 import numpy as np
 from model_utils import ModelDefinition
 from models import FCNet, BarrierNet
-from util import get_x_is_d_goal_input
+from util import perturb_model_input, axay_to_aw_control
 
 
 class ModelController:
@@ -29,13 +29,19 @@ class ModelController:
         self.use_for_training = False
         self.initial_state = initial_state
         model_input_original = np.append(self.initial_state, self.opp_state)
-        if self.model_definition.x_is_d_goal:
-            model_input_original = get_x_is_d_goal_input(model_input_original, self.goal)
+        model_input_original = perturb_model_input(
+            model_input_original,
+            self.model_definition.x_is_d_goal,
+            self.model_definition.vx_vy_inputs,
+            self.model_definition.add_liveness_as_input,
+            self.goal
+        )
+
         model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
 
         with torch.no_grad():
             model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
-            model_input = torch.reshape(model_input, (1, self.model.n_features)).to(config.device)
+            model_input = torch.reshape(model_input, (1, self.model_definition.nInputs)).to(config.device)
             model_output = self.model(model_input, 0)
             if self.model_definition.is_barriernet:
                 model_output = np.array([model_output[0], model_output[1]])
@@ -45,4 +51,8 @@ class ModelController:
         output = model_output * self.model_definition.label_std + self.model_definition.label_mean
         print("Outputted controls:", output)
         output = output.reshape(-1, 1)
+
+        if self.model_definition.ax_ay_output:
+            output = axay_to_aw_control(self.initial_state, output)
+
         return output

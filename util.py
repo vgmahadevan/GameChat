@@ -119,3 +119,49 @@ def get_x_is_d_goal_input(inputs, goal):
     inputs = np.array([x, y, theta, v, opp_x, opp_y, opp_theta, opp_v])
     return inputs
 
+def perturb_model_input(inputs, x_is_d_goal, vx_vy_inputs, add_liveness_as_input, goal, metrics=None):
+    if metrics is None and add_liveness_as_input:
+        metrics = calculate_all_metrics(np.array(inputs[:4]), np.array(inputs[4:8]), config.liveness_threshold)
+    if x_is_d_goal:
+        inputs = get_x_is_d_goal_input(inputs, goal)
+    if vx_vy_inputs:
+        vxvy_inputs = inputs.copy()
+        vxvy_inputs[2] = np.cos(inputs[2]) * inputs[3]
+        vxvy_inputs[3] = np.sin(inputs[2]) * inputs[3]
+        vxvy_inputs[6] = np.cos(inputs[6]) * inputs[7]
+        vxvy_inputs[7] = np.sin(inputs[6]) * inputs[7]
+        inputs = vxvy_inputs
+    if add_liveness_as_input:
+        if not metrics[-2]: # Not intersecting
+            liveness = 0.0
+        else: # Intersecting
+            liveness = metrics[0]
+        inputs = np.append(inputs, liveness)
+    return inputs
+
+
+def aw_to_axay_control(state, control):
+    vx = state[3] * np.cos(state[2])
+    vy = state[3] * np.sin(state[2])
+    
+    new_vx = (state[3] + control[1]) * np.cos((state[2] + control[0]))
+    new_vy = (state[3] + control[1]) * np.sin((state[2] + control[0]))
+
+    dvx, dvy = new_vx - vx, new_vy - vy
+    ax, ay = dvx, dvy
+
+    return ax, ay
+
+
+def axay_to_aw_control(state, control):
+    vx = state[3] * np.cos(state[2])
+    vy = state[3] * np.sin(state[2])
+    new_vx, new_vy = vx + control[0], vy + control[1]
+    dv = np.sqrt((new_vx - vx) ** 2 + (new_vy - vy) ** 2)
+    dtheta = np.arctan2(new_vy, new_vx) - np.arctan2(vy, vx)
+    if dtheta < np.pi:
+        dtheta += 2.0 * np.pi
+    
+    a, w = dv, dtheta
+    return np.array([a, w])
+
