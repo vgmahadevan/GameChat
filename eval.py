@@ -37,12 +37,12 @@ if __name__ == "__main__":
     model_definition = ModelDefinition.from_json(model_definition_filepath)
     generator = DataGenerator(eval_data_paths, model_definition.x_is_d_goal)
 
-    model = BarrierNet(model_definition, generator.get_obstacles(), generator.data_streams[0]["iterations"][0]["goals"][config.agent_to_train]).to(config.device)
+    model = BarrierNet(model_definition, generator.get_obstacles(), generator.data_streams[0]["iterations"][0]["goals"][config.agents_to_train_on[0]]).to(config.device)
     model.load_state_dict(torch.load(model_definition.weights_path))
     model.eval()
 
-    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
-    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
+    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agents_to_train_on, normalize=True)
+    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agents_to_train_on, normalize=True)
 
     dataset = Dataset(norm_inputs, norm_outputs)
     dataloader = torch.utils.data.DataLoader(dataset, **params)

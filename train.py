@@ -29,7 +29,7 @@ def train(dataloader, model, loss_fn, optimizer, losses):
         loss.backward()
         optimizer.step()
 
-        if batch % 25 == 0:  #25
+        if batch % 5 == 0:  # 25
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return losses
@@ -60,8 +60,8 @@ if __name__ == "__main__":
 
     generator = DataGenerator(config.train_data_paths, config.x_is_d_goal)
 
-    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idx=config.agent_to_train, normalize=True)
-    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idx=config.agent_to_train, normalize=True)
+    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
+    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
 
     X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
     # X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=False)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
-        nHidden23=config.nHidden23 if config.add_control_limits else None,
+        nHidden23=config.nHidden23,
         nHidden24=config.nHidden24 if config.add_liveness_filter else None,
         input_mean=input_mean.tolist(),
         input_std=input_std.tolist(),
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     )
 
     if config.use_barriernet:
-        model = BarrierNet(model_definition, generator.get_obstacles(), generator.data_streams[0]["iterations"][0]["goals"][config.agent_to_train]).to(config.device)
+        model = BarrierNet(model_definition, generator.get_obstacles(), generator.data_streams[0]["iterations"][0]["goals"][config.agents_to_train_on[0]]).to(config.device)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     os.mkdir(savefolder)
     config_json = {
         'use_barriernet': config.use_barriernet,
-        'agent_to_train': config.agent_to_train,
+        'agents_to_train_on': config.agents_to_train_on,
         'train_data_paths': config.train_data_paths,
         'add_control_limits': config.add_control_limits,
         'separate_penalty_for_opp': config.separate_penalty_for_opp,

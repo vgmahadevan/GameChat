@@ -73,7 +73,7 @@ COST_MATRICES = {
 
 # Training parameters.
 use_barriernet = True
-agent_to_train = 1
+# agent_to_train = 1
 
 # train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
 # train_data_paths = ['all_data_with_offsets/']
@@ -111,7 +111,8 @@ train_data_paths = [
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
 
-# train_data_paths = ['doorway_scenario_suite/']
+agents_to_train_on = [0, 1]
+train_data_paths = ['doorway_scenario_suite/']
 
 # train_data_paths = []
 # for filename in os.listdir('doorway_scenario_suite'):
@@ -120,13 +121,12 @@ train_data_paths = [
 #         train_data_paths.append(os.path.join('doorway_scenario_suite', filename))
 
 
-
 add_control_limits = True
 separate_penalty_for_opp = True
-add_liveness_filter = True
+add_liveness_filter = False
 x_is_d_goal = True
-train_batch_size = 64
-train_append_goal_xy = False
+train_batch_size = 32
+train_append_goal_xy = True
 # train_batch_size = 1
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -140,5 +140,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model3_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_s_OG_'
-saveprefix += str(agent_to_train)
+saveprefix = f'weights/model3_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_suite_multi_'
+saveprefix += '_'.join([str(i) for i in agents_to_train_on])

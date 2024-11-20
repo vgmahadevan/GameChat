@@ -86,28 +86,29 @@ class DataGenerator:
         print("Number of file streams:", len(self.data_streams))
 
 
-    def get_inputs(self, agent_idx, normalize):
+    def get_inputs(self, agent_idxs, normalize):
         data = []
         total_count = 0
         num_unlive = 0
         goals = []
         for data_stream in self.data_streams:
             for iteration in data_stream['iterations']:
-                if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
-                    # print("DONT USE", self.filenames[self.data_streams.index(data_stream)])
-                    continue
-                # 4 + 4 = 8 inputs.
-                inputs = iteration['states'][agent_idx] + iteration['states'][1 - agent_idx]
-                metrics = calculate_all_metrics(np.array(iteration['states'][agent_idx]), np.array(iteration['states'][1 - agent_idx]), config.liveness_threshold)
-                if not metrics[-1]:
-                    num_unlive += 1
+                for agent_idx in agent_idxs:
+                    if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
+                        # print("DONT USE", self.filenames[self.data_streams.index(data_stream)])
+                        continue
+                    # 4 + 4 = 8 inputs.
+                    inputs = iteration['states'][agent_idx] + iteration['states'][1 - agent_idx]
+                    metrics = calculate_all_metrics(np.array(iteration['states'][agent_idx]), np.array(iteration['states'][1 - agent_idx]), config.liveness_threshold)
+                    if not metrics[-1]:
+                        num_unlive += 1
 
-                total_count += 1
-                if self.x_is_d_goal:
-                    inputs = get_x_is_d_goal_input(inputs, iteration['goals'][agent_idx])
+                    total_count += 1
+                    if self.x_is_d_goal:
+                        inputs = get_x_is_d_goal_input(inputs, iteration['goals'][agent_idx])
 
-                goals.append(np.array(iteration['goals'][agent_idx][:2]))
-                data.append(np.array(inputs))
+                    goals.append(np.array(iteration['goals'][agent_idx][:2]))
+                    data.append(np.array(inputs))
         data = np.array(data)
         goals = np.array(goals)
         print(f"Num unlive: {num_unlive}, total count: {total_count}")
@@ -126,13 +127,14 @@ class DataGenerator:
         return data_normalized, data_mean, data_std
 
 
-    def get_outputs(self, agent_idx, normalize):
+    def get_outputs(self, agent_idxs, normalize):
         data = []
         for data_stream in self.data_streams:
             for iteration in data_stream['iterations']:
-                if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
-                    continue
-                data.append(iteration['controls'][agent_idx])
+                for agent_idx in agent_idxs:
+                    if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
+                        continue
+                    data.append(iteration['controls'][agent_idx])
         data = np.array(data)
 
         if not normalize:

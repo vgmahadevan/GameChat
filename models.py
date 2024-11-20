@@ -120,27 +120,36 @@ class BarrierNet(nn.Module):
         Q = Q.unsqueeze(0).expand(nBatch, N_CL, N_CL).to(config.device)
         sin_theta = torch.sin(theta)
         cos_theta = torch.cos(theta)
-        
-        obstacles = self.static_obstacles.copy()
-        opps = [(x0[:,OPP_X_IDX], x0[:,OPP_Y_IDX], x0[:,OPP_THETA_IDX], x0[:,OPP_V_IDX])]
 
+        # obstacles = self.static_obstacles.copy()
+        # opps = [(x0[:,OPP_X_IDX], x0[:,OPP_Y_IDX], x0[:,OPP_THETA_IDX], x0[:,OPP_V_IDX])]
+        opps = []
+
+        # Only include the 2 static obstacles closes to us
+        # G_obs_0, G_obs_1, h_obs_0, h_obs_1 = [], [], [], []
+        # for i in range(len(px)):
+        #     obstacles = self.static_obstacles.copy()
+        #     obstacles.sort(key=lambda o: np.linalg.norm(np.array([o[0], o[1]]) - np.array([px[i].item(), py[i].item()])))
+        #     obstacles = obstacles[:2]
+        #     Gh = [(G_obs_0, h_obs_0), (G_obs_1, h_obs_1)]
+        
         G = []
         h = []
-        for obs_x, obs_y, r in obstacles:
-            R = config.agent_radius + r + config.safety_dist
-            dx = (px - obs_x)
-            dy = (py - obs_y)
+        #     for (obs_x, obs_y, r), (G, h) in zip(obstacles, Gh):
+        #         R = config.agent_radius + r + config.safety_dist
+        #         dx = (px - obs_x)
+        #         dy = (py - obs_y)
 
-            barrier = dx**2 + dy**2 - R**2
-            barrier_dot = 2*dx*v*cos_theta + 2*dy*v*sin_theta
-            Lf2b = 2*v**2
-            LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1)) 
-            LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
-            obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
-            obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
-            obs_h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0] * x32[:,1])*barrier, (nBatch, 1)))
-            G.append(obs_G)
-            h.append(obs_h)
+        #         barrier = dx**2 + dy**2 - R**2
+        #         barrier_dot = 2*dx*v*cos_theta + 2*dy*v*sin_theta
+        #         Lf2b = 2*v**2
+        #         LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1)) 
+        #         LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
+        #         obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
+        #         obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
+        #         obs_h = (torch.reshape(Lf2b + (x32[:,0] + x32[:,1])*barrier_dot + (x32[:,0] * x32[:,1])*barrier, (nBatch, 1)))
+        #         G.append(obs_G)
+        #         h.append(obs_h)
 
         for opp_x, opp_y, opp_theta, opp_vel in opps:
             R = config.agent_radius + config.agent_radius + config.safety_dist
@@ -171,7 +180,6 @@ class BarrierNet(nn.Module):
         lower_G_lims = []
         lower_h_lims = []
         if self.model_definition.add_control_limits:
-            G_lims, h_lims = [], []
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, 1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
@@ -180,8 +188,6 @@ class BarrierNet(nn.Module):
                 upper_G_lims.append(lim_G)
                 upper_h_lims.append(lim_h)
 
-
-            G_lims, h_lims = [], []
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, -1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
@@ -304,6 +310,8 @@ class BarrierNet(nn.Module):
         G.append(torch.cat(lower_G_lims))
         h.append(torch.cat(lower_h_lims))
 
+        # print(G[-1][0], h[-1][0])
+
         # NOTE: All of these guys are with respect to the output accel, but doesn't consider that model_output = (actual_output - mean) / std since the output data is normalized.
         # Thus, actual_output = (model_output * std) + mean
         # Thus, if our barrier function is Gu <= h
@@ -316,8 +324,9 @@ class BarrierNet(nn.Module):
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
+
         # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2 + self.model_definition.add_liveness_filter
-        num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2
+        # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2
         # assert(G.shape == (nBatch, num_ineq, N_CL))
         # assert(h.shape == (nBatch, num_ineq))
         e = Variable(torch.Tensor()).to(config.device)
@@ -328,8 +337,9 @@ class BarrierNet(nn.Module):
         x31_actual = x31*self.output_std + self.output_mean
         # print("X31 actual:", x31_actual)
         if self.training or sgn == 1:
-            x = QPFunction(verbose = -1)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
+            x = QPFunction(verbose = 0)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
             # x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
+            # print("Outputted x:", x)
             x = (x - self.output_mean) / self.output_std
         else:
             # self.p1 = x32[0,0]
