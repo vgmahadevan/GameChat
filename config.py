@@ -34,13 +34,13 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 22.0                             # Total runtime [s]
+runtime = 18.0                             # Total runtime [s]
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 6                              # Prediction horizon time steps
-sim_steps = int(runtime / sim_ts)              # Number of iteration steps for each agent
 
 obstacle_avoidance = True
+mpc_use_opp_cbf = True
 # Gamma, in essence, is the leniancy on how much we can deprove the CBF.
 opp_gamma = 0.5                            # CBF parameter in [0,1]
 obs_gamma = 0.3                            # CBF parameter in [0,1]
@@ -87,24 +87,26 @@ agent_to_train = 1
 #                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
 #                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
 # train_data_paths = ['obs_doorway_with_offsets/']
-train_data_paths = [
-    # No liveness cases
-    'obs_doorway_with_offsets/l_0_faster_off-1.json',
-    'obs_doorway_with_offsets/l_0_faster_off-3.json',
-    'obs_doorway_with_offsets/l_0_faster_off-5.json',
-    'obs_doorway_with_offsets/l_0_faster_off-7.json',
-    'obs_doorway_with_offsets/l_1_faster_off1.json',
-    'obs_doorway_with_offsets/l_1_faster_off3.json',
-    'obs_doorway_with_offsets/l_1_faster_off5.json',
-    'obs_doorway_with_offsets/l_1_faster_off7.json',
-    # Liveness cases
-    'obs_doorway_with_offsets/l_0_faster_off0.json',
-    'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    'obs_doorway_with_offsets/l_1_faster_off0.json',
-    'obs_doorway_with_offsets/l_0_faster_off0.json',
-    'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-    'obs_doorway_with_offsets/l_1_faster_off0.json',
-]
+# train_data_paths = [
+#     # No liveness cases
+#     'obs_doorway_with_offsets/l_0_faster_off-1.json',
+#     'obs_doorway_with_offsets/l_0_faster_off-3.json',
+#     'obs_doorway_with_offsets/l_0_faster_off-5.json',
+#     'obs_doorway_with_offsets/l_0_faster_off-7.json',
+#     'obs_doorway_with_offsets/l_1_faster_off1.json',
+#     'obs_doorway_with_offsets/l_1_faster_off3.json',
+#     'obs_doorway_with_offsets/l_1_faster_off5.json',
+#     'obs_doorway_with_offsets/l_1_faster_off7.json',
+#     # Liveness cases
+#     'obs_doorway_with_offsets/l_0_faster_off0.json',
+#     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
+#     'obs_doorway_with_offsets/l_1_faster_off0.json',
+#     'obs_doorway_with_offsets/l_0_faster_off0.json',
+#     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
+#     'obs_doorway_with_offsets/l_1_faster_off0.json',
+# ]
+
+train_data_paths = ['doorway_scenario_suite/']
 
 add_control_limits = True
 separate_penalty_for_opp = True
@@ -124,5 +126,5 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_25_smgbin_w_lims_opp_pen_dgoal_fixo_obs_l_all_more_'
+saveprefix = f'weights/model_25_smgbin_suite_w_lims_opp_pen_dgoal_fixo_obs_l_'
 saveprefix += str(agent_to_train)

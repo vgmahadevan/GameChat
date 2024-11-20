@@ -3,6 +3,7 @@ from casadi import *
 import config
 from config import DynamicsModel
 import numpy as np
+from memory_profiler import profile
 
 class Environment:
     def __init__(self, initial_states, goals):
@@ -110,6 +111,7 @@ class Environment:
             control[1] = -config.accel_limit
         return control
 
+    # @profile
     def run_simulation(self, sim_iteration, controllers, logger):
         """Runs a closed-loop control simulation."""
         self.sim_iteration = sim_iteration

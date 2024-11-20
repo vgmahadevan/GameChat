@@ -5,6 +5,7 @@ import config
 from config import DynamicsModel
 import numpy as np
 from util import calculate_all_metrics
+from memory_profiler import profile
 
 class MPC:
     """MPC-CBF Optimization problem:
@@ -122,11 +123,15 @@ class MPC:
             h_k1 = self.h_obs(x_k1, obs)
             cbf_constraints.append(-h_k1 + (1-self.obs_gamma)*h_k)
 
-        obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)
-        obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
-        h_k = self.h_obs(self.model.x['x'], obs)
-        h_k1 = self.h_obs(x_k1, obs)
-        cbf_constraints.append(-h_k1 + (1-self.opp_gamma)*h_k)
+        if config.mpc_use_opp_cbf:
+            # obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)
+            obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
+            obs_projected = (self.opp_state[0] + self.opp_state[3] * math.cos(self.opp_state[2]) * config.MPC_Ts, self.opp_state[1] + self.opp_state[3] * math.sin(self.opp_state[2]) * config.MPC_Ts, config.agent_radius)
+            h_k = self.h_obs(self.model.x['x'], obs)
+            # h_k1 = self.h_obs(x_k1, obs)
+            h_k1 = self.h_obs(x_k1, obs_projected)
+            # print(obs, obs_projected)
+            cbf_constraints.append(-h_k1 + (1-self.opp_gamma)*h_k)
 
         return cbf_constraints
     
@@ -216,6 +221,7 @@ class MPC:
         self.mpc.u0 = np.zeros_like(self.mpc.u0['u'])
         self.mpc.set_initial_guess()
 
+    # @profile
     def make_step(self, timestamp, x0):
         if timestamp < self.delay_start:
             self.use_for_training = False

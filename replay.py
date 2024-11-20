@@ -16,7 +16,8 @@ from data_logger import DataLogger, BlankLogger
 from util import calculate_all_metrics
 
 # dirname = 'all_data_with_offsets'
-dirname = 'obs_doorway_with_offsets'
+# dirname = 'obs_doorway_with_offsets'
+dirname = 'doorway_scenario_suite'
 
 bags = []
 for filename in os.listdir(dirname):
@@ -39,8 +40,9 @@ for bag in bags:
     output_logger = BlankLogger()
 
     # Add all initial and goal positions of the agents here (Format: [x, y, theta])
+    scenario.obstacles = logger.data['obstacles'].copy()
     goals = scenario.goals.copy()
-    logger.set_obstacles(scenario.obstacles.copy())
+    # logger.set_obstacles(scenario.obstacles.copy())
 
     x_cum = [[], []]
     u_cum = [[], []]
@@ -52,7 +54,7 @@ for bag in bags:
         for agent_idx, controls in enumerate(iteration['controls']):
             u_cum[agent_idx].append(np.array(controls))
 
-        metrics.append(calculate_all_metrics(x_cum[0][-1], x_cum[1][-1]), config.liveness_threshold)
+        metrics.append(calculate_all_metrics(x_cum[0][-1], x_cum[1][-1], config.liveness_threshold))
 
         # Plots
         if sim_iteration % config.plot_rate == 0 and config.plot_live and plotter is not None:

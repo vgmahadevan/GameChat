@@ -7,13 +7,12 @@
 # mpc_cbf.py containst eh code for the Game thereotic MPC controllers for agent 1 and 2 respectively
 
 import numpy as np
-import config
 from mpc_cbf import MPC
 from scenarios import DoorwayScenario
 from data_logger import BlankLogger
 from environment import Environment
 from simulation import run_simulation
-from metrics import calculate_avg_delta_vel, calculate_path_deviation, check_for_obs_collisions, check_for_traj_collisions, check_when_reached_goal, get_desired_path
+from metrics import get_desired_path, gather_all_metric_data
 import multiprocessing as mp
 
 def gen_metrics_single(scenario_vals, desired_path_0, desired_path_1, params, queue):
@@ -39,30 +38,10 @@ def gen_metrics_single(scenario_vals, desired_path_0, desired_path_1, params, qu
     traj1 = x_cum[1]
 
     # Caclulate metrics
+    metric_data = gather_all_metric_data(scenario, traj0, traj1, goals, desired_path_0, desired_path_1)
+    metric_params = [opp_gamma, obs_gamma, live_gamma, liveness_thresh]
+    metric = metric_params + metric_data
 
-    goal_reach_idx0 = check_when_reached_goal(traj0, goals[0, :2])
-    goal_reach_idx1 = check_when_reached_goal(traj1, goals[1, :2])
-
-    traj0_to_consider = traj0
-    if goal_reach_idx0 is not None:
-        traj0_to_consider = traj0[:goal_reach_idx0]
-
-    traj1_to_consider = traj1
-    if goal_reach_idx1 is not None:
-        traj1_to_consider = traj1[:goal_reach_idx1]
-
-    traj_collision = check_for_traj_collisions(traj0, traj1)
-    obs_collision_0 = check_for_obs_collisions(traj0_to_consider, scenario.obstacles)
-    obs_collision_1 = check_for_obs_collisions(traj1_to_consider, scenario.obstacles)
-    delta_vel_0 = calculate_avg_delta_vel(traj0_to_consider)
-    delta_vel_1 = calculate_avg_delta_vel(traj1_to_consider)
-    path_dev_0 = calculate_path_deviation(traj0_to_consider, desired_path_0)
-    path_dev_1 = calculate_path_deviation(traj1_to_consider, desired_path_1)
-
-    goal_reach_idx0 = -1 if goal_reach_idx0 is None else goal_reach_idx0
-    goal_reach_idx1 = -1 if goal_reach_idx1 is None else goal_reach_idx1
-
-    metric = [opp_gamma, obs_gamma, live_gamma, liveness_thresh, goal_reach_idx0, goal_reach_idx1, traj_collision, obs_collision_0, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1]
     queue.put((scenario_vals, metric))
     return metric
 
@@ -87,7 +66,7 @@ def file_writer(q):
     '''listens for messages on the q, writes to file. '''
     scenario_metrics = {}
     metrics_written = 0
-    folder_to_save_to = 'scenario_generation'
+    folder_to_save_to = 'scenario_generation3'
     while 1:
         m = q.get()
         if m == 'kill':
@@ -110,74 +89,65 @@ def file_writer(q):
 
 if __name__ == "__main__":
     scenarios = [
-        (-1.0, 0.5, 2.0, 0.15),
-        (-1.0, 0.5, 2.0, 0.25),
-        (-1.0, 0.5, 2.0, 0.35),
-        (-1.0, 0.5, 2.0, 0.45),
-        (-1.0, 0.4, 2.0, 0.15),
-        (-1.0, 0.4, 2.0, 0.25),
-        (-1.0, 0.4, 2.0, 0.35),
-        (-1.0, 0.3, 2.0, 0.15),
-        (-1.0, 0.3, 2.0, 0.25),
+        # (-1.0, 0.5, 2.0, 0.15),
+        # (-1.0, 0.5, 2.0, 0.30),
+        # (-1.0, 0.5, 2.0, 0.45), ??
+        # (-1.0, 0.4, 2.0, 0.15),
+        # (-1.0, 0.4, 2.0, 0.35),
+        # (-1.0, 0.3, 2.0, 0.15),
+        # (-1.0, 0.3, 2.0, 0.25),
 
-        (-0.5, 0.5, 2.0, 0.15),
-        (-0.5, 0.5, 2.0, 0.25),
-        (-0.5, 0.5, 2.0, 0.35),
-        (-0.5, 0.5, 2.0, 0.45),
-        (-0.5, 0.4, 2.0, 0.15),
-        (-0.5, 0.4, 2.0, 0.25),
-        (-0.5, 0.4, 2.0, 0.35),
-        (-0.5, 0.3, 2.0, 0.15),
-        (-0.5, 0.3, 2.0, 0.25),
+        # (-0.5, 0.5, 2.0, 0.15),
+        # (-0.5, 0.5, 2.0, 0.30),
+        # (-0.5, 0.5, 2.0, 0.45),
+        # (-0.5, 0.4, 2.0, 0.15),
+        # (-0.5, 0.4, 2.0, 0.35),
+        # (-0.5, 0.3, 2.0, 0.15),
+        # (-0.5, 0.3, 2.0, 0.25),
 
         (0.0, 0.5, 2.0, 0.15),
-        (0.0, 0.5, 2.0, 0.25),
-        (0.0, 0.5, 2.0, 0.35),
+        (0.0, 0.5, 2.0, 0.30),
         (0.0, 0.5, 2.0, 0.45),
         (0.0, 0.4, 2.0, 0.15),
-        (0.0, 0.4, 2.0, 0.25),
         (0.0, 0.4, 2.0, 0.35),
         (0.0, 0.3, 2.0, 0.15),
         (0.0, 0.3, 2.0, 0.25),
 
         (-1.0, 0.5, 3.0, 0.15),
-        (-1.0, 0.5, 3.0, 0.25),
-        (-1.0, 0.5, 3.0, 0.35),
+        (-1.0, 0.5, 3.0, 0.30),
         (-1.0, 0.5, 3.0, 0.45),
         (-1.0, 0.4, 3.0, 0.15),
-        (-1.0, 0.4, 3.0, 0.25),
         (-1.0, 0.4, 3.0, 0.35),
         (-1.0, 0.3, 3.0, 0.15),
         (-1.0, 0.3, 3.0, 0.25),
 
         (-0.5, 0.5, 3.0, 0.15),
-        (-0.5, 0.5, 3.0, 0.25),
-        (-0.5, 0.5, 3.0, 0.35),
+        (-0.5, 0.5, 3.0, 0.30),
         (-0.5, 0.5, 3.0, 0.45),
         (-0.5, 0.4, 3.0, 0.15),
-        (-0.5, 0.4, 3.0, 0.25),
         (-0.5, 0.4, 3.0, 0.35),
         (-0.5, 0.3, 3.0, 0.15),
         (-0.5, 0.3, 3.0, 0.25),
 
-        (0.0, 0.5, 3.0, 0.15),
-        (0.0, 0.5, 3.0, 0.25),
-        (0.0, 0.5, 3.0, 0.35),
-        (0.0, 0.5, 3.0, 0.45),
-        (0.0, 0.4, 3.0, 0.15),
-        (0.0, 0.4, 3.0, 0.25),
-        (0.0, 0.4, 3.0, 0.35),
-        (0.0, 0.3, 3.0, 0.15),
-        (0.0, 0.3, 3.0, 0.25),
+        # (0.0, 0.5, 3.0, 0.15),
+        # (0.0, 0.5, 3.0, 0.30),
+        # (0.0, 0.5, 3.0, 0.45),
+        # (0.0, 0.4, 3.0, 0.15),
+        # (0.0, 0.4, 3.0, 0.35),
+        # (0.0, 0.3, 3.0, 0.15),
+        # (0.0, 0.3, 3.0, 0.25),
     ]
 
-    opp_gammas = np.arange(0.2, 0.8, 0.1)
-    obs_gammas = np.arange(0.2, 0.7, 0.1)
-    live_gammas = np.arange(0.1, 0.6, 0.1)
-    liveliness = np.arange(0.5, 1.2, 0.15)
+    opp_gammas = np.arange(0.4, 0.9, 0.1) # 5
+    obs_gammas = np.arange(0.2, 0.6, 0.1) # 4
+    live_gammas = np.arange(0.2, 0.3, 0.1) # 1
+        # live_gammas = np.arange(0.2, 0.7, 0.1) # 5
+    liveliness = np.arange(0.8, 1.21, 0.1) # 5
+    # 18 * 25 = 450
+    # 450 * 7 = 3150
+    # 25 * 12 = 300 * 40 = 12000
 
     gridsearch = np.array(np.meshgrid(opp_gammas, obs_gammas, live_gammas, liveliness)).T.reshape(-1, 4)
-    gridsearch.sort(axis=0)
 
     # opp_gammas = np.arange(0.1, 0.5, 0.1)
     # opp_gammas = np.array([config.opp_gamma])
@@ -193,7 +163,7 @@ if __name__ == "__main__":
 
     manager = mp.Manager()
     q = manager.Queue()
-    pool = mp.Pool(processes=24)
+    pool = mp.Pool(processes=22)
 
     watcher = pool.apply_async(file_writer, (q,))
 

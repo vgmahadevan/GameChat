@@ -56,20 +56,61 @@ def calculate_avg_delta_vel(traj):
     return total_delta_v / count
 
 
-def check_for_traj_collisions(traj1, traj2):
+def check_for_traj_collisions(traj1, traj2, early_exit = False):
+    min_dist = float("inf")
     for state1, state2 in zip(traj1, traj2):
         dist = np.linalg.norm(state1[:2] - state2[:2])
-        if dist < config.agent_radius * 2 + config.safety_dist:
-            return True
+        min_dist = min(dist, min_dist)
+        if early_exit:
+            if dist < config.agent_radius * 2 + config.safety_dist:
+                return min_dist, True
 
-    return False
+    return min_dist, min_dist < config.agent_radius * 2 + config.safety_dist
 
 
-def check_for_obs_collisions(traj, obstacles):
+def check_for_obs_collisions(traj, obstacles, early_exit = False):
+    min_dist = float("inf")
+    collides = False
     for state in traj:
         for obs_x, obs_y, obs_r in obstacles:
             dist = np.linalg.norm(state[:2] - np.array([obs_x, obs_y]))
+            min_dist = min(min_dist, dist)
             if dist < config.agent_radius + obs_r + config.safety_dist:
-                return True
+                collides = True
 
-    return False
+            if early_exit and collides:
+                return min_dist, False
+
+    return min_dist, collides
+
+
+def gather_all_metric_data(scenario, traj0, traj1, goals, desired_path_0=None, desired_path_1=None):
+    if desired_path_0 is None:
+        desired_path_0 = get_desired_path(scenario.initial[0], scenario.goals[0])
+    if desired_path_1 is None:
+        desired_path_1 = get_desired_path(scenario.initial[1], scenario.goals[1])
+
+    goal_reach_idx0 = check_when_reached_goal(traj0, goals[0, :2])
+    goal_reach_idx1 = check_when_reached_goal(traj1, goals[1, :2])
+
+    traj0_to_consider = traj0
+    if goal_reach_idx0 is not None:
+        traj0_to_consider = traj0[:goal_reach_idx0]
+
+    traj1_to_consider = traj1
+    if goal_reach_idx1 is not None:
+        traj1_to_consider = traj1[:goal_reach_idx1]
+
+    min_agent_dist, traj_collision = check_for_traj_collisions(traj0, traj1)
+    obs_min_dist_0, obs_collision_0 = check_for_obs_collisions(traj0_to_consider, scenario.obstacles)
+    obs_min_dist_1, obs_collision_1 = check_for_obs_collisions(traj1_to_consider, scenario.obstacles)
+    delta_vel_0 = calculate_avg_delta_vel(traj0_to_consider)
+    delta_vel_1 = calculate_avg_delta_vel(traj1_to_consider)
+    path_dev_0 = calculate_path_deviation(traj0_to_consider, desired_path_0)
+    path_dev_1 = calculate_path_deviation(traj1_to_consider, desired_path_1)
+
+    goal_reach_idx0 = -1 if goal_reach_idx0 is None else goal_reach_idx0
+    goal_reach_idx1 = -1 if goal_reach_idx1 is None else goal_reach_idx1
+
+    return [goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1]
+

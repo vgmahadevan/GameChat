@@ -49,6 +49,8 @@ class DoorwayScenario:
         for obs_x, obs_y, r in self.obstacles:
             circle = patches.Circle((obs_x, obs_y), r, linewidth=1,edgecolor='k',facecolor='k',fill=True)
             ax.add_patch(circle)
+        # ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=1500)
+        # ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=1500)
         ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
         ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
 
@@ -77,16 +79,18 @@ class NoObstacleDoorwayScenario:
         self.obstacles = []
     
     def plot(self, ax):
-        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
-        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
+        # ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
+        # ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=5)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=5)
 
 
 class IntersectionScenario:
     def __init__(self):
-        self.initial = np.array([[0.0, -2.0, 0],
-                      [-2.0, 0.0, 0]])
-        self.goals = np.array([[0.0, 1.0, 0],
-                    [1.0, 0.0, 0]
+        self.initial = np.array([[0.0, -2.0, np.pi / 2, 0.0],
+                      [-2.0, 0.0, 0.0, 0.0]])
+        self.goals = np.array([[0.0, 2.0, np.pi / 2, 0.0],
+                    [2.0, 0.0, 0.0, 0.0]
                     ])
         self.ox=-0.3
         self.ox1=0.3
@@ -103,27 +107,35 @@ class IntersectionScenario:
 
                 (0.3,self.ox1, 0.1), ( 0.4,self.ox1, 0.1),(0.5,self.ox1, 0.1),(0.6, self.ox1, 0.1),(0.7,self.ox1, 0.1),(0.8,self.ox1, 0.1),(0.9,self.ox1, 0.1),( 1.0, self.ox1, 0.1),
                 (-0.3,self.ox1, 0.1), ( -0.4,self.ox1, 0.1),(-0.5, self.ox1, 0.1),( -0.6, self.ox1, 0.1),( -0.7,self.ox1, 0.1),( -0.8,self.ox1, 0.1),( -0.9,self.ox1, 0.1),(-1.0,self.ox1, 0.1)]
+        self.plot_bounds = np.array([[-2.5, -2.5], [2.5, 2.5]])
 
 
     def plot(self, ax):
-        length=1
-        ox, ox1 = self.ox, self.ox1
-        rect = patches.Rectangle((ox-0.1,-length),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect1 = patches.Rectangle((ox1-0.1,-length),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect2 = patches.Rectangle((ox1-0.1,ox1),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect3 = patches.Rectangle((ox-0.1,ox1),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect4 = patches.Rectangle((-length,ox-0.1),1-ox1+0.1,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect5 = patches.Rectangle((-length,ox1-0.1),1-ox1+0.1,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect6 = patches.Rectangle((ox1-0.1,ox1-0.1),1-ox1+0.2,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        rect7 = patches.Rectangle((ox1,ox-0.1),1-ox1+0.1,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
-        ax.add_patch(rect)
-        ax.add_patch(rect1)
-        ax.add_patch(rect2)
-        ax.add_patch(rect3)
-        ax.add_patch(rect4)
-        ax.add_patch(rect5)
-        ax.add_patch(rect6)
-        ax.add_patch(rect7)
+        for obs_x, obs_y, r in self.obstacles:
+            circle = patches.Circle((obs_x, obs_y), r, linewidth=1,edgecolor='k',facecolor='k',fill=True)
+            ax.add_patch(circle)
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=1500)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=1500)
+
+
+        # length=1
+        # ox, ox1 = self.ox, self.ox1
+        # rect = patches.Rectangle((ox-0.1,-length),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect1 = patches.Rectangle((ox1-0.1,-length),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect2 = patches.Rectangle((ox1-0.1,ox1),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect3 = patches.Rectangle((ox-0.1,ox1),0.2,1-ox1+0.1,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect4 = patches.Rectangle((-length,ox-0.1),1-ox1+0.1,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect5 = patches.Rectangle((-length,ox1-0.1),1-ox1+0.1,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect6 = patches.Rectangle((ox1-0.1,ox1-0.1),1-ox1+0.2,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # rect7 = patches.Rectangle((ox1,ox-0.1),1-ox1+0.1,0.2,linewidth=1,edgecolor='k',facecolor='k',fill=True)
+        # ax.add_patch(rect)
+        # ax.add_patch(rect1)
+        # ax.add_patch(rect2)
+        # ax.add_patch(rect3)
+        # ax.add_patch(rect4)
+        # ax.add_patch(rect5)
+        # ax.add_patch(rect6)
+        # ax.add_patch(rect7)
 
 
 

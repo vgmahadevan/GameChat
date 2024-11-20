@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib import patches
 
 def quit_figure(event):
     if event.key == 'q':
@@ -15,6 +16,8 @@ def quit_figure(event):
 class Plotter:
     def __init__(self):
         self.fig, self.ax = plt.subplots()
+        # self.fig.set_figheight(15)
+        # self.fig.set_figwidth(15)
         # Create a figure and axis object for the plot
         self.liveliness_text = self.ax.text(0.05, 0.95, '', transform=self.ax.transAxes, fontsize=14,
             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
@@ -71,33 +74,54 @@ class Plotter:
         x0_state[2] = np.rad2deg(x0_state[2])
         x1_state = self.x_cum[1][frame].T.copy()
         x1_state[2] = np.rad2deg(x1_state[2])
-        dist = np.linalg.norm(x0_state[:2] - x1_state[:2])
+        agent_dist = np.linalg.norm(x0_state[:2] - x1_state[:2])
+        collides = agent_dist < config.agent_radius * 2 + config.safety_dist
+        closest_obs_dists = []
+        for state in [x0_state, x1_state]:
+            closest_obs_dist = float("inf")
+            for obs in self.scenario.obstacles:
+                dist = np.linalg.norm(state[:2] - np.array(obs[:2]))
+                closest_obs_dist = min(closest_obs_dist, dist)
+            if closest_obs_dist < config.agent_radius + obs[2] + config.safety_dist:
+                collides = True
+            closest_obs_dists.append(closest_obs_dist)
+
         liveliness_text = [f'Iteration: {frame}, Timestamp: {frame * config.sim_ts}',
                            f'Liveliness function = {L}. TTC: {ttc}',
                            f'Agent 0 X = {x0_state}.',
                            f'Agent 0 U = {u0.T}.',
                            f'Agent 1 X = {x1_state}.',
                            f'Agent 1 U = {u1.T}',
-                           f'Agent dist: {dist}']
+                           f'Agent 0 obs dist: {round(closest_obs_dists[0], 3)}, Agent 1 obs dist: {round(closest_obs_dists[1], 3)}',
+                           f'Agent dist: {round(agent_dist, 3)}']
+        # liveliness_text = []
         
-        collides = dist < config.agent_radius * 2 + config.safety_dist
-        for state in [x0_state, x1_state]:
-            for obs in self.scenario.obstacles:
-                if np.linalg.norm(state[:2] - np.array(obs[:2])) < config.agent_radius + obs[2] + config.safety_dist:
-                    collides = True
         text_color = 'red' if collides else 'green' if is_live else 'magenta'
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)
 
         # Determine the start index for the fading effect
-        trail_length = 20 * config.plot_rate
+        # trail_length = 20 * config.plot_rate
+        trail_length = 20
         start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
 
         # Draw the fading trails for agents 1 and 2
         for i in range(start_index, frame - 1, config.plot_rate):
+        # if True:
+        #     trail_length = 1
+        #     i = start_index
             alpha = 1 - ((frame - 1 - i) / trail_length)**2
+            
             self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
-        
+
+            # Plot real-sized objects.
+            # circle = patches.Circle((x0_state[0], x0_state[1]), config.agent_radius, linewidth=1, edgecolor='r', facecolor='r', fill=True)
+            # self.ax.add_patch(circle)
+            # circle = patches.Circle((x1_state[0], x1_state[1]), config.agent_radius, linewidth=1, edgecolor='b', facecolor='b', fill=True)
+            # self.ax.add_patch(circle)
+            # self.ax.arrow(x0_state[0], x0_state[1], math.cos(np.deg2rad(x0_state[2])) * x0_state[3] * 10.0, math.sin(np.deg2rad(x0_state[2])) * x0_state[3] * 10.0, head_width=0.05, head_length=0.1, fc='red', ec='red')
+            # self.ax.arrow(x1_state[0], x1_state[1], math.cos(np.deg2rad(x1_state[2])) * x1_state[3] * 10.0, math.sin(np.deg2rad(x1_state[2])) * x1_state[3] * 10.0, head_width=0.05, head_length=0.1, fc='blue', ec='blue')
+
         if config.plot_arrows:
             pos_diff, vel_diff = self.metrics[frame][2], self.metrics[frame][3] * -3.0
             print(pos_diff, vel_diff)

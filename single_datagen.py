@@ -82,7 +82,6 @@ for (starting_0, starting_1, runtime) in starting_states:
     # scenario = NoObstacleDoorwayScenario()
     scenario.initial = np.array([starting_0, starting_1])
     config.runtime = runtime
-    config.sim_steps = int(runtime / config.sim_ts)
 
     # Matplotlib plotting handler
     plotter = Plotter()
