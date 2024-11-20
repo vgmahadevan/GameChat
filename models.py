@@ -66,6 +66,8 @@ class BarrierNet(nn.Module):
         if model_definition.add_control_limits:
             self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
             self.s1 = Parameter(torch.ones(1).cuda()).to(config.device)
+            self.s2 = Parameter(torch.ones(1).cuda()).to(config.device)
+            self.s3 = Parameter(torch.ones(1).cuda()).to(config.device)
 
     
 
@@ -175,26 +177,42 @@ class BarrierNet(nn.Module):
 
         # Add control limits as soft inequality constraints.
         is_not_lives = [calculate_is_not_live_torch(x0[i,OPP_X_IDX], x0[i,OPP_Y_IDX], theta[i], v[i], x0[i,OPP_THETA_IDX], x0[i,OPP_V_IDX]) for i in range(len(x0))]
-        upper_G_lims = []
-        upper_h_lims = []
-        lower_G_lims = []
-        lower_h_lims = []
+        upper_G_a_lims, upper_h_a_lims = [], []
+        lower_G_a_lims, lower_h_a_lims = [], []
+        upper_G_w_lims, upper_h_w_lims = [], []
+        lower_G_w_lims, lower_h_w_lims = [], []
         if self.model_definition.add_control_limits:
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, 1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                 lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s0
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                upper_G_lims.append(lim_G)
-                upper_h_lims.append(lim_h)
+                upper_G_a_lims.append(lim_G)
+                upper_h_a_lims.append(lim_h)
 
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, -1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                 lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s1
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                lower_G_lims.append(lim_G)
-                lower_h_lims.append(lim_h)
+                lower_G_a_lims.append(lim_G)
+                lower_h_a_lims.append(lim_h)
+
+            for i in range(len(x0)):
+                lim_G = Variable(torch.tensor([1.0, 0.0]))
+                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                lim_h = Variable(torch.tensor([config.omega_limit])).to(config.device) + self.s2
+                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                upper_G_w_lims.append(lim_G)
+                upper_h_w_lims.append(lim_h)
+
+            for i in range(len(x0)):
+                lim_G = Variable(torch.tensor([-1.0, 0.0]))
+                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                lim_h = Variable(torch.tensor([config.omega_limit])).to(config.device) + self.s3
+                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                lower_G_w_lims.append(lim_G)
+                lower_h_w_lims.append(lim_h)
 
 
         # Add in liveness CBF
@@ -304,11 +322,15 @@ class BarrierNet(nn.Module):
             G.append(G_live)
             h.append(h_live)
 
-        G.append(torch.cat(upper_G_lims))
-        h.append(torch.cat(upper_h_lims))
+        G.append(torch.cat(upper_G_a_lims))
+        h.append(torch.cat(upper_h_a_lims))
+        G.append(torch.cat(lower_G_a_lims))
+        h.append(torch.cat(lower_h_a_lims))
 
-        G.append(torch.cat(lower_G_lims))
-        h.append(torch.cat(lower_h_lims))
+        G.append(torch.cat(upper_G_w_lims))
+        h.append(torch.cat(upper_h_w_lims))
+        G.append(torch.cat(lower_G_w_lims))
+        h.append(torch.cat(lower_h_w_lims))
 
         # print(G[-1][0], h[-1][0])
 
@@ -324,6 +346,14 @@ class BarrierNet(nn.Module):
         
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
+
+        # print(upper_h_lims[0])
+        # print(lower_h_lims[0])
+        # print(upper_h_lims[1])
+        # print(lower_h_lims[1])
+        # print(h.shape)
+        # print(h[0])
+        # print(h[1])
 
         # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2 + self.model_definition.add_liveness_filter
         # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2

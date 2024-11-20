@@ -110,6 +110,7 @@ controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model2_l_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model4_l_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_obs_l_f_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model4_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_suite_multi_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
 # controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
@@ -134,7 +135,7 @@ controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model_30_smgbin_w_lims_opp_pen_dgoal_obs_l_all_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_25_smgbin_w_lims_opp_pen_dgoal_fixo_obs_l_all_more_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_25_smgbin_suite_w_lims_opp_pen_dgoal_fixo_obs_l_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model3_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_suite_multi_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model4_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_suite_multi_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

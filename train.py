@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 def train(dataloader, model, loss_fn, optimizer, losses):
     size = len(dataloader.dataset)
     model.train()
+    train_loss = 0
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(config.device), y.to(config.device)
         if config.train_append_goal_xy:
@@ -22,7 +23,7 @@ def train(dataloader, model, loss_fn, optimizer, losses):
         # Compute prediction error
         pred = model(X, 1)
         loss = loss_fn(pred, y)
-        losses.append(loss.item())
+        train_loss += loss.item()
 
         # Backpropagation
         optimizer.zero_grad()
@@ -32,6 +33,9 @@ def train(dataloader, model, loss_fn, optimizer, losses):
         if batch % 5 == 0:  # 25
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+    train_loss /= size
+    losses.append(train_loss)
     return losses
 
 def test(dataloader, model, loss_fn, losses):
@@ -162,6 +166,7 @@ if __name__ == "__main__":
         shutil.rmtree(savefolder, ignore_errors=True)
     os.mkdir(savefolder)
     config_json = {
+        'description': config.description,
         'use_barriernet': config.use_barriernet,
         'agents_to_train_on': config.agents_to_train_on,
         'train_data_paths': config.train_data_paths,
@@ -217,3 +222,14 @@ if __name__ == "__main__":
     plt.ylim(ymin=0.)
 
     plt.savefig(os.path.join(savefolder, 'test_loss.pdf'))
+
+    plt.figure(5)
+    plt.title('Loss')
+    plt.plot(train_losses, color = 'green', label = 'train')
+    plt.plot(test_losses, color = 'red', label = 'test')
+    plt.legend()
+    plt.ylabel('Loss')
+    plt.xlabel('time')
+    plt.ylim(ymin=0.)
+
+    plt.savefig(os.path.join(savefolder, 'train_and_test_loss.pdf'))
