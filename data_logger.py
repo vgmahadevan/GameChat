@@ -3,7 +3,7 @@ import json
 import torch
 import config
 import numpy as np
-from util import perturb_model_input, calculate_all_metrics, aw_to_axay_control
+from util import perturb_model_input, calculate_all_metrics
 
 class Dataset(torch.utils.data.Dataset):
     # Characterizes a dataset for PyTorch
@@ -68,11 +68,10 @@ class BlankLogger:
 
 # Extracts inputs and outputs from data files.
 class DataGenerator:
-    def __init__(self, filenames, x_is_d_goal, vx_vy_inputs, ax_ay_output, add_liveness_as_input):
+    def __init__(self, filenames, x_is_d_goal, add_liveness_as_input, num_opponents):
         self.x_is_d_goal = x_is_d_goal
-        self.vx_vy_inputs = vx_vy_inputs
-        self.ax_ay_output = ax_ay_output
         self.add_liveness_as_input = add_liveness_as_input
+        self.num_opponents = num_opponents
         self.data_streams = []
         self.filenames = filenames
         for filename in filenames:
@@ -93,7 +92,6 @@ class DataGenerator:
         data = []
         total_count = 0
         num_unlive = 0
-        goals = []
         for data_stream in self.data_streams:
             for iteration in data_stream['iterations']:
                 for agent_idx in agent_idxs:
@@ -102,6 +100,7 @@ class DataGenerator:
                         continue
                     # 4 + 4 = 8 inputs.
                     inputs = iteration['states'][agent_idx] + iteration['states'][1 - agent_idx]
+
                     metrics = calculate_all_metrics(np.array(iteration['states'][agent_idx]), np.array(iteration['states'][1 - agent_idx]), config.liveness_threshold)
                     if not metrics[-1]:
                         num_unlive += 1
@@ -109,30 +108,25 @@ class DataGenerator:
                     total_count += 1
                     inputs = perturb_model_input(
                         inputs,
+                        data_stream['obstacles'],
+                        self.num_opponents,
                         self.x_is_d_goal,
-                        self.vx_vy_inputs,
                         self.add_liveness_as_input,
                         iteration['goals'][agent_idx],
                         metrics
                     )
 
-                    goals.append(np.array(iteration['goals'][agent_idx][:2]))
                     data.append(np.array(inputs))
         data = np.array(data)
-        goals = np.array(goals)
         print(f"Num unlive: {num_unlive}, total count: {total_count}")
         # print(1/0)
 
         if not normalize:
-            if config.train_append_goal_xy:
-                return np.hstack((data, goals))
             return data
 
         data_mean = np.mean(data, axis=0)
         data_std = np.std(data, axis=0)
-        data_normalized = (data - data_mean) / data_std
-        if config.train_append_goal_xy:
-            return np.hstack((data_normalized, goals)), data_mean, data_std
+        data_normalized = np.nan_to_num((data - data_mean) / data_std)
         return data_normalized, data_mean, data_std
 
 
@@ -144,8 +138,6 @@ class DataGenerator:
                     if 'use_for_training' in iteration and not iteration['use_for_training'][agent_idx]:
                         continue
                     controls = iteration['controls'][agent_idx]
-                    if self.ax_ay_output:
-                        controls = aw_to_axay_control(iteration['states'][agent_idx], controls)
                     data.append(controls)
         data = np.array(data)
 

@@ -35,7 +35,7 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 80.0                             # Total runtime [s]
+runtime = 20.0                             # Total runtime [s]
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 6                              # Prediction horizon time steps
@@ -119,30 +119,22 @@ train_data_paths = [
 agents_to_train_on = [0]
 # agents_to_train_on = [0, 1]
 
-x_is_d_goal = True
-separate_penalty_for_opp = True
-
 # CBF Filters
 add_control_limits = False
 add_liveness_filter = False
 
 # Changing the inputs / outputs
-vx_vy_inputs = False
-ax_ay_output = False
+x_is_d_goal = True
 add_liveness_as_input = False
-n_obs_as_input = 16
-
-n_closest_obs = None
-# n_closest_obs = 5
+n_opponents = 12
+separate_penalty_for_opp = False # SHOULDNT NEED THIS HOPEFULLY
 
 train_batch_size = 32
-train_append_goal_xy = False
 # train_batch_size = 1
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
 epochs = 30
-nInputs = 8 + add_liveness_as_input
 nHidden1 = 256
 nHidden21 = 64
 nHidden22 = 64
@@ -151,7 +143,8 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/modelf_base_single_all_obs_nolim_'
+# wc = with checkpoint
+saveprefix = f'weights/model_base_single_input_obs_wc_nolim_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 
-description = "Base model, no limits, all obs, single scenario, fixed Lf2b bug"
+description = "Base model, no limits, obs are inputs, single scenario, fixed Lf2b bug"

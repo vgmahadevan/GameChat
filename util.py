@@ -119,18 +119,27 @@ def get_x_is_d_goal_input(inputs, goal):
     inputs = np.array([x, y, theta, v, opp_x, opp_y, opp_theta, opp_v])
     return inputs
 
-def perturb_model_input(inputs, x_is_d_goal, vx_vy_inputs, add_liveness_as_input, goal, metrics=None):
+def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, goal, metrics=None):
     if metrics is None and add_liveness_as_input:
         metrics = calculate_all_metrics(np.array(inputs[:4]), np.array(inputs[4:8]), config.liveness_threshold)
+
+    ego_pos = inputs[:2].copy()
+    num_obstacles = num_total_opponents - 1
+    agent_obs = sorted(scenario_obstacles, key = lambda o: np.linalg.norm(ego_pos - np.array(o[:2])))
+    agent_obs = agent_obs[:num_obstacles]
+    # print(ego_pos)
+    # print(agent_obs)
+
     if x_is_d_goal:
         inputs = get_x_is_d_goal_input(inputs, goal)
-    if vx_vy_inputs:
-        vxvy_inputs = inputs.copy()
-        vxvy_inputs[2] = np.cos(inputs[2]) * inputs[3]
-        vxvy_inputs[3] = np.sin(inputs[2]) * inputs[3]
-        vxvy_inputs[6] = np.cos(inputs[6]) * inputs[7]
-        vxvy_inputs[7] = np.sin(inputs[6]) * inputs[7]
-        inputs = vxvy_inputs
+
+    for obs_x, obs_y, _ in agent_obs:
+        if x_is_d_goal:
+            obs_inp = np.array([obs_x - ego_pos[0], obs_y - ego_pos[1], 0.0, 0.0]) # opp - ego (ego frame)
+        else:
+            obs_inp = np.array([obs_x, obs_y, 0.0, 0.0])
+        inputs = np.append(inputs, obs_inp)
+
     if add_liveness_as_input:
         if not metrics[-2]: # Not intersecting
             liveness = 0.0

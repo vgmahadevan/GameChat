@@ -17,9 +17,6 @@ def train(dataloader, model, loss_fn, optimizer, losses):
     train_loss = 0
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(config.device), y.to(config.device)
-        if config.train_append_goal_xy:
-            X, goals = X[:, :-2], X[:, -2:]
-            model.goals = goals
         
         # Compute prediction error
         pred = model(X, 1)
@@ -46,9 +43,6 @@ def test(dataloader, model, loss_fn, losses):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(config.device), y.to(config.device)
-            if config.train_append_goal_xy:
-                X, goals = X[:, :-2], X[:, -2:]
-                model.goals = goals
 
             pred = model(X, 1)
             loss = loss_fn(pred, y)
@@ -63,7 +57,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.vx_vy_inputs, config.ax_ay_output, config.add_liveness_as_input)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.n_opponents)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
@@ -90,7 +84,6 @@ if __name__ == "__main__":
     model_definition = ModelDefinition(
         is_barriernet=config.use_barriernet,
         weights_path=None,
-        nInputs=config.nInputs,
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
@@ -104,14 +97,12 @@ if __name__ == "__main__":
         add_liveness_filter=config.add_liveness_filter,
         separate_penalty_for_opp=config.separate_penalty_for_opp,
         x_is_d_goal=config.x_is_d_goal,
-        vx_vy_inputs=config.vx_vy_inputs,
-        ax_ay_output=config.ax_ay_output,
         add_liveness_as_input=config.add_liveness_as_input,
-        n_closest_obs=config.n_closest_obs,
+        n_opponents=config.n_opponents,
     )
 
     if config.use_barriernet:
-        model = BarrierNet(model_definition, generator.get_obstacles(), generator.data_streams[0]["iterations"][0]["goals"][config.agents_to_train_on[0]]).to(config.device)
+        model = BarrierNet(model_definition).to(config.device)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)
@@ -121,21 +112,27 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     loss_fn = torch.nn.MSELoss()
 
+    saveprefix = config.saveprefix + ('_bn' if config.use_barriernet else '_fc')
+    weights_path = saveprefix + '.pth'
+    model_definition.weights_path = os.path.basename(weights_path)
+    best_training_epoch = None
+
     train_losses, test_losses = [], []
     for t in tqdm(range(config.epochs)):
         print(f"Epoch {t+1}\n-------------------------------")
         train_losses = train(train_dataloader, model, loss_fn, optimizer, train_losses)
         print("Finished training epoch")
         test_losses = test(test_dataloader, model, loss_fn, test_losses)
-    print("Training Done!")
 
-    # Save the model.
-    saveprefix = config.saveprefix + ('_bn' if config.use_barriernet else '_fc')
-    weights_path = saveprefix + '.pth'
-    torch.save(model.state_dict(), weights_path)
-    model_definition.weights_path = os.path.basename(weights_path)
-    model_definition.save(saveprefix + '_definition.json')
-    print(f"Saved PyTorch Model and Definition to {saveprefix}")
+        # Save the model with the best test loss.
+        if best_training_epoch is None or test_losses[-1] < test_losses[best_training_epoch]:
+            best_training_epoch = t
+            print(f"Epoch {t} was the best training epoch so far, saving model")
+            torch.save(model.state_dict(), weights_path)
+            model_definition.save(saveprefix + '_definition.json')
+
+    print("Training Done!")
+    print(f"Saved PyTorch Model and Definition to {saveprefix} with weights from epoch {best_training_epoch}")
 
     model.eval()    
     tr = []
@@ -144,9 +141,6 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for X, y in zip(X_test, y_test):
-            if config.train_append_goal_xy:
-                X, goals = X[:-2], torch.reshape(torch.from_numpy(X[-2:]), (1, 2)).to(config.device)
-                model.goals = goals
             x = torch.autograd.Variable(torch.from_numpy(X), requires_grad=False)
             x = torch.reshape(x, (1, len(X)))
             x = x.to(config.device)
@@ -188,6 +182,7 @@ if __name__ == "__main__":
         'nHidden23': config.nHidden23,
         'nHidden24': config.nHidden24,
         'saveprefix': config.saveprefix,
+        'best_training_epoch': best_training_epoch,
     }
     json.dump(config_json, open(os.path.join(savefolder, "config.json"), "w+"))
 
@@ -214,7 +209,7 @@ if __name__ == "__main__":
     plt.plot(train_losses, color = 'green', label = 'train')
     plt.legend()
     plt.ylabel('Loss')
-    plt.xlabel('time')
+    plt.xlabel('Epoch')
     plt.ylim(ymin=0.)
 
     plt.savefig(os.path.join(savefolder, 'train_loss.pdf'))
@@ -224,7 +219,7 @@ if __name__ == "__main__":
     plt.plot(test_losses, color = 'red', label = 'test')
     plt.legend()
     plt.ylabel('Loss')
-    plt.xlabel('time')
+    plt.xlabel('Epoch')
     plt.ylim(ymin=0.)
 
     plt.savefig(os.path.join(savefolder, 'test_loss.pdf'))
@@ -235,7 +230,7 @@ if __name__ == "__main__":
     plt.plot(test_losses, color = 'red', label = 'test')
     plt.legend()
     plt.ylabel('Loss')
-    plt.xlabel('time')
+    plt.xlabel('Epoch')
     plt.ylim(ymin=0.)
 
     plt.savefig(os.path.join(savefolder, 'train_and_test_loss.pdf'))

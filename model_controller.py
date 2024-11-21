@@ -11,9 +11,10 @@ class ModelController:
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.goal = goal
         if self.model_definition.is_barriernet:
-            self.model = BarrierNet(self.model_definition, static_obs, goal).to(config.device)
+            self.model = BarrierNet(self.model_definition).to(config.device)
         else:
             self.model = FCNet(self.model_definition).to(config.device)
+        self.static_obs = static_obs
         print(self.model_definition.weights_path)
         self.model.load_state_dict(torch.load(self.model_definition.weights_path))
         self.model.eval()
@@ -31,17 +32,18 @@ class ModelController:
         model_input_original = np.append(self.initial_state, self.opp_state)
         model_input_original = perturb_model_input(
             model_input_original,
+            self.static_obs,
+            self.model_definition.n_opponents,
             self.model_definition.x_is_d_goal,
-            self.model_definition.vx_vy_inputs,
             self.model_definition.add_liveness_as_input,
             self.goal
         )
 
-        model_input = (model_input_original - self.model_definition.input_mean) / self.model_definition.input_std
+        model_input = np.nan_to_num((model_input_original - self.model_definition.input_mean) / self.model_definition.input_std)
 
         with torch.no_grad():
             model_input = torch.autograd.Variable(torch.from_numpy(model_input), requires_grad=False)
-            model_input = torch.reshape(model_input, (1, self.model_definition.nInputs)).to(config.device)
+            model_input = torch.reshape(model_input, (1, self.model_definition.get_num_inputs())).to(config.device)
             model_output = self.model(model_input, 0)
             if self.model_definition.is_barriernet:
                 model_output = np.array([model_output[0], model_output[1]])
@@ -51,8 +53,5 @@ class ModelController:
         output = model_output * self.model_definition.label_std + self.model_definition.label_mean
         print("Outputted controls:", output)
         output = output.reshape(-1, 1)
-
-        if self.model_definition.ax_ay_output:
-            output = axay_to_aw_control(self.initial_state, output)
 
         return output

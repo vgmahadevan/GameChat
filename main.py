@@ -17,7 +17,7 @@ from model_controller import ModelController
 from simulation import run_simulation
 from metrics import gather_all_metric_data
 
-scenario_params = (-1.0, 0.4, 2.0, 0.25)
+scenario_params = (-1.0, 0.5, 2.0, 0.25)
 scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
 
 plotter = Plotter()
@@ -30,13 +30,13 @@ env = Environment(scenario.initial.copy(), scenario.goals.copy())
 controllers = []
 
 # Setup agent 0
-# controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/modelf_base_single_all_obs_nolim_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(BlankController())
 
 # Setup agent 1
 # controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/modelf_base_single_all_obs_nolim_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(BlankController())
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
