@@ -16,10 +16,11 @@ plot_rate = 1
 plot_live = True
 # plot_live_pause_iteration = None
 # plot_live_pause_iteration = 0
-plot_live_pause_iteration = 50
+plot_live_pause_iteration = 30
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
+plot_text_on = False
 ani_save_name = 'base_barriernet_model.mp4'
 
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR

@@ -102,7 +102,8 @@ class Plotter:
                            f'Agent 1 U = {u1.T}',
                            f'Agent 0 obs dist: {round(closest_obs_dists[0], 3)}, Agent 1 obs dist: {round(closest_obs_dists[1], 3)}',
                            f'Agent dist: {round(agent_dist, 3)}']
-        # liveliness_text = []
+        if not config.plot_text_on:
+            liveliness_text = []
         
         text_color = 'red' if collides else 'green' if is_live else 'magenta'
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)

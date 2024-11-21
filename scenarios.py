@@ -88,10 +88,10 @@ class NoObstacleDoorwayScenario:
 
 class IntersectionScenario:
     def __init__(self):
-        self.initial = np.array([[0.0, -2.0, np.pi / 2, 0.0],
-                      [-2.0, 0.0, 0.0, 0.0]])
-        self.goals = np.array([[0.0, 2.0, np.pi / 2, 0.0],
-                    [2.0, 0.0, 0.0, 0.0]
+        self.initial = np.array([[0.0, -1.0, np.pi / 2, 0.0],
+                      [-1.0, 0.0, 0.0, 0.0]])
+        self.goals = np.array([[0.0, 1.0, np.pi / 2, 0.0],
+                    [1.0, 0.0, 0.0, 0.0]
                     ])
         self.ox=-0.3
         self.ox1=0.3
@@ -108,7 +108,7 @@ class IntersectionScenario:
 
                 (0.3,self.ox1, 0.1), ( 0.4,self.ox1, 0.1),(0.5,self.ox1, 0.1),(0.6, self.ox1, 0.1),(0.7,self.ox1, 0.1),(0.8,self.ox1, 0.1),(0.9,self.ox1, 0.1),( 1.0, self.ox1, 0.1),
                 (-0.3,self.ox1, 0.1), ( -0.4,self.ox1, 0.1),(-0.5, self.ox1, 0.1),( -0.6, self.ox1, 0.1),( -0.7,self.ox1, 0.1),( -0.8,self.ox1, 0.1),( -0.9,self.ox1, 0.1),(-1.0,self.ox1, 0.1)]
-        self.plot_bounds = np.array([[-2.5, -2.5], [2.5, 2.5]])
+        self.plot_bounds = np.array([[-1.5, -1.5], [1.5, 1.5]])
 
 
     def plot(self, ax):

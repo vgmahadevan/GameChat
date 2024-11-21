@@ -16,20 +16,35 @@ from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
 
-SCENARIO = 'Doorway'
+# SCENARIO = 'Doorway'
+SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
+RUN_AGENT = 'MPC_UNLIVE'
 # RUN_AGENT = 'BarrierNet'
-RUN_AGENT = 'LiveNet'
+# RUN_AGENT = 'LiveNet'
 
-def get_mpc_controllers(scenario, liveness, zero_goes_faster):
-    if SCENARIO == 'Doorway':
-        config.liveliness = liveness
+def get_mpc_live_controllers(scenario, zero_goes_faster):
+    if SCENARIO == 'Doorway' or SCENARIO == 'Intersection':
+        config.liveliness = True
         config.mpc_p0_faster = zero_goes_faster
         config.opp_gamma = 0.5
         config.obs_gamma = 0.3
         config.liveliness_gamma = 0.3
         config.liveness_threshold = 1.0
+
+    controllers = [
+        MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=scenario.goals[0,:].copy(), static_obs=scenario.obstacles.copy()),
+        MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=scenario.goals[1,:].copy(), static_obs=scenario.obstacles.copy())
+    ]
+    return controllers
+
+
+def get_mpc_unlive_controllers(scenario):
+    if SCENARIO == 'Doorway' or SCENARIO == 'Intersection':
+        config.liveliness = False
+        config.opp_gamma = 0.1
+        config.obs_gamma = 0.1
 
     controllers = [
         MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=scenario.goals[0,:].copy(), static_obs=scenario.obstacles.copy()),
@@ -65,6 +80,8 @@ def get_livenet_controllers(scenario):
 if SCENARIO == 'Doorway':
     scenario_params = (-1.0, 0.5, 2.0, 0.15)
     scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
+elif SCENARIO == 'Intersection':
+    scenario = IntersectionScenario()
 
 NUM_SIMS = 50
 
@@ -79,7 +96,9 @@ for sim in range(NUM_SIMS):
     logger.set_obstacles(scenario.obstacles.copy())
     env = Environment(scenario.initial.copy(), scenario.goals.copy())
     if RUN_AGENT == 'MPC':
-        controllers = get_mpc_controllers(scenario, True)
+        controllers = get_mpc_live_controllers(scenario, True)
+    elif RUN_AGENT == 'MPC_UNLIVE':
+        controllers = get_mpc_unlive_controllers(scenario)
     elif RUN_AGENT == 'BarrierNet':
         controllers = get_barriernet_controllers(scenario)
     elif RUN_AGENT == 'LiveNet':
