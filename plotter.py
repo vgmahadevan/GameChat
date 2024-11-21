@@ -109,18 +109,15 @@ class Plotter:
 
         # Determine the start index for the fading effect
         # trail_length = 20 * config.plot_rate
-        trail_length = 20
+        trail_length = 40
         start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
 
         # Draw the fading trails for agents 1 and 2
-        for i in range(start_index, frame - 1, config.plot_rate):
+        for i in range(start_index, frame - 1, config.plot_rate * 3):
         # if True:
         #     trail_length = 1
         #     i = start_index
             alpha = 1 - ((frame - 1 - i) / trail_length)**2
-            
-            self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
-            self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
 
             # Plot real-sized objects.
             circle = patches.Circle(self.x_cum[0][i, :2], config.agent_radius, linewidth=1, edgecolor='r', facecolor='r', fill=True, alpha=alpha)

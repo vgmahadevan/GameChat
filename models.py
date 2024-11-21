@@ -208,15 +208,17 @@ class BarrierNet(nn.Module):
                 if v[i] > x0[i, opp_v_idx]:
                     control_scalar_factor = -1.0
                     barrier = v[i] - self.zeta * x0[i, opp_v_idx]
-                    penalty = x34[0]
+                    penalty = x34[i, 0]
                 else:
                     control_scalar_factor = self.zeta
                     barrier = x0[i, opp_v_idx] - self.zeta * v[i]
-                    penalty = x34[1]
+                    penalty = x34[i, 1]
 
                 live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
                 live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                 live_h = torch.reshape(penalty * barrier * (np.pi - liveness), (1, 1)).to(config.device)
+
+                print(live_G, live_h, penalty)
 
                 G_live.append(live_G)
                 h_live.append(live_h)

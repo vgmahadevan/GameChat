@@ -40,11 +40,12 @@ controllers = []
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_suite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 
 
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
 # controllers.append(BlankController())
@@ -53,11 +54,12 @@ controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_suite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

@@ -39,6 +39,7 @@ class ModelDefinition:
     x_is_d_goal: bool # Default = false
     add_liveness_as_input: bool
     n_opponents: int
+    fixed_liveness_input: bool
 
     def get_num_inputs(self):
         return 4 + self.n_opponents * 4 + self.add_liveness_as_input
@@ -67,6 +68,6 @@ class ModelDefinition:
                 data['add_liveness_as_input'] = False
             if 'n_opponents' not in data:
                 data['n_opponents'] = 1
-            # if 'nInputs' not in data:
-            #     del data['nInputs']
+            if 'fixed_liveness_input' not in data:
+                data['fixed_liveness_input'] = False
             return ModelDefinition(**data)

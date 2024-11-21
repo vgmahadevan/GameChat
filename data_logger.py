@@ -68,9 +68,10 @@ class BlankLogger:
 
 # Extracts inputs and outputs from data files.
 class DataGenerator:
-    def __init__(self, filenames, x_is_d_goal, add_liveness_as_input, num_opponents):
+    def __init__(self, filenames, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, num_opponents):
         self.x_is_d_goal = x_is_d_goal
         self.add_liveness_as_input = add_liveness_as_input
+        self.fixed_liveness_input = fixed_liveness_input
         self.num_opponents = num_opponents
         self.data_streams = []
         self.filenames = filenames
@@ -112,6 +113,7 @@ class DataGenerator:
                         self.num_opponents,
                         self.x_is_d_goal,
                         self.add_liveness_as_input,
+                        self.fixed_liveness_input,
                         iteration['goals'][agent_idx],
                         metrics
                     )

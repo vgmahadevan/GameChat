@@ -119,7 +119,7 @@ def get_x_is_d_goal_input(inputs, goal):
     inputs = np.array([x, y, theta, v, opp_x, opp_y, opp_theta, opp_v])
     return inputs
 
-def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, goal, metrics=None):
+def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, goal, metrics=None):
     if metrics is None and add_liveness_as_input:
         metrics = calculate_all_metrics(np.array(inputs[:4]), np.array(inputs[4:8]), config.liveness_threshold)
 
@@ -142,7 +142,10 @@ def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_
 
     if add_liveness_as_input:
         if not metrics[-2]: # Not intersecting
-            liveness = 0.0
+            if fixed_liveness_input:
+                liveness = np.pi
+            else:
+                liveness = 0.0
         else: # Intersecting
             liveness = metrics[0]
         inputs = np.append(inputs, liveness)

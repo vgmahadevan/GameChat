@@ -19,8 +19,8 @@ from simulation import run_simulation
 SCENARIO = 'Doorway'
 
 # RUN_AGENT = 'MPC'
-RUN_AGENT = 'MPC_BARE'
-RUN_AGENT = 'BarrierNet'
+# RUN_AGENT = 'BarrierNet'
+RUN_AGENT = 'LiveNet'
 
 def get_mpc_controllers(scenario, liveness, zero_goes_faster):
     if SCENARIO == 'Doorway':
@@ -42,6 +42,17 @@ def get_barriernet_controllers(scenario):
     if SCENARIO == 'Doorway':
         model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json"
         model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json"
+
+    controllers = [
+        ModelController(model_0_def, scenario.goals[0], scenario.obstacles.copy()),
+        ModelController(model_1_def, scenario.goals[1], scenario.obstacles.copy()),
+    ]
+    return controllers
+
+def get_livenet_controllers(scenario):
+    if SCENARIO == 'Doorway':
+        model_0_def = "weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json"
+        model_1_def = "weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json"
 
     controllers = [
         ModelController(model_0_def, scenario.goals[0], scenario.obstacles.copy()),
@@ -71,6 +82,8 @@ for sim in range(NUM_SIMS):
         controllers = get_mpc_controllers(scenario, True)
     elif RUN_AGENT == 'BarrierNet':
         controllers = get_barriernet_controllers(scenario)
+    elif RUN_AGENT == 'LiveNet':
+        controllers = get_livenet_controllers(scenario)
 
     x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

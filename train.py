@@ -57,7 +57,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.n_opponents)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
@@ -98,6 +98,7 @@ if __name__ == "__main__":
         separate_penalty_for_opp=config.separate_penalty_for_opp,
         x_is_d_goal=config.x_is_d_goal,
         add_liveness_as_input=config.add_liveness_as_input,
+        fixed_liveness_input=config.fixed_liveness_input,
         n_opponents=config.n_opponents,
     )
 

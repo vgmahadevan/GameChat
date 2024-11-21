@@ -36,6 +36,7 @@ class ModelController:
             self.model_definition.n_opponents,
             self.model_definition.x_is_d_goal,
             self.model_definition.add_liveness_as_input,
+            self.model_definition.fixed_liveness_input,
             self.goal
         )
 
