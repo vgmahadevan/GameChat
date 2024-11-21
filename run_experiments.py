@@ -16,12 +16,12 @@ from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
 
-# SCENARIO = 'Doorway'
-SCENARIO = 'Intersection'
+SCENARIO = 'Doorway'
+# SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
-RUN_AGENT = 'MPC_UNLIVE'
-# RUN_AGENT = 'BarrierNet'
+# RUN_AGENT = 'MPC_UNLIVE'
+RUN_AGENT = 'BarrierNet'
 # RUN_AGENT = 'LiveNet'
 
 def get_mpc_live_controllers(scenario, zero_goes_faster):
@@ -55,8 +55,10 @@ def get_mpc_unlive_controllers(scenario):
 
 def get_barriernet_controllers(scenario):
     if SCENARIO == 'Doorway':
-        model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json"
-        model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json"
+#        model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json"
+#        model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json"
+        model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json"
+        model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json"
 
     controllers = [
         ModelController(model_0_def, scenario.goals[0], scenario.obstacles.copy()),
@@ -83,6 +85,8 @@ if SCENARIO == 'Doorway':
 elif SCENARIO == 'Intersection':
     scenario = IntersectionScenario()
 
+
+print(f"Running experimnets on agent {RUN_AGENT} on scenario {SCENARIO}")
 NUM_SIMS = 50
 
 all_metric_data = []
@@ -110,4 +114,6 @@ for sim in range(NUM_SIMS):
     all_metric_data.append(metric_data)
 
 all_metric_data = np.array(all_metric_data)
-np.savetxt(f'experiment_results/{RUN_AGENT}_{SCENARIO}.csv', all_metric_data, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1')
+save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}.csv"
+print(f"Saving experiment results to {save_filename}")
+np.savetxt(save_filename, all_metric_data, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1')

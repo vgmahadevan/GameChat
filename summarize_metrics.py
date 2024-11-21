@@ -2,9 +2,13 @@ import config
 import numpy as np
 
 # AGENT = 'MPC'
-# AGENT = 'BarrierNet'
-AGENT = 'LiveNet'
+AGENT = 'BarrierNet'
+# AGENT = 'LiveNet'
+# AGENT = 'MPC_UNLIVE'
+
 SCENARIO = 'Doorway'
+# SCENARIO = 'Intersection'
+
 metrics = np.loadtxt(f'experiment_results/{AGENT}_{SCENARIO}.csv', delimiter=',')
 
 IDXS = {

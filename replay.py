@@ -10,14 +10,15 @@ import os
 import numpy as np
 import config
 import matplotlib.pyplot as plt
-from scenarios import DoorwayScenario, NoObstacleDoorwayScenario
+from scenarios import DoorwayScenario, NoObstacleDoorwayScenario, IntersectionScenario
 from plotter import Plotter
 from data_logger import DataLogger, BlankLogger
 from util import calculate_all_metrics
 
 # dirname = 'all_data_with_offsets'
 # dirname = 'obs_doorway_with_offsets'
-dirname = 'doorway_scenario_suite'
+# dirname = 'doorway_scenario_suite'
+dirname = 'intersection_scenario_suite'
 
 bags = []
 for filename in os.listdir(dirname):
@@ -26,11 +27,12 @@ bags.sort()
 
 # bags = ['obs_doorway_with_offsets/l_0_faster_off0.json']
 # bags = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json']
-bags = ['obs_doorway_with_offsets/l_0_faster_edge_cases.json']
+# bags = ['obs_doorway_with_offsets/l_0_faster_edge_cases.json']
 
 for bag in bags:
     print("Viewing", bag)
-    scenario = DoorwayScenario()
+    # scenario = DoorwayScenario()
+    scenario = IntersectionScenario()
     config.ani_save_name = os.path.basename(bag).rstrip('json') + '.mp4'
     # scenario = NoObstacleDoorwayScenario()
 

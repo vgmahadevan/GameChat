@@ -27,6 +27,7 @@ class DoorwayScenario:
         self.initial_y = initial_y
         self.goal_x = goal_x
         self.goal_y = goal_y
+        self.config = (initial_x, initial_y, goal_x, goal_y)
         self.initial = np.array([[self.initial_x, self.initial_y, 0],
                     [self.initial_x, -self.initial_y, 0]])
         self.goals = np.array([[self.goal_x, -self.goal_y, 0.0],
@@ -50,10 +51,17 @@ class DoorwayScenario:
         for obs_x, obs_y, r in self.obstacles:
             circle = patches.Circle((obs_x, obs_y), r, linewidth=1,edgecolor='k',facecolor='k',fill=True)
             ax.add_patch(circle)
-        # ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=1500)
-        # ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=1500)
-        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
-        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=1000)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=1000)
+        # ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
+        # ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
+
+    def __str__(self):
+        return f"Doorway Scenario with config: {self.config}"
+
+
+    def save_str(self):
+        return f"s_doorway_{self.config[0]}_{self.config[1]}_{self.config[2]}_{self.config[3]}"
 
 
 class NoObstacleDoorwayScenario:
@@ -137,9 +145,10 @@ class IntersectionScenario:
         # ax.add_patch(rect5)
         # ax.add_patch(rect6)
         # ax.add_patch(rect7)
+    
+    def __str__(self):
+        return "Intersection Scenario"
 
 
-
-
-
-
+    def save_str(self):
+        return "s_intersection"

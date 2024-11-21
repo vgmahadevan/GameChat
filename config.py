@@ -14,13 +14,14 @@ liveliness = True
 liveness_threshold = 1.0
 plot_rate = 1
 plot_live = True
-# plot_live_pause_iteration = None
+plot_live_pause_iteration = None
 # plot_live_pause_iteration = 0
-plot_live_pause_iteration = 30
+# plot_live_pause_iteration = 30
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
-plot_text_on = False
+plot_text_on = True
+# plot_text_on = False
 ani_save_name = 'base_barriernet_model.mp4'
 
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
@@ -111,6 +112,7 @@ train_data_paths = [
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
 # train_data_paths = ['doorway_scenario_suite/']
+train_data_paths = ['intersection_scenario_suite']
 
 # train_data_paths = []
 # for filename in os.listdir('doorway_scenario_suite'):
@@ -121,16 +123,16 @@ train_data_paths = [
 # agents_to_train_on = [0]
 agents_to_train_on = [0, 1]
 
-# CBF Filters
+# Liveness / CBF Filters (all the cool shit)
 add_control_limits = False
-add_liveness_filter = True
+add_liveness_filter = False
+add_liveness_as_input = False
+fixed_liveness_input = True
 
 # Changing the inputs / outputs
 x_is_d_goal = True
-add_liveness_as_input = True
 n_opponents = 12
-separate_penalty_for_opp = False # SHOULDNT NEED THIS HOPEFULLY
-fixed_liveness_input = True
+separate_penalty_for_opp = False
 
 train_batch_size = 32
 # train_batch_size = 1
@@ -155,9 +157,10 @@ nHidden24 = 64
 
 # Livenet options: model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition
 
-saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
+# saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
+saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
 
 
-description = "Base model, no limits, liveness input, liveness filter, obs are inputs, run on WHOLE suite"
+description = "Base model, no limits, no liveness, obs are inputs, run on intersection suite"

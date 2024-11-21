@@ -16,56 +16,63 @@ from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from simulation import run_simulation
 
-# start x, start y, goal x, goal y, opp gamma, obs gamma, liveness gamma
-scenario_configs = [
-    # (-1, 0.5, 2, 0.15, 0.5, 0.5, 0.3),
-    # (-1, 0.5, 2, 0.25, 0.5, 0.5, 0.3),
-    # (-1, 0.5, 2, 0.35, 0.5, 0.3),
-    # (-1, 0.5, 2, 0.15, 0.5, 0.3),
-    # (-1, 0.5, 2, 0.15, 0.5, 0.3),
+# # start x, start y, goal x, goal y, opp gamma, obs gamma, liveness gamma
+# scenario_configs = [
+#     # (-1, 0.5, 2, 0.15, 0.5, 0.5, 0.3),
+#     # (-1, 0.5, 2, 0.25, 0.5, 0.5, 0.3),
+#     # (-1, 0.5, 2, 0.35, 0.5, 0.3),
+#     # (-1, 0.5, 2, 0.15, 0.5, 0.3),
+#     # (-1, 0.5, 2, 0.15, 0.5, 0.3),
 
-    (-1.0, 0.5, 2.0, 0.15), # 0
-    (-1.0, 0.5, 2.0, 0.30), # 1
-    # (-1.0, 0.5, 2.0, 0.45), # 2
-    (-1.0, 0.4, 2.0, 0.15), # 3
-    (-1.0, 0.4, 2.0, 0.35), # 4
-    (-1.0, 0.3, 2.0, 0.15), # 5
-    (-1.0, 0.3, 2.0, 0.25), # 6
+#     (-1.0, 0.5, 2.0, 0.15), # 0
+#     (-1.0, 0.5, 2.0, 0.30), # 1
+#     # (-1.0, 0.5, 2.0, 0.45), # 2
+#     (-1.0, 0.4, 2.0, 0.15), # 3
+#     (-1.0, 0.4, 2.0, 0.35), # 4
+#     (-1.0, 0.3, 2.0, 0.15), # 5
+#     (-1.0, 0.3, 2.0, 0.25), # 6
 
-    (-0.5, 0.5, 2.0, 0.15), # 7
-    (-0.5, 0.5, 2.0, 0.30), # 8
-    (-0.5, 0.5, 2.0, 0.45), # 9
-    (-0.5, 0.4, 2.0, 0.15), # 10
-    (-0.5, 0.4, 2.0, 0.35), # 11
-    (-0.5, 0.3, 2.0, 0.15), # 12
-    (-0.5, 0.3, 2.0, 0.25), # 13
-]
+#     (-0.5, 0.5, 2.0, 0.15), # 7
+#     (-0.5, 0.5, 2.0, 0.30), # 8
+#     (-0.5, 0.5, 2.0, 0.45), # 9
+#     (-0.5, 0.4, 2.0, 0.15), # 10
+#     (-0.5, 0.4, 2.0, 0.35), # 11
+#     (-0.5, 0.3, 2.0, 0.15), # 12
+#     (-0.5, 0.3, 2.0, 0.25), # 13
+# ]
+# scenarios = [DoorwayScenario(initial_x=conf[0], initial_y=conf[1], goal_x=conf[2], goal_y=conf[3]) for conf in scenario_configs]
 
+# best_params = [
+#   (0.5, 0.3, 0.3, 1.0, True, 18.0), # 0
+#   (0.8, 0.4, 0.4, 1.0, True, 17.0), # 1
+# #   ??? # 2
+#   (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
+#   (0.7, 0.6, 0.2, 1.3, True, 18.0), # 4
+#   (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
+#   (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
+#   (0.9, 0.3, 0.2, 0.7, True, 15.0), # 7
+#   (0.9, 0.2, 0.2, 0.8, False, 16.0), # 8
+#   (0.9, 0.3, 0.2, 0.8, False, 16.0), # 9
+#   (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
+#   (0.9, 0.3, 0.2, 0.9, False, 15.0), # 11
+#   (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
+#   (0.9, 0.3, 0.2, 1.1, False, 15.0), # 13
+# ]
+
+# folder_to_save_to = 'doorway_scenario_suite/'
+
+folder_to_save_to = 'intersection_scenario_suite/'
 best_params = [
   (0.5, 0.3, 0.3, 1.0, True, 18.0), # 0
-  (0.8, 0.4, 0.4, 1.0, True, 17.0), # 1
-#   ??? # 2
-  (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
-  (0.7, 0.6, 0.2, 1.3, True, 18.0), # 4
-  (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
-  (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
-  (0.9, 0.3, 0.2, 0.7, True, 15.0), # 7
-  (0.9, 0.2, 0.2, 0.8, False, 16.0), # 8
-  (0.9, 0.3, 0.2, 0.8, False, 16.0), # 9
-  (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
-  (0.9, 0.3, 0.2, 0.9, False, 15.0), # 11
-  (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
-  (0.9, 0.3, 0.2, 1.1, False, 15.0), # 13
 ]
-
-folder_to_save_to = 'doorway_scenario_suite/'
+scenarios = [IntersectionScenario()]
 
 # scenario_configs = scenario_configs[:1]
 # best_params = best_params[:1]
 # offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
 offset = [0]
 zero_faster = [True, False]
-for scenario_config, mpc_params in zip(scenario_configs, best_params):
+for scenario, mpc_params in zip(scenarios, best_params):
     config.opp_gamma = mpc_params[0]
     config.obs_gamma = mpc_params[1]
     config.liveliness_gamma = mpc_params[2]
@@ -74,7 +81,7 @@ for scenario_config, mpc_params in zip(scenario_configs, best_params):
     config.runtime = mpc_params[5]
     for z in zero_faster:
         for o in offset:
-            print(f"Running scenario {scenario_config} with z {z} and o {o}")
+            print(f"Running scenario {str(scenario)} with z {z} and o {o}")
             # Don't include situations that won't happen.
             if o > 0 and z:
                 continue
@@ -83,10 +90,8 @@ for scenario_config, mpc_params in zip(scenario_configs, best_params):
 
             config.agent_zero_offset = o
             config.mpc_p0_faster = z
-            log_filename = f's_{scenario_config[0]}_{scenario_config[1]}_{scenario_config[2]}_{scenario_config[3]}_l_{0 if z else 1}_faster_off{o}.json'
+            log_filename = f'{scenario.save_str()}_l_{0 if z else 1}_faster_off{o}.json'
             logger = DataLogger(os.path.join(folder_to_save_to, log_filename))
-
-            scenario = DoorwayScenario(initial_x=scenario_config[0], initial_y=scenario_config[1], goal_x=scenario_config[2], goal_y=scenario_config[3])
 
             # Matplotlib plotting handler
             # plotter = Plotter()
