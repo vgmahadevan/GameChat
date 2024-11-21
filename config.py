@@ -106,10 +106,10 @@ train_data_paths = [
 #     'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
-train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
-                    'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
+# train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
+#                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
-# train_data_paths = ['doorway_scenario_suite/']
+train_data_paths = ['doorway_scenario_suite/']
 
 # train_data_paths = []
 # for filename in os.listdir('doorway_scenario_suite'):
@@ -117,18 +117,19 @@ train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.
 #     # if '1_faster' in filename:
 #         train_data_paths.append(os.path.join('doorway_scenario_suite', filename))
 
-agents_to_train_on = [0]
-# agents_to_train_on = [1]
+agents_to_train_on = [1]
+# agents_to_train_on = [0, 1]
 
 # CBF Filters
 add_control_limits = False
-add_liveness_filter = False
+add_liveness_filter = True
 
 # Changing the inputs / outputs
 x_is_d_goal = True
-add_liveness_as_input = False
+add_liveness_as_input = True
 n_opponents = 12
 separate_penalty_for_opp = False # SHOULDNT NEED THIS HOPEFULLY
+fixed_liveness_input = True
 
 train_batch_size = 32
 # train_batch_size = 1
@@ -150,7 +151,10 @@ nHidden24 = 64
 # Baseline options: weights/model_base_single_input_obs_wc_nolim_saf_
 # Baseline options: weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1
 # Baseline options: weights/model_base_single_input_obs_wc_nolim_saf_suite_0 and weights/model_base_single_input_obs_wc_nolim_saf_suite_1
-saveprefix = f'weights/model_base_single_input_obs_wc_nolim_f_suite_'
+
+# Livenet options: model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition
+
+saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 
-description = "Base model, no limits, obs are inputs, single scenario, fixed Lf2b bug"
+description = "Base model, no limits, liveness input, liveness filter, obs are inputs, run on WHOLE suite"

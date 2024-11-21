@@ -34,21 +34,30 @@ env = Environment(scenario.initial.copy(), scenario.goals.copy())
 controllers = []
 
 # Setup agent 0
-controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(BlankController())
+# controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_suite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 
-# controllers.append(BlankController())
+
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
 
 # Setup agent 1
-controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(BlankController())
+# controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(BlankController())
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_suite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+
+
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

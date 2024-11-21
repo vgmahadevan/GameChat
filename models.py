@@ -39,12 +39,12 @@ class BarrierNet(nn.Module):
         self.output_mean = torch.from_numpy(self.output_mean_np).to(config.device)
         self.output_std = torch.from_numpy(self.output_std_np).to(config.device)
 
-        # QP Parameters
-        self.p1 = 0
-        self.p2 = 0
+        self.zeta = 2.0
 
         print("NUM MODEL INPUTS:", model_definition.get_num_inputs())
-        # print(1/0)
+        if self.model_definition.add_liveness_filter:
+            # Liveness is the last input.
+            self.liveness_idx = self.model_definition.get_num_inputs() - 1
         
         self.fc1 = nn.Linear(model_definition.get_num_inputs(), model_definition.nHidden1).double()
         self.fc21 = nn.Linear(model_definition.nHidden1, model_definition.nHidden21).double()
@@ -161,28 +161,28 @@ class BarrierNet(nn.Module):
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, 1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s0
+                lim_h = Variable(torch.tensor([config.accel_limit * 1.5])).to(config.device)
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
                 upper_G_a_lims.append(lim_G)
                 upper_h_a_lims.append(lim_h)
 
                 lim_G = Variable(torch.tensor([0.0, -1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.accel_limit])).to(config.device) + self.s1
+                lim_h = Variable(torch.tensor([config.accel_limit * 1.5])).to(config.device)
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
                 lower_G_a_lims.append(lim_G)
                 lower_h_a_lims.append(lim_h)
 
                 lim_G = Variable(torch.tensor([1.0, 0.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.omega_limit])).to(config.device) + self.s2
+                lim_h = Variable(torch.tensor([config.omega_limit * 1.5])).to(config.device)
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
                 upper_G_w_lims.append(lim_G)
                 upper_h_w_lims.append(lim_h)
 
                 lim_G = Variable(torch.tensor([-1.0, 0.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.omega_limit])).to(config.device) + self.s3
+                lim_h = Variable(torch.tensor([config.omega_limit * 1.5])).to(config.device)
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
                 lower_G_w_lims.append(lim_G)
                 lower_h_w_lims.append(lim_h)
@@ -202,8 +202,21 @@ class BarrierNet(nn.Module):
         if self.model_definition.add_liveness_filter:
             G_live, h_live = [], []
             for i in range(len(x0)):
-                # is_not_live will be 1 if it's not live, and 0 if it is live.
-                pass
+                # TODO: For now hardcoded to one opponent. In the future it should be based on which opponent is most dangerous.
+                liveness = x0[i, self.liveness_idx]
+                opp_v_idx =  4 + OPP_V_OFFSET
+                if v[i] > x0[i, opp_v_idx]:
+                    control_scalar_factor = -1.0
+                    barrier = v[i] - self.zeta * x0[i, opp_v_idx]
+                    penalty = x34[0]
+                else:
+                    control_scalar_factor = self.zeta
+                    barrier = x0[i, opp_v_idx] - self.zeta * v[i]
+                    penalty = x34[1]
+
+                live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
+                live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                live_h = torch.reshape(penalty * barrier * (np.pi - liveness), (1, 1)).to(config.device)
 
                 G_live.append(live_G)
                 h_live.append(live_h)
@@ -236,8 +249,6 @@ class BarrierNet(nn.Module):
             # print("Outputted x:", x)
             x = (x - self.output_mean) / self.output_std
         else:
-            # self.p1 = x32[0,0]
-            # self.p2 = x32[0,1]
             # print(x31[0].cpu())
             try:
                 # x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
