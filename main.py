@@ -78,9 +78,9 @@ scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_para
 # config.liveness_threshold = 1.1
 delay_start = 0.0
 
-config.opp_gamma = 0.6
-config.obs_gamma = 0.2
-config.liveliness_gamma = 0.5
+config.opp_gamma = 0.5
+config.obs_gamma = 0.3
+config.liveliness_gamma = 0.3
 config.liveness_threshold = 1.0
 
 
@@ -102,7 +102,9 @@ controllers = []
 # Setup agent 0
 # controllers.append(BlankController())
 # controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy(), delay_start=max(config.agent_zero_offset, 0.0)))
-controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy(), delay_start=delay_start))
+# controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy(), delay_start=delay_start))
+controllers.append(ModelController("weights/modelf_base_single_all_obs_nolim_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
+
 # controllers.append(ModelController("weights/model_liveness_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_0_bn_definition.json", static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_g_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
@@ -114,7 +116,7 @@ controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config
 
 # Setup agent 1
 # controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
-# controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_liveness_1_bn_definition.json", static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_l_saf_g_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
@@ -137,7 +139,8 @@ controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model_25_smgbin_suite_w_lims_opp_pen_dgoal_fixo_obs_l_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model4_25_smgbin_l_w_lims_opp_pen_dgoal_fixo_obs_l_suite_multi_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/model_30_multi_vxvy_aw_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-controllers.append(ModelController("weights/model_30_multi_vxvy_axay_blim_li_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/model_30_multi_vxvy_axay_blim_li_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(ModelController("weights/modelf_base_single_all_obs_nolim_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

@@ -16,7 +16,7 @@ plot_rate = 1
 plot_live = True
 plot_live_pause_iteration = None
 # plot_live_pause_iteration = 0
-# plot_live_pause_iteration = 60
+# plot_live_pause_iteration = 35
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
@@ -99,20 +99,16 @@ train_data_paths = [
 #     'obs_doorway_with_offsets/l_1_faster_off5.json',
 #     'obs_doorway_with_offsets/l_1_faster_off7.json',
 #     # Liveness cases
-    'obs_doorway_with_offsets/l_0_faster_off0.json',
-#     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-#     'obs_doorway_with_offsets/l_1_faster_off0.json',
-#     'obs_doorway_with_offsets/l_0_faster_off0.json',
-#     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
+    # 'obs_doorway_with_offsets/l_0_faster_off0.json',
+    'doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json',
+    'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
 #     'obs_doorway_with_offsets/l_1_faster_off0.json',
 ]
 
 # train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
-
-agents_to_train_on = [0, 1]
-train_data_paths = ['doorway_scenario_suite/']
+# train_data_paths = ['doorway_scenario_suite/']
 
 # train_data_paths = []
 # for filename in os.listdir('doorway_scenario_suite'):
@@ -120,14 +116,24 @@ train_data_paths = ['doorway_scenario_suite/']
 #     # if '1_faster' in filename:
 #         train_data_paths.append(os.path.join('doorway_scenario_suite', filename))
 
+agents_to_train_on = [0]
+# agents_to_train_on = [0, 1]
 
-add_control_limits = True
-separate_penalty_for_opp = True
-add_liveness_filter = False
 x_is_d_goal = True
-vx_vy_inputs = True
-ax_ay_output = True
-add_liveness_as_input = True
+separate_penalty_for_opp = True
+
+# CBF Filters
+add_control_limits = False
+add_liveness_filter = False
+
+# Changing the inputs / outputs
+vx_vy_inputs = False
+ax_ay_output = False
+add_liveness_as_input = False
+
+n_closest_obs = None
+# n_closest_obs = 5
+
 train_batch_size = 32
 train_append_goal_xy = False
 # train_batch_size = 1
@@ -144,7 +150,7 @@ nHidden24 = 64
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
-saveprefix = f'weights/model_30_multi_vxvy_axay_blim_li_'
+saveprefix = f'weights/modelf_base_single_all_obs_nolim_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 
-description = "Vx Vy input data with ax,ay control output, bad limits, with liveness input"
+description = "Base model, no limits, all obs, single scenario, fixed Lf2b bug"

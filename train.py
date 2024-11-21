@@ -107,6 +107,7 @@ if __name__ == "__main__":
         vx_vy_inputs=config.vx_vy_inputs,
         ax_ay_output=config.ax_ay_output,
         add_liveness_as_input=config.add_liveness_as_input,
+        n_closest_obs=config.n_closest_obs,
     )
 
     if config.use_barriernet:

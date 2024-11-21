@@ -16,8 +16,6 @@ from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from simulation import run_simulation
 
-folder_to_save_to = 'doorway_scenario_suite/'
-
 # start x, start y, goal x, goal y, opp gamma, obs gamma, liveness gamma
 scenario_configs = [
     # (-1, 0.5, 2, 0.15, 0.5, 0.5, 0.3),
@@ -60,6 +58,10 @@ best_params = [
   (0.9, 0.3, 0.2, 1.1, False, 15.0), # 13
 ]
 
+folder_to_save_to = 'doorway_scenario_suite/'
+
+# scenario_configs = scenario_configs[:1]
+# best_params = best_params[:1]
 # offset = [0, 1, 3, 5, 7, -1, -3, -5, -7]
 offset = [0]
 zero_faster = [True, False]

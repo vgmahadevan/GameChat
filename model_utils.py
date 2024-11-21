@@ -41,6 +41,7 @@ class ModelDefinition:
     vx_vy_inputs: bool
     ax_ay_output: bool
     add_liveness_as_input: bool
+    n_closest_obs: Optional[int]
 
 
     def save(self, path: str):
@@ -70,4 +71,6 @@ class ModelDefinition:
                 data['add_liveness_as_input'] = False
             if 'ax_ay_output' not in data:
                 data['ax_ay_output'] = False
+            if 'n_closest_obs' not in data:
+                data['n_closest_obs'] = None
             return ModelDefinition(**data)
