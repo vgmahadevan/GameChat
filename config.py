@@ -100,6 +100,7 @@ train_data_paths = [
 #     'obs_doorway_with_offsets/l_1_faster_off7.json',
 #     # Liveness cases
     # 'obs_doorway_with_offsets/l_0_faster_off0.json',
+    'doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_1_faster_off0.json',
     'doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json',
     'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
 #     'obs_doorway_with_offsets/l_1_faster_off0.json',
@@ -108,7 +109,7 @@ train_data_paths = [
 # train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
-# train_data_paths = ['doorway_scenario_suite/']
+train_data_paths = ['doorway_scenario_suite/']
 
 # train_data_paths = []
 # for filename in os.listdir('doorway_scenario_suite'):
@@ -116,8 +117,8 @@ train_data_paths = [
 #     # if '1_faster' in filename:
 #         train_data_paths.append(os.path.join('doorway_scenario_suite', filename))
 
-agents_to_train_on = [0]
-# agents_to_train_on = [0, 1]
+# agents_to_train_on = [0]
+agents_to_train_on = [0, 1]
 
 # CBF Filters
 add_control_limits = False
@@ -144,7 +145,11 @@ nHidden24 = 64
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
 # wc = with checkpoint
-saveprefix = f'weights/model_base_single_input_obs_wc_nolim_'
+# 
+# Baseline options: weights/model_base_single_input_obs_wc_nolim_
+# Baseline options: weights/model_base_single_input_obs_wc_nolim_saf_
+# Baseline options: weights/model_base_single_input_obs_wc_nolim_saf_suite_
+saveprefix = f'weights/model_base_single_input_obs_wc_nolim_saf_suite_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 
 description = "Base model, no limits, obs are inputs, single scenario, fixed Lf2b bug"
