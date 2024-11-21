@@ -82,8 +82,8 @@ class NoObstacleDoorwayScenario:
     def plot(self, ax):
         # ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=100)
         # ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=100)
-        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=5)
-        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=5)
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=1500)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=1500)
 
 
 class IntersectionScenario:

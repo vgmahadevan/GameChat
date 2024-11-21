@@ -1,7 +1,8 @@
 import config
 import numpy as np
 
-AGENT = 'MPC'
+# AGENT = 'MPC'
+AGENT = 'BarrierNet'
 SCENARIO = 'Doorway'
 metrics = np.loadtxt(f'experiment_results/{AGENT}_{SCENARIO}.csv', delimiter=',')
 
