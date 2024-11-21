@@ -2,6 +2,7 @@ import numpy as np
 
 class BlankController:
     def __init__(self):
+        self.use_for_training = False
         pass
 
     def initialize_controller(self, env):

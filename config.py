@@ -35,7 +35,7 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 18.0                             # Total runtime [s]
+runtime = 80.0                             # Total runtime [s]
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 6                              # Prediction horizon time steps
@@ -48,7 +48,7 @@ obs_gamma = 0.3                            # CBF parameter in [0,1]
 liveliness_gamma = 0.3                     # CBF parameter in [0,1]
 # safety_dist = 0.00                         # Safety distance
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
-safety_dist = 0.03                         # Safety distance
+safety_dist = 0.0                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
 zeta = 3.0
 
@@ -130,6 +130,7 @@ add_liveness_filter = False
 vx_vy_inputs = False
 ax_ay_output = False
 add_liveness_as_input = False
+n_obs_as_input = 16
 
 n_closest_obs = None
 # n_closest_obs = 5

@@ -51,6 +51,14 @@ class Plotter:
 
         frame *= config.plot_rate
 
+        plot_x_bounds = max(self.scenario.plot_bounds[:, 0]) - min(self.scenario.plot_bounds[:, 0])
+        plot_y_bounds = max(self.scenario.plot_bounds[:, 1]) - min(self.scenario.plot_bounds[:, 1])
+        ratio = plot_x_bounds / plot_y_bounds
+        height = 12
+        width = int(round(ratio * height))
+        self.fig.set_figwidth(width)
+        self.fig.set_figheight(height)
+
         # Redraw static elements
         self.scenario.plot(self.ax)
 
@@ -115,10 +123,10 @@ class Plotter:
             self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
 
             # Plot real-sized objects.
-            # circle = patches.Circle((x0_state[0], x0_state[1]), config.agent_radius, linewidth=1, edgecolor='r', facecolor='r', fill=True)
-            # self.ax.add_patch(circle)
-            # circle = patches.Circle((x1_state[0], x1_state[1]), config.agent_radius, linewidth=1, edgecolor='b', facecolor='b', fill=True)
-            # self.ax.add_patch(circle)
+            circle = patches.Circle(self.x_cum[0][i, :2], config.agent_radius, linewidth=1, edgecolor='r', facecolor='r', fill=True, alpha=alpha)
+            self.ax.add_patch(circle)
+            circle = patches.Circle(self.x_cum[1][i, :2], config.agent_radius, linewidth=1, edgecolor='b', facecolor='b', fill=True, alpha=alpha)
+            self.ax.add_patch(circle)
             # self.ax.arrow(x0_state[0], x0_state[1], math.cos(np.deg2rad(x0_state[2])) * x0_state[3] * 10.0, math.sin(np.deg2rad(x0_state[2])) * x0_state[3] * 10.0, head_width=0.05, head_length=0.1, fc='red', ec='red')
             # self.ax.arrow(x1_state[0], x1_state[1], math.cos(np.deg2rad(x1_state[2])) * x1_state[3] * 10.0, math.sin(np.deg2rad(x1_state[2])) * x1_state[3] * 10.0, head_width=0.05, head_length=0.1, fc='blue', ec='blue')
 

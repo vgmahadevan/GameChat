@@ -43,7 +43,8 @@ class DoorwayScenario:
         for y in np.arange(self.obs_starting_y, 1.15, 0.1):
             self.obstacles.append((self.ox, y, 0.1))
             self.obstacles.append((self.ox, -y, 0.1))
-        self.plot_bounds = np.array([[-2.6, -1], [2.5, 1]])
+        # self.plot_bounds = np.array([[-2.5, -1.0], [2.5, 1.0]])
+        self.plot_bounds = np.array([[-2.5, -1.5], [5.0, 1.5]])
 
     def plot(self, ax):
         for obs_x, obs_y, r in self.obstacles:
@@ -63,7 +64,7 @@ class NoObstacleDoorwayScenario:
                     [-1, -0.5, 0]])
         self.goals = np.array([[2.3, -goal_y, 0.0],
                     [2.3, goal_y, 0.0]])
-        self.plot_bounds = [[-2.6, -1], [2.5, 1]]
+        self.plot_bounds = [[-2.5, -2.5], [2.5, 2.5]]
 
         self.env_center = np.array([(2.3-1) / 2.0, 0.0])
         # Perform rotation
