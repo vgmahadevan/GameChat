@@ -104,6 +104,9 @@ if __name__ == "__main__":
 
     if config.use_barriernet:
         model = BarrierNet(model_definition).to(config.device)
+        print(model)
+        print(list(model.parameters()))
+        # print(1/0)
     else:
         model = FCNet(model_definition).to(config.device)
     print(model_definition)

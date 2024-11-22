@@ -7,7 +7,7 @@ from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 from qpth.qp import QPFunction
 from model_utils import solver
-from util import calculate_all_metrics, calculate_is_not_live_torch
+from util import calculate_all_metrics, calculate_is_not_live_torch, get_ray_intersection_point
 
 # Indices to make reading the code easier.
 
@@ -59,6 +59,7 @@ class BarrierNet(nn.Module):
         if self.model_definition.add_liveness_filter:
             self.fc34 = nn.Linear(model_definition.nHidden24, 2).double()
 
+        # self.s0 = Parameter(torch.ones(1), requires_grad=True)
         if model_definition.add_control_limits:
             self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
             self.s1 = Parameter(torch.ones(1).cuda()).to(config.device)
@@ -202,23 +203,65 @@ class BarrierNet(nn.Module):
         if self.model_definition.add_liveness_filter:
             G_live, h_live = [], []
             for i in range(len(x0)):
-                # TODO: For now hardcoded to one opponent. In the future it should be based on which opponent is most dangerous.
-                liveness = x0[i, self.liveness_idx]
-                opp_v_idx =  4 + OPP_V_OFFSET
-                if v[i] > x0[i, opp_v_idx]:
-                    control_scalar_factor = -1.0
-                    barrier = v[i] - self.zeta * x0[i, opp_v_idx]
+                ego_pos = np.array([0.0, 0.0])
+                ego_theta = x0[i, EGO_THETA_IDX].item()
+                opp_pos = np.array([x0[i, 4 + OPP_X_OFFSET].item(), x0[i, 4 + OPP_Y_OFFSET].item()])
+                opp_theta = x0[i, 4 + OPP_THETA_OFFSET].item()
+
+                intersection = get_ray_intersection_point(ego_pos, ego_theta, opp_pos, opp_theta)
+                # if True:
+                if intersection is None:
+                    lim_G = Variable(torch.tensor([0.0, 1.0]))
+                    lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                    lim_h = Variable(torch.tensor([config.accel_limit * 100.0])).to(config.device)
+                    lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                    G_live.append(lim_G)
+                    h_live.append(lim_h)
+                    continue
+
+                d0 = np.linalg.norm(ego_pos - intersection)
+                d1 = np.linalg.norm(opp_pos - intersection)
+
+                # if x0[i, EGO_V_IDX] > x0[i, 4 + OPP_V_OFFSET]:
+                #     print("STARTING:", x0[i, :8])
+                #     print("\tEgo pos:", ego_pos, "Ego theta:", np.degrees(ego_theta), " Opp pos:", opp_pos, "Opp theta:", np.degrees(opp_theta))
+                #     print("\tIntersection:", intersection, "D0:", d0, "D1:", d1)
+
+                t0 = d0 / x0[i, EGO_V_IDX]
+                t1 = d1 / x0[i, 4 + OPP_V_OFFSET]
+
+                if t0 >= t1:
+                    barrier = (d0 * x0[i, 4 + OPP_V_OFFSET] -  d1 * x0[i, EGO_V_IDX])
                     penalty = x34[i, 0]
+                    live_G = Variable(torch.tensor([0.0, d1]).to(config.device)).to(config.device)
+                    live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                    live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
                 else:
-                    control_scalar_factor = self.zeta
-                    barrier = x0[i, opp_v_idx] - self.zeta * v[i]
-                    penalty = x34[i, 1]
+                    barrier = (d1 * x0[i, EGO_V_IDX] - d0 * x0[i, 4 + OPP_V_OFFSET])
+                    penalty = x34[i, 0]
+                    live_G = Variable(torch.tensor([0.0, -d1]).to(config.device)).to(config.device)
+                    live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                    live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
 
-                live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
-                live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                live_h = torch.reshape(penalty * barrier * (np.pi - liveness), (1, 1)).to(config.device)
+                # if x0[i, EGO_V_IDX] > x0[i, 4 + OPP_V_OFFSET]:
+                #     print("\tBarrier:", barrier, "Penalty:", penalty)
+                #     print("\tG:", live_G, "h:", live_h)
 
-                print(live_G, live_h, penalty)
+                # TODO: For now hardcoded to one opponent. In the future it should be based on which opponent is most dangerous.
+                # liveness = x0[i, self.liveness_idx]
+                # opp_v_idx =  4 + OPP_V_OFFSET
+                # if v[i] > x0[i, opp_v_idx]:
+                #     control_scalar_factor = -1.0
+                #     barrier = v[i] - self.zeta * x0[i, opp_v_idx]
+                #     penalty = x34[i, 0]
+                # else:
+                #     control_scalar_factor = self.zeta
+                #     barrier = x0[i, opp_v_idx] - self.zeta * v[i]
+                #     penalty = x34[i, 1]
+
+                # live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
+                # live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                # live_h = torch.reshape(penalty * barrier * (np.pi - liveness), (1, 1)).to(config.device)
 
                 G_live.append(live_G)
                 h_live.append(live_h)
@@ -246,6 +289,7 @@ class BarrierNet(nn.Module):
         x31_actual = x31*self.output_std + self.output_mean
         # print("X31 actual:", x31_actual)
         if self.training or sgn == 1:
+            # print("Reference x:", x31)
             x = QPFunction(verbose = 0)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
             # x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
             # print("Outputted x:", x)

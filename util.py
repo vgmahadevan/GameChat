@@ -77,6 +77,22 @@ def calculate_liveliness(ego_pos, opp_pos, ego_vel, opp_vel):
     return l, ttc, pos_diff, vel_diff
 
 
+def get_ray_intersection_point(ego_pos, ego_theta, opp_pos, opp_theta):
+    ego_vel = np.array([np.cos(ego_theta), np.sin(ego_theta)])
+    opp_vel = np.array([np.cos(opp_theta), np.sin(opp_theta)])
+    if not check_intersection(ego_pos, opp_pos, ego_vel, opp_vel):
+        return None
+
+    x1, y1 = ego_pos
+    x2, y2 = ego_pos + ego_vel
+    x3, y3 = opp_pos
+    x4, y4 = opp_pos + opp_vel
+
+    px= ( (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4) ) / ( (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4) ) 
+    py= ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / ( (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4) )
+    return [px, py]
+    
+
 def check_intersection(ego_pos, opp_pos, ego_vel, opp_vel):
     ego_vel_uvec = ego_vel / np.linalg.norm(ego_vel)
     opp_vel_uvec = opp_vel / np.linalg.norm(opp_vel)
