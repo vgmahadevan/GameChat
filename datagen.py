@@ -63,7 +63,7 @@ from simulation import run_simulation
 
 folder_to_save_to = 'intersection_scenario_suite/'
 best_params = [
-  (0.5, 0.3, 0.3, 1.0, True, 18.0), # 0
+  (0.5, 0.3, 0.3, 0.5, True, 14.0), # 0
 ]
 scenarios = [IntersectionScenario()]
 

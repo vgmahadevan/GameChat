@@ -1,8 +1,5 @@
 import os
-import config
 import json
-import numpy as np
-from qpth.qp import QPFunction
 from cvxopt import solvers, matrix
 from dataclasses import dataclass, asdict
 from typing import Optional

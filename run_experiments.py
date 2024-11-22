@@ -16,8 +16,8 @@ from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
 
-SCENARIO = 'Doorway'
-# SCENARIO = 'Intersection'
+# SCENARIO = 'Doorway'
+SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
@@ -25,13 +25,21 @@ RUN_AGENT = 'BarrierNet'
 # RUN_AGENT = 'LiveNet'
 
 def get_mpc_live_controllers(scenario, zero_goes_faster):
-    if SCENARIO == 'Doorway' or SCENARIO == 'Intersection':
+    if SCENARIO == 'Doorway':
         config.liveliness = True
         config.mpc_p0_faster = zero_goes_faster
         config.opp_gamma = 0.5
         config.obs_gamma = 0.3
         config.liveliness_gamma = 0.3
         config.liveness_threshold = 1.0
+    elif SCENARIO == 'Intersection':
+        config.liveliness = True
+        config.mpc_p0_faster = zero_goes_faster
+        config.opp_gamma = 0.5
+        config.obs_gamma = 0.3
+        config.liveliness_gamma = 0.3
+        config.liveliness_threshold = 0.5
+        config.runtime = 14.0
 
     controllers = [
         MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=scenario.goals[0,:].copy(), static_obs=scenario.obstacles.copy()),
@@ -55,10 +63,11 @@ def get_mpc_unlive_controllers(scenario):
 
 def get_barriernet_controllers(scenario):
     if SCENARIO == 'Doorway':
-#        model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json"
-#        model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json"
         model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json"
         model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json"
+    elif SCENARIO == 'Intersection':
+       model_0_def = "weights/model_base_input_obs_wc_nolim_saf_intersuite_0_1_bn_definition.json"
+       model_1_def = "weights/model_base_input_obs_wc_nolim_saf_intersuite_0_1_bn_definition.json"
 
     controllers = [
         ModelController(model_0_def, scenario.goals[0], scenario.obstacles.copy()),

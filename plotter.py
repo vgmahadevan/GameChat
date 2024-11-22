@@ -54,7 +54,8 @@ class Plotter:
         plot_x_bounds = max(self.scenario.plot_bounds[:, 0]) - min(self.scenario.plot_bounds[:, 0])
         plot_y_bounds = max(self.scenario.plot_bounds[:, 1]) - min(self.scenario.plot_bounds[:, 1])
         ratio = plot_x_bounds / plot_y_bounds
-        height = 12
+        # height = 12
+        height = 6
         width = int(round(ratio * height))
         self.fig.set_figwidth(width)
         self.fig.set_figheight(height)
@@ -110,15 +111,18 @@ class Plotter:
 
         # Determine the start index for the fading effect
         # trail_length = 20 * config.plot_rate
-        trail_length = 40
-        start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
+        trail_separation = 3
+        trail_length = 15
+        start_index = frame - trail_length * trail_separation  # Adjust '10' to control the length of the fading trail
 
         # Draw the fading trails for agents 1 and 2
-        for i in range(start_index, frame - 1, config.plot_rate * 3):
+        for i in range(start_index, frame, config.plot_rate * trail_separation):
+            if i < 0:
+                continue
         # if True:
         #     trail_length = 1
         #     i = start_index
-            alpha = 1 - ((frame - 1 - i) / trail_length)**2
+            alpha = 1 - ((frame - i) / (trail_length * trail_separation))**2
 
             # Plot real-sized objects.
             circle = patches.Circle(self.x_cum[0][i, :2], config.agent_radius, linewidth=1, edgecolor='r', facecolor='r', fill=True, alpha=alpha)

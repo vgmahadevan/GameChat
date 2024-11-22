@@ -11,17 +11,17 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 1.0
+liveness_threshold = 0.45
 plot_rate = 1
 plot_live = True
-plot_live_pause_iteration = None
+# plot_live_pause_iteration = None
 # plot_live_pause_iteration = 0
-# plot_live_pause_iteration = 30
+plot_live_pause_iteration = 25
 plot_arrows = False
 plot_end = False
 plot_end_ani_only = False
-plot_text_on = True
-# plot_text_on = False
+# plot_text_on = True
+plot_text_on = False
 ani_save_name = 'base_barriernet_model.mp4'
 
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
@@ -37,7 +37,7 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 20.0                             # Total runtime [s]
+runtime = 18.0                             # Total runtime [s]
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 6                              # Prediction horizon time steps
@@ -75,38 +75,6 @@ COST_MATRICES = {
 
 # Training parameters.
 use_barriernet = True
-# agent_to_train = 1
-
-# train_data_paths = ['doorway_train_data_with_liveness_0_faster.json', 'doorway_train_data_with_liveness_1_faster.json']
-# train_data_paths = ['all_data_with_offsets/']
-# train_data_paths = ['all_data_with_offsets/doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/doorway_train_data_with_liveness_1_faster_off0.json']
-# train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json', 'all_data_with_offsets/test_doorway_train_data_with_liveness_1_faster_off0.json']
-# train_data_paths = ['all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off0.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off3.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off5.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off7.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-1.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-3.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-5.json',
-#                     'all_data_with_offsets/test_doorway_train_data_with_liveness_0_faster_off-7.json']
-# train_data_paths = ['obs_doorway_with_offsets/']
-train_data_paths = [
-#     # No liveness cases
-#     'obs_doorway_with_offsets/l_0_faster_off-1.json',
-#     'obs_doorway_with_offsets/l_0_faster_off-3.json',
-#     'obs_doorway_with_offsets/l_0_faster_off-5.json',
-#     'obs_doorway_with_offsets/l_0_faster_off-7.json',
-#     'obs_doorway_with_offsets/l_1_faster_off1.json',
-#     'obs_doorway_with_offsets/l_1_faster_off3.json',
-#     'obs_doorway_with_offsets/l_1_faster_off5.json',
-#     'obs_doorway_with_offsets/l_1_faster_off7.json',
-#     # Liveness cases
-    # 'obs_doorway_with_offsets/l_0_faster_off0.json',
-    # 'doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_1_faster_off0.json',
-    'doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json',
-    'obs_doorway_with_offsets/l_0_faster_edge_cases.json',
-#     'obs_doorway_with_offsets/l_1_faster_off0.json',
-]
 
 # train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]

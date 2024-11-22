@@ -123,8 +123,8 @@ class IntersectionScenario:
         for obs_x, obs_y, r in self.obstacles:
             circle = patches.Circle((obs_x, obs_y), r, linewidth=1,edgecolor='k',facecolor='k',fill=True)
             ax.add_patch(circle)
-        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=1500)
-        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=1500)
+        ax.scatter(self.goals[0, 0], self.goals[0, 1], c='r', marker='x', s=500)
+        ax.scatter(self.goals[1, 0], self.goals[1, 1], c='b', marker='x', s=500)
 
 
         # length=1
