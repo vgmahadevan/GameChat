@@ -39,12 +39,6 @@ class MPC:
         X = model.x['x'] - self.goal
         cost_expression = transpose(X)@self.Q@X
 
-        # if np.linalg.norm(X) > 0.2:
-        #     cost_expression = np.array([1])
-        # else:
-        #     cost_expression = np.array([0])
-        print("asldjaksdj;als;dj", cost_expression)
-
         return cost_expression
 
     """Configures the mpc controller."""
@@ -113,24 +107,25 @@ class MPC:
         # Compute CBF constraints
         cbf_constraints = []
 
-        # for obs in self.static_obs:
-        #     # delta_h_k + gamma*h_k >= 0
-        #     # h_k1 - h_k + gamma*h_k >= 0
-        #     # -h_k1 + h_k - gamma*h_k <= 0
-        #     # -h_k1 + (1 - gamma)*h_k <= 0
-        #     h_k = self.h_obs(self.model.x['x'], obs)
-        #     h_k1 = self.h_obs(x_k1, obs)
-        #     cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
-
-        opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
-        for obs in self.static_obs + [opponent_obs]:
-            # delta_h_k + gamma*h_k >= 0
-            # h_k1 - h_k + gamma*h_k >= 0
-            # -h_k1 + h_k - gamma*h_k <= 0
-            # -h_k1 + (1 - gamma)*h_k <= 0
-            h_k = self.h_obs(self.model.x['x'], obs)
-            h_k1 = self.h_obs(x_k1, obs)
-            cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
+        if self.agent_idx == 1:
+            for obs in self.static_obs:
+                # delta_h_k + gamma*h_k >= 0
+                # h_k1 - h_k + gamma*h_k >= 0
+                # -h_k1 + h_k - gamma*h_k <= 0
+                # -h_k1 + (1 - gamma)*h_k <= 0
+                h_k = self.h_obs(self.model.x['x'], obs)
+                h_k1 = self.h_obs(x_k1, obs)
+                cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
+        else:
+            opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
+            for obs in self.static_obs + [opponent_obs]:
+                # delta_h_k + gamma*h_k >= 0
+                # h_k1 - h_k + gamma*h_k >= 0
+                # -h_k1 + h_k - gamma*h_k <= 0
+                # -h_k1 + (1 - gamma)*h_k <= 0
+                h_k = self.h_obs(self.model.x['x'], obs)
+                h_k1 = self.h_obs(x_k1, obs)
+                cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
 
         return cbf_constraints
     
