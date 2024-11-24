@@ -61,10 +61,10 @@ class BarrierNet(nn.Module):
 
         # self.s0 = Parameter(torch.ones(1), requires_grad=True)
         if model_definition.add_control_limits:
-            self.s0 = Parameter(torch.ones(1).cuda()).to(config.device)
-            self.s1 = Parameter(torch.ones(1).cuda()).to(config.device)
-            self.s2 = Parameter(torch.ones(1).cuda()).to(config.device)
-            self.s3 = Parameter(torch.ones(1).cuda()).to(config.device)
+            self.s0 = Parameter(torch.ones(1).cuda(), requires_grad=True).to(config.device)
+            self.s1 = Parameter(torch.ones(1).cuda(), requires_grad=True).to(config.device)
+            self.s2 = Parameter(torch.ones(1).cuda(), requires_grad=True).to(config.device)
+            self.s3 = Parameter(torch.ones(1).cuda(), requires_grad=True).to(config.device)
             
 
     def forward(self, x, sgn):
@@ -162,31 +162,31 @@ class BarrierNet(nn.Module):
             for i in range(len(x0)):
                 lim_G = Variable(torch.tensor([0.0, 1.0]))
                 lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.accel_limit * 1.5])).to(config.device)
+                lim_h = Variable(torch.tensor([config.accel_limit * s0])).to(config.device)
                 lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
                 upper_G_a_lims.append(lim_G)
                 upper_h_a_lims.append(lim_h)
 
-                lim_G = Variable(torch.tensor([0.0, -1.0]))
-                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.accel_limit * 1.5])).to(config.device)
-                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                lower_G_a_lims.append(lim_G)
-                lower_h_a_lims.append(lim_h)
+                # lim_G = Variable(torch.tensor([0.0, -1.0]))
+                # lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                # lim_h = Variable(torch.tensor([config.accel_limit * 1.1])).to(config.device)
+                # lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                # lower_G_a_lims.append(lim_G)
+                # lower_h_a_lims.append(lim_h)
 
-                lim_G = Variable(torch.tensor([1.0, 0.0]))
-                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.omega_limit * 1.5])).to(config.device)
-                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                upper_G_w_lims.append(lim_G)
-                upper_h_w_lims.append(lim_h)
+                # lim_G = Variable(torch.tensor([1.0, 0.0]))
+                # lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                # lim_h = Variable(torch.tensor([config.omega_limit * 1.5])).to(config.device)
+                # lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                # upper_G_w_lims.append(lim_G)
+                # upper_h_w_lims.append(lim_h)
 
-                lim_G = Variable(torch.tensor([-1.0, 0.0]))
-                lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                lim_h = Variable(torch.tensor([config.omega_limit * 1.5])).to(config.device)
-                lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
-                lower_G_w_lims.append(lim_G)
-                lower_h_w_lims.append(lim_h)
+                # lim_G = Variable(torch.tensor([-1.0, 0.0]))
+                # lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
+                # lim_h = Variable(torch.tensor([config.omega_limit * 1.5])).to(config.device)
+                # lim_h = torch.reshape(lim_h, (1, 1)).to(config.device)
+                # lower_G_w_lims.append(lim_G)
+                # lower_h_w_lims.append(lim_h)
 
             G.append(torch.cat(upper_G_a_lims))
             h.append(torch.cat(upper_h_a_lims))
@@ -230,38 +230,18 @@ class BarrierNet(nn.Module):
                 t0 = d0 / x0[i, EGO_V_IDX]
                 t1 = d1 / x0[i, 4 + OPP_V_OFFSET]
 
-                if t0 >= t1:
+                if t0 >= t1: # If slower agent
                     barrier = (d0 * x0[i, 4 + OPP_V_OFFSET] -  d1 * x0[i, EGO_V_IDX])
                     penalty = x34[i, 0]
                     live_G = Variable(torch.tensor([0.0, d1]).to(config.device)).to(config.device)
                     live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
-                else:
+                else: # If faster agent
                     barrier = (d1 * x0[i, EGO_V_IDX] - d0 * x0[i, 4 + OPP_V_OFFSET])
                     penalty = x34[i, 0]
                     live_G = Variable(torch.tensor([0.0, -d1]).to(config.device)).to(config.device)
                     live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
-
-                # if x0[i, EGO_V_IDX] > x0[i, 4 + OPP_V_OFFSET]:
-                #     print("\tBarrier:", barrier, "Penalty:", penalty)
-                #     print("\tG:", live_G, "h:", live_h)
-
-                # TODO: For now hardcoded to one opponent. In the future it should be based on which opponent is most dangerous.
-                # liveness = x0[i, self.liveness_idx]
-                # opp_v_idx =  4 + OPP_V_OFFSET
-                # if v[i] > x0[i, opp_v_idx]:
-                #     control_scalar_factor = -1.0
-                #     barrier = v[i] - self.zeta * x0[i, opp_v_idx]
-                #     penalty = x34[i, 0]
-                # else:
-                #     control_scalar_factor = self.zeta
-                #     barrier = x0[i, opp_v_idx] - self.zeta * v[i]
-                #     penalty = x34[i, 1]
-
-                # live_G = Variable(torch.tensor([0.0, control_scalar_factor]).to(config.device)).to(config.device)
-                # live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                # live_h = torch.reshape(penalty * barrier * (np.pi - liveness), (1, 1)).to(config.device)
 
                 G_live.append(live_G)
                 h_live.append(live_h)
@@ -279,7 +259,7 @@ class BarrierNet(nn.Module):
         G = torch.cat(G, dim=1).to(config.device)
         h = torch.cat(h, dim=1).to(config.device)
 
-        print(G.shape, h.shape)
+        # print(G.shape, h.shape)
 
         # num_ineq = len(obstacles) + len(opps) + self.model_definition.add_control_limits * 2 + self.model_definition.add_liveness_filter
         # assert(G.shape == (nBatch, num_ineq, N_CL))
@@ -293,6 +273,10 @@ class BarrierNet(nn.Module):
             x = QPFunction(verbose = 0)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
             # x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
             # print("Outputted x:", x)
+
+            # x = F.relu(x + config.accel_limit) - config.accel_limit  # ensure CBF parameters are positive
+            # x = -(F.relu(-x + config.accel_limit) - config.accel_limit)  # ensure CBF parameters are positive
+
             x = (x - self.output_mean) / self.output_std
         else:
             # print(x31[0].cpu())
@@ -305,7 +289,7 @@ class BarrierNet(nn.Module):
                 x = x31_actual[0].cpu()
 
             x = (x - self.output_mean_np) / self.output_std_np
-
+        
         return x
 
 

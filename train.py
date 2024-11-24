@@ -10,6 +10,13 @@ from models import FCNet, BarrierNet
 from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 
+def sidloss(model, pred, y):
+    unnorm_pred = pred * model.output_std + model.output_mean
+    sid = torch.sum(torch.nn.functional.relu(torch.abs(unnorm_pred[:, 1]) - config.accel_limit * 2.0))
+    loss = loss_fn(pred, y) + sid
+    return loss, loss_fn(pred, y), sid
+
+
 def train(dataloader, model, loss_fn, optimizer, losses):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
@@ -20,7 +27,7 @@ def train(dataloader, model, loss_fn, optimizer, losses):
         
         # Compute prediction error
         pred = model(X, 1)
-        loss = loss_fn(pred, y)
+        loss, aloss, bloss = sidloss(model, pred, y)
         train_loss += loss.item()
 
         # Backpropagation
@@ -30,7 +37,7 @@ def train(dataloader, model, loss_fn, optimizer, losses):
 
         if batch % 5 == 0:  # 25
             loss, current = loss.item(), batch * len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            print(f"loss: {loss:>7f}, Reg: {aloss:>7f}, Sid: {bloss:>7f}  [{current:>5d}/{size:>5d}]")
 
     train_loss /= num_batches
     losses.append(train_loss)
@@ -40,16 +47,22 @@ def test(dataloader, model, loss_fn, losses):
     num_batches = len(dataloader)
     model.eval()
     test_loss = 0
+    alosscum = 0
+    blosscum = 0
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(config.device), y.to(config.device)
 
             pred = model(X, 1)
-            loss = loss_fn(pred, y)
+            loss, aloss, bloss = sidloss(model, pred, y)
+            alosscum += aloss
+            blosscum += bloss
             test_loss += loss.item()
     test_loss /= num_batches
+    alosscum /= num_batches
+    blosscum /= num_batches
     losses.append(test_loss)
-    print(f"Test avg loss: {test_loss:>8f} \n")
+    print(f"Test avg loss: {test_loss:>8f}, Reg avg loss: {alosscum}, Sid avg los: {blosscum}  \n")
     return losses
 
 if __name__ == "__main__":

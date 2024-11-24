@@ -4,7 +4,7 @@ from casadi import *
 import config
 from config import DynamicsModel
 import numpy as np
-from util import calculate_all_metrics
+from util import calculate_all_metrics, get_ray_intersection_point
 from memory_profiler import profile
 
 class MPC:
@@ -167,7 +167,8 @@ class MPC:
             return
 
         l, _, _, _, intersecting, is_live = calculate_all_metrics(self.initial_state.copy(), self.opp_state, self.liveness_thresh)
-        if is_live:
+        # if is_live:
+        if not intersecting:
             return
 
         # print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
@@ -177,37 +178,125 @@ class MPC:
         x_k1 = self.model.x['x'] + A*config.MPC_Ts + B@self.model.u['u']*config.MPC_Ts
 
         # Compute CBF constraints
-        h_k = self.h_v(self.model.x['x'], self.opp_state)
-        h_k1 = self.h_v(x_k1, self.opp_state)
+        opp_state = np.array(self.opp_state)
+        opp_A, _ = self.env.get_double_integrator_dynamics_np(opp_state)
+
+        h_k = self.h_v(self.model.x['x'], self.opp_state, ts=0.0, t=0)
+
+        opp_k1 = opp_state + opp_A*config.MPC_Ts
+        h_k1 = self.h_v(x_k1, opp_k1, ts=config.MPC_Ts, t=1)
         constraint = -h_k1 + (1-self.live_gamma)*h_k
         # -h_k1 + (1 - gamma)*h_k <= 0
         # h_k1 >= h_k - gamma*h_k
         # (h_k1 - h_k) >= -gamma*h_k
         mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
 
-    def h_v(self, x, opp_x):
-        self.A_matrix = SX.zeros(2, 2)
-        max_zeta = 0.3 / opp_x[3]
-        upper_zeta = min(max_zeta, config.zeta)
+    # def h_v(self, x, opp_x):
+    #     self.A_matrix = SX.zeros(2, 2)
+    #     max_zeta = 0.3 / opp_x[3]
+    #     upper_zeta = min(max_zeta, config.zeta)
 
-        # The A matrix looks like this:
-        # [[1, -zeta]
-        #  [-zeta, 1]]
-        # So that when multiplied by the velocity vector [ego_v, opp_v], the result is [ego_v - zeta*opp_v, opp_v - zeta*ego_v]
-        self.A_matrix[0, 0] = 1.0
-        self.A_matrix[0, 1] = -upper_zeta
-        self.A_matrix[1, 0] = -config.zeta
-        self.A_matrix[1, 1] = 1.0
+    #     # The A matrix looks like this:
+    #     # [[1, -zeta]
+    #     #  [-zeta, 1]]
+    #     # So that when multiplied by the velocity vector [ego_v, opp_v], the result is [ego_v - zeta*opp_v, opp_v - zeta*ego_v]
+    #     self.A_matrix[0, 0] = 1.0
+    #     self.A_matrix[0, 1] = -upper_zeta
+    #     self.A_matrix[1, 0] = -config.zeta
+    #     self.A_matrix[1, 1] = 1.0
 
-        # ego_v - 3 * opp_v >= 0.0 -> ego_v >= 3 * opp_v
-        # opp_v - 3 * ego_v >= 0.0 -> ego_v <= 1/3 * opp_v
-        # Means that agent 1 will speed up and agent 2 will slow down.
-    
-        vel_vector = vertcat(x[3], opp_x[3])
-        h_vec = self.A_matrix @ vel_vector
-        # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
-        h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
-        h = h_vec[h_idx]
+    #     # ego_v - 3 * opp_v >= 0.0 -> ego_v >= 3 * opp_v
+    #     # opp_v - 3 * ego_v >= 0.0 -> ego_v <= 1/3 * opp_v
+    #     # Means that agent 1 will speed up and agent 2 will slow down.
+
+    #     vel_vector = vertcat(x[3], opp_x[3])
+    #     h_vec = self.A_matrix @ vel_vector
+    #     # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
+    #     h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
+    #     h = h_vec[h_idx]
+    #     return h
+
+    # def h_v(self, x, opp_state, ts, t):
+    #     intersection = get_ray_intersection_point(self.initial_state[:2], self.initial_state[2], opp_state[:2], opp_state[2])
+    #     assert(intersection is not None)
+
+    #     # d0 = sqrt((self.initial_state[0] - intersection[0])**2 + (self.initial_state[1] - intersection[1])**2)
+    #     d0 = sqrt((x[0] - intersection[0]) ** 2.0 + (x[1] - intersection[1]) ** 2.0)
+    #     d0_reg = np.sqrt((self.initial_state[0] - intersection[0]) ** 2.0 + (self.initial_state[1] - intersection[1]) ** 2.0)
+    #     d1 = np.linalg.norm(opp_state[:2] - intersection)
+    #     should_go_faster = (config.mpc_p0_faster and self.agent_idx == 0) or (not config.mpc_p0_faster and self.agent_idx == 1)
+
+    #     theta = np.abs(opp_state[2] - self.initial_state[2])
+    #     if theta >= 2.0 * np.pi:
+    #         theta -= 2.0 * np.pi
+    #     if theta > np.pi:
+    #         theta = 2.0 * np.pi - theta
+
+    #     d0 = d0_reg
+    #     d0 -= x[3]*ts
+    #     d0_reg -= self.initial_state[3]*ts
+
+    #     critical_point = config.agent_radius / np.sin(theta)
+    #     d0 -= critical_point
+    #     d1 -= critical_point
+    #     d0_reg -= critical_point
+
+    #     if should_go_faster:
+    #         d0 += config.agent_radius + config.safety_dist
+    #         d1 -= (config.agent_radius + config.safety_dist)
+    #         # h = (d1 * x[3] - d0 * opp_state[3])
+    #         h = (d1 * x[3] - d0_reg * opp_state[3])
+    #     else:
+    #         if t == 0:
+    #             print("Intersection:", intersection)
+    #             print(f"D0 orig: {d0_reg}, D1 orig: {d1}, Critical dist: {critical_point}")
+    #         d0 -= (config.agent_radius + config.safety_dist)
+    #         d0_reg -= (config.agent_radius + config.safety_dist)
+    #         d1 += config.agent_radius + config.safety_dist
+    #         # h = (d0 * opp_state[3] - d1 * x[3])
+    #         h = (d0_reg * opp_state[3] - d1 * x[3])
+    #         if t == 0:
+    #             print(f"D0 perturb: {d0_reg}, D1 perturb: {d1}")
+    #             print("CBF:", d0_reg * opp_state[3] - d1 * self.initial_state[3])
+
+    #     # if should_go_faster:
+    #     #     h = d1 - 2 * config.agent_radius - config.safety_dist - d0
+    #     # else:
+    #     #     h = d0 - 2 * config.agent_radius - config.safety_dist - d1
+    #     #     print(d0, d1, self.initial_state[3], opp_state[3], np.degrees(self.initial_state[2]), np.degrees(opp_state[2]), h)
+    #     #     print("CBF:", d0_reg - 2 * config.agent_radius - config.safety_dist - d1)
+
+    #     return h
+
+    def h_v(self, x, opp_state, ts, t):
+        dir_to_opp = np.arctan2(opp_state[1] - self.initial_state[1], opp_state[0] - self.initial_state[0])
+        vec_to_opp = np.array([np.cos(dir_to_opp), np.sin(dir_to_opp)])
+        initial_closest_to_opp = np.array(self.initial_state[:2]) + vec_to_opp * (config.agent_radius + config.mpc_liveness_safety_buffer / 2.0)
+        opp_closest_to_initial = np.array(self.opp_state[:2]) - vec_to_opp * (config.agent_radius + config.mpc_liveness_safety_buffer / 2.0)
+        intersection = get_ray_intersection_point(initial_closest_to_opp, self.initial_state[2], opp_closest_to_initial, opp_state[2])
+        assert(intersection is not None)
+
+        # d0 = sqrt((x[0] - intersection[0]) ** 2.0 + (x[1] - intersection[1]) ** 2.0)
+        d0_reg = np.linalg.norm(initial_closest_to_opp - intersection)
+        d1 = np.linalg.norm(opp_closest_to_initial - intersection)
+        should_go_faster = (config.mpc_p0_faster and self.agent_idx == 0) or (not config.mpc_p0_faster and self.agent_idx == 1)
+
+        d0 = d0_reg
+        d0 -= x[3]*ts
+        d0_reg -= self.initial_state[3]*ts
+
+        if should_go_faster:
+            h = (d1 * x[3] - d0 * opp_state[3])
+        else:
+            if t == 0:
+                print("Closest points:", initial_closest_to_opp, opp_closest_to_initial)
+                print("Intersection:", intersection)
+                print(f"D0 orig: {d0_reg}, D1 orig: {d1}")
+
+            h = (d0 * opp_state[3] - d1 * x[3])
+            if t == 0:
+                print("CBF:", d0_reg * opp_state[3] - d1 * self.initial_state[3])
+
         return h
 
     """Sets the initial state in all components."""

@@ -64,7 +64,7 @@ class Environment:
         B[2, 1] = 1
         return A, B
 
-    """Defines the system input matrices A and B for single-integrator dynamics."""
+    """Defines the system input matrices A and B for double-integrator dynamics."""
     @staticmethod
     def get_double_integrator_dynamics(x):
         A = SX.zeros(4, 1)
@@ -78,6 +78,18 @@ class Environment:
         a = 1e-9  # Small positive constant so system has relative degree 1
         B[0, 1] = -a*sin(x[2])
         B[1, 1] = a*cos(x[2])
+        return A, B
+
+    """Defines the system input matrices A and B for double-integrator dynamics."""
+    @staticmethod
+    def get_double_integrator_dynamics_np(x):
+        A = np.zeros((4,))
+        A[0] = x[3] * np.cos(x[2]) # x_dot = v * cos(theta)
+        A[1] = x[3] * np.sin(x[2]) # y_dot = v * sin(theta)
+
+        B = np.zeros((4, 2))
+        B[2, 0] = 1 # dtheta = omega
+        B[3, 1] = 1 # dv = a
         return A, B
 
     """Configures the simulator."""

@@ -11,18 +11,17 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 0.45
+liveness_threshold = 0.7
 plot_rate = 1
-plot_live = True
-plot_live_pause_iteration = None
-# plot_live_pause_iteration = 0
-# plot_live_pause_iteration = 25
+plot_live = False
+# plot_live_pause_iteration = None
+plot_live_pause_iteration = 0
 plot_arrows = False
-plot_end = False
-plot_end_ani_only = False
+plot_end = True
+plot_end_ani_only = True
 plot_text_on = True
 # plot_text_on = False
-ani_save_name = 'base_barriernet_model.mp4'
+ani_save_name = 'new_liveness_mpc.mp4'
 
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
@@ -43,13 +42,14 @@ MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 6                              # Prediction horizon time steps
 
 obstacle_avoidance = True
-mpc_use_opp_cbf = True
+mpc_use_opp_cbf = False
 # Gamma, in essence, is the leniancy on how much we can deprove the CBF.
 opp_gamma = 0.5                            # CBF parameter in [0,1]
 obs_gamma = 0.3                            # CBF parameter in [0,1]
-liveliness_gamma = 0.3                     # CBF parameter in [0,1]
+liveliness_gamma = 0.7                     # CBF parameter in [0,1]
 # safety_dist = 0.00                         # Safety distance
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
+mpc_liveness_safety_buffer = 0.03
 safety_dist = 0.0                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
 zeta = 3.0
@@ -80,7 +80,7 @@ use_barriernet = True
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
 train_data_paths = ['doorway_scenario_suite/']
-# train_data_paths = ['intersection_scenario_suite']
+# train_data_paths = ['intersection_scenario_suite/']
 
 # train_data_paths = []
 # for filename in os.listdir('doorway_scenario_suite'):
@@ -93,8 +93,8 @@ agents_to_train_on = [0, 1]
 
 # Liveness / CBF Filters (all the cool shit)
 add_control_limits = False
-add_liveness_filter = True
-add_liveness_as_input = False
+add_liveness_filter = False
+add_liveness_as_input = True
 fixed_liveness_input = True
 
 # Changing the inputs / outputs
@@ -127,7 +127,7 @@ nHidden24 = 64
 
 # saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 # saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
-saveprefix = f'weights/livetest2_doorway_'
+saveprefix = f'weights/livetest8_intersection_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
 

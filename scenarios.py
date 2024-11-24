@@ -95,12 +95,13 @@ class NoObstacleDoorwayScenario:
 
 
 class IntersectionScenario:
-    def __init__(self):
-        self.initial = np.array([[0.0, -1.0, np.pi / 2, 0.0],
-                      [-1.0, 0.0, 0.0, 0.0]])
-        self.goals = np.array([[0.0, 1.0, np.pi / 2, 0.0],
-                    [1.0, 0.0, 0.0, 0.0]
+    def __init__(self, start=1.0, goal=1.0):
+        self.initial = np.array([[0.0, -start, np.pi / 2, 0.0],
+                      [-start, 0.0, 0.0, 0.0]])
+        self.goals = np.array([[0.0, goal, np.pi / 2, 0.0],
+                    [goal, 0.0, 0.0, 0.0]
                     ])
+        self.config = (start, goal)
         self.ox=-0.3
         self.ox1=0.3
 
@@ -147,8 +148,8 @@ class IntersectionScenario:
         # ax.add_patch(rect7)
     
     def __str__(self):
-        return "Intersection Scenario"
+        return f"Intersection Scenario with config {self.config}"
 
 
     def save_str(self):
-        return "s_intersection"
+        return f"s_intersection_{self.config[0]}_{self.config[1]}"

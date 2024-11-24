@@ -62,10 +62,39 @@ from simulation import run_simulation
 # folder_to_save_to = 'doorway_scenario_suite/'
 
 folder_to_save_to = 'intersection_scenario_suite/'
-best_params = [
-  (0.5, 0.3, 0.3, 0.5, True, 14.0), # 0
+# best_params = [
+#   (0.5, 0.3, 0.3, 0.5, True, 14.0), # 0
+# ]
+# scenarios = [IntersectionScenario()]
+
+config.runtime = 14.0
+
+scenario_configs = [
+    (0.8, 0.8),
+    (1.0, 1.0),
+    (1.2, 1.2),
+    (0.8, 1.0),
+    (0.8, 1.2),
+    (1.0, 0.8),
+    (1.0, 1.2),
+    (1.2, 0.8),
+    (1.2, 1.0)
 ]
-scenarios = [IntersectionScenario()]
+scenarios = [IntersectionScenario(start=conf[0], goal=conf[1]) for conf in scenario_configs]
+
+best_params = [
+    (0.65, 0.5, 2.0),
+    (0.5, 0.5, 2.0),
+    (0.65, 0.5, 2.0),
+    (0.65, 0.5, 2.0),
+    (0.65, 0.5, 2.0),
+    (0.5, 0.5, 2.0),
+    (0.5, 0.5, 2.0),
+    (0.65, 0.5, 2.0),
+    (0.65, 0.5, 2.0)
+]
+
+
 
 # scenario_configs = scenario_configs[:1]
 # best_params = best_params[:1]
@@ -73,12 +102,18 @@ scenarios = [IntersectionScenario()]
 offset = [0]
 zero_faster = [True, False]
 for scenario, mpc_params in zip(scenarios, best_params):
-    config.opp_gamma = mpc_params[0]
-    config.obs_gamma = mpc_params[1]
-    config.liveliness_gamma = mpc_params[2]
-    config.liveness_threshold = mpc_params[3]
-    config.mpc_use_opp_cbf = mpc_params[4]
-    config.runtime = mpc_params[5]
+    if type(scenario) == DoorwayScenario:
+        config.opp_gamma = mpc_params[0]
+        config.obs_gamma = mpc_params[1]
+        config.liveliness_gamma = mpc_params[2]
+        config.liveness_threshold = mpc_params[3]
+        config.mpc_use_opp_cbf = mpc_params[4]
+        config.runtime = mpc_params[5]
+    else:
+        config.opp_gamma = mpc_params[0]
+        config.liveliness_threshold = mpc_params[1]
+        zeta = mpc_params[2]
+
     for z in zero_faster:
         for o in offset:
             print(f"Running scenario {str(scenario)} with z {z} and o {o}")
@@ -108,4 +143,5 @@ for scenario, mpc_params in zip(scenarios, best_params):
             controllers.append(MPC(agent_idx=1, goal=goals[1,:], opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
 
             run_simulation(scenario, env, controllers, logger, plotter)
+            print("Saving scenario to:", log_filename)
             plt.close()
