@@ -79,7 +79,8 @@ use_barriernet = True
 # train_data_paths = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json',
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
-train_data_paths = ['doorway_scenario_suite/']
+# train_data_paths = ['doorway_scenario_suite/']
+train_data_paths = ['doorway_scenario_suite2/']
 # train_data_paths = ['intersection_scenario_suite/']
 
 # train_data_paths = []
@@ -93,8 +94,8 @@ agents_to_train_on = [0, 1]
 
 # Liveness / CBF Filters (all the cool shit)
 add_control_limits = False
-add_liveness_filter = False
-add_liveness_as_input = True
+add_liveness_filter = True
+add_liveness_as_input = False
 fixed_liveness_input = True
 
 # Changing the inputs / outputs
@@ -127,7 +128,7 @@ nHidden24 = 64
 
 # saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 # saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
-saveprefix = f'weights/livetest8_intersection_'
+saveprefix = f'weights/model_doorsuite2_lf'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
 

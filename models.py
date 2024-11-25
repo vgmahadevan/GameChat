@@ -205,11 +205,16 @@ class BarrierNet(nn.Module):
             for i in range(len(x0)):
                 ego_pos = np.array([0.0, 0.0])
                 ego_theta = x0[i, EGO_THETA_IDX].item()
+                ego_vel = x0[i, EGO_V_IDX].item()
                 opp_pos = np.array([x0[i, 4 + OPP_X_OFFSET].item(), x0[i, 4 + OPP_Y_OFFSET].item()])
                 opp_theta = x0[i, 4 + OPP_THETA_OFFSET].item()
+                opp_vel = x0[i, 4 + OPP_V_OFFSET].item()
 
-                intersection = get_ray_intersection_point(ego_pos, ego_theta, opp_pos, opp_theta)
-                # if True:
+                dir_to_opp = np.arctan2(opp_pos[1] - ego_pos[1], opp_pos[0] - ego_pos[0])
+                vec_to_opp = np.array([np.cos(dir_to_opp), np.sin(dir_to_opp)])
+                initial_closest_to_opp = ego_pos + vec_to_opp * (config.agent_radius)
+                opp_closest_to_initial = opp_pos - vec_to_opp * (config.agent_radius)
+                intersection = get_ray_intersection_point(initial_closest_to_opp, ego_theta[2], opp_closest_to_initial, opp_theta)
                 if intersection is None:
                     lim_G = Variable(torch.tensor([0.0, 1.0]))
                     lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
@@ -219,26 +224,26 @@ class BarrierNet(nn.Module):
                     h_live.append(lim_h)
                     continue
 
-                d0 = np.linalg.norm(ego_pos - intersection)
-                d1 = np.linalg.norm(opp_pos - intersection)
+                d0 = np.linalg.norm(initial_closest_to_opp - intersection)
+                d1 = np.linalg.norm(opp_closest_to_initial - intersection)
 
-                # if x0[i, EGO_V_IDX] > x0[i, 4 + OPP_V_OFFSET]:
-                #     print("STARTING:", x0[i, :8])
-                #     print("\tEgo pos:", ego_pos, "Ego theta:", np.degrees(ego_theta), " Opp pos:", opp_pos, "Opp theta:", np.degrees(opp_theta))
-                #     print("\tIntersection:", intersection, "D0:", d0, "D1:", d1)
+                t0 = d0 / ego_vel
+                t1 = d1 / opp_vel
 
-                t0 = d0 / x0[i, EGO_V_IDX]
-                t1 = d1 / x0[i, 4 + OPP_V_OFFSET]
+                # # if x0[i, EGO_V_IDX] > x0[i, 4 + OPP_V_OFFSET]:
+                # #     print("STARTING:", x0[i, :8])
+                # #     print("\tEgo pos:", ego_pos, "Ego theta:", np.degrees(ego_theta), " Opp pos:", opp_pos, "Opp theta:", np.degrees(opp_theta))
+                # #     print("\tIntersection:", intersection, "D0:", d0, "D1:", d1)
 
                 if t0 >= t1: # If slower agent
-                    barrier = (d0 * x0[i, 4 + OPP_V_OFFSET] -  d1 * x0[i, EGO_V_IDX])
+                    barrier = (d0 * opp_vel -  d1 * ego_vel)
                     penalty = x34[i, 0]
                     live_G = Variable(torch.tensor([0.0, d1]).to(config.device)).to(config.device)
                     live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
                 else: # If faster agent
-                    barrier = (d1 * x0[i, EGO_V_IDX] - d0 * x0[i, 4 + OPP_V_OFFSET])
-                    penalty = x34[i, 0]
+                    barrier = (d1 * ego_vel - d0 * opp_vel)
+                    penalty = x34[i, 1]
                     live_G = Variable(torch.tensor([0.0, -d1]).to(config.device)).to(config.device)
                     live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
