@@ -202,7 +202,8 @@ class MPC:
         # -h_k1 + (1 - gamma)*h_k <= 0
         # h_k1 >= h_k - gamma*h_k
         # (h_k1 - h_k) >= -gamma*h_k
-        constraint = -h_k1 + (1-self.live_gamma)*h_k
+        # constraint = -h_k1 + (1-self.live_gamma)*h_k
+        constraint = -h_k
         mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
 
     # Original liveness filter
@@ -250,9 +251,12 @@ class MPC:
         d0_reg -= self.initial_state[3]*ts
 
         if should_go_faster:
-            h = (d1 * x[3] - d0 * opp_state[3])
+            h = d1 / opp_state[3] - d0 / x[3]
+            # h = (d1 * x[3] - d0 * opp_state[3])
         else:
-            h = (d0 * opp_state[3] - d1 * x[3])
+            h = d0 / x[3] - d1 / opp_state[3]
+            print(h, d0_reg / self.initial_state[3] - d1 / opp_state[3])
+            # h = (d0 * opp_state[3] - d1 * x[3])
 
             # if ts == 0:
             #     print("Closest points:", initial_closest_to_opp, opp_closest_to_initial)

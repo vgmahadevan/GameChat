@@ -10,7 +10,7 @@ from models import FCNet, BarrierNet
 from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 
-def sidloss(model, pred, y):
+def sidloss(model, loss_fn, pred, y):
     unnorm_pred = pred * model.output_std + model.output_mean
     sid = torch.sum(torch.nn.functional.relu(torch.abs(unnorm_pred[:, 1]) - config.accel_limit * 2.0))
     loss = loss_fn(pred, y) + sid
@@ -27,7 +27,8 @@ def train(dataloader, model, loss_fn, optimizer, losses):
         
         # Compute prediction error
         pred = model(X, 1)
-        loss, aloss, bloss = sidloss(model, pred, y)
+        loss = loss_fn(pred, y)
+        # loss, aloss, bloss = sidloss(model, loss_fn, pred, y)
         train_loss += loss.item()
 
         # Backpropagation
@@ -37,7 +38,8 @@ def train(dataloader, model, loss_fn, optimizer, losses):
 
         if batch % 5 == 0:  # 25
             loss, current = loss.item(), batch * len(X)
-            print(f"loss: {loss:>7f}, Reg: {aloss:>7f}, Sid: {bloss:>7f}  [{current:>5d}/{size:>5d}]")
+            # print(f"loss: {loss:>7f}, Reg: {aloss:>7f}, Sid: {bloss:>7f}  [{current:>5d}/{size:>5d}]")
+            print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
 
     train_loss /= num_batches
     losses.append(train_loss)
@@ -47,22 +49,25 @@ def test(dataloader, model, loss_fn, losses):
     num_batches = len(dataloader)
     model.eval()
     test_loss = 0
-    alosscum = 0
-    blosscum = 0
+    # alosscum = 0
+    # blosscum = 0
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(config.device), y.to(config.device)
 
             pred = model(X, 1)
-            loss, aloss, bloss = sidloss(model, pred, y)
-            alosscum += aloss
-            blosscum += bloss
+            loss = loss_fn(pred, y)
+            # loss, aloss, bloss = sidloss(model, loss_fn, pred, y)
+            # alosscum += aloss
+            # blosscum += bloss
             test_loss += loss.item()
+
     test_loss /= num_batches
-    alosscum /= num_batches
-    blosscum /= num_batches
+    # alosscum /= num_batches
+    # blosscum /= num_batches
     losses.append(test_loss)
-    print(f"Test avg loss: {test_loss:>8f}, Reg avg loss: {alosscum}, Sid avg los: {blosscum}  \n")
+    # print(f"Test avg loss: {test_loss:>8f}, Reg avg loss: {alosscum}, Sid avg los: {blosscum}  \n")
+    print(f"Test avg loss: {test_loss:>8f} \n")
     return losses
 
 if __name__ == "__main__":
@@ -72,8 +77,8 @@ if __name__ == "__main__":
 
     generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents)
 
-    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=False)
-    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=False)
+    norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
+    norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
 
     X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=True)
     # X_train, X_test, y_train, y_test = train_test_split(norm_inputs, norm_outputs, test_size=0.25, random_state=42, shuffle=False)

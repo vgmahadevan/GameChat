@@ -16,13 +16,13 @@ from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
 
-# SCENARIO = 'Doorway'
-SCENARIO = 'Intersection'
+SCENARIO = 'Doorway'
+# SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
-RUN_AGENT = 'BarrierNet'
-# RUN_AGENT = 'LiveNet'
+# RUN_AGENT = 'BarrierNet'
+RUN_AGENT = 'LiveNet'
 
 def get_mpc_live_controllers(scenario, zero_goes_faster):
     if SCENARIO == 'Doorway':
@@ -77,12 +77,12 @@ def get_barriernet_controllers(scenario):
 
 def get_livenet_controllers(scenario):
     if SCENARIO == 'Doorway':
-        model_0_def = "weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json"
-        model_1_def = "weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json"
+        # model_def = "weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json"
+        model_def = "weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json"
 
     controllers = [
-        ModelController(model_0_def, scenario.goals[0], scenario.obstacles.copy()),
-        ModelController(model_1_def, scenario.goals[1], scenario.obstacles.copy()),
+        ModelController(model_def, scenario.goals[0], scenario.obstacles.copy()),
+        ModelController(model_def, scenario.goals[1], scenario.obstacles.copy()),
     ]
     return controllers
 
@@ -94,6 +94,9 @@ if SCENARIO == 'Doorway':
 elif SCENARIO == 'Intersection':
     scenario = IntersectionScenario()
 
+
+config.plot_live = False
+config.plot_end = False
 
 print(f"Running experimnets on agent {RUN_AGENT} on scenario {SCENARIO}")
 NUM_SIMS = 50

@@ -16,77 +16,82 @@ from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from simulation import run_simulation
 
+# SCENARIO = 'Doorway'
+SCENARIO = 'Intersection'
+
 # start x, start y, goal x, goal y, opp gamma, obs gamma, liveness gamma
-scenario_configs = [
-    # (-1.0, 0.5, 2.0, 0.15), # 0
-    # (-1.0, 0.5, 2.0, 0.30), # 1
-    (-1.0, 0.5, 2.0, 0.45), # 2 redo
-    # (-1.0, 0.4, 2.0, 0.15), # 3
-    (-1.0, 0.4, 2.0, 0.35), # 4 redo
-    # (-1.0, 0.3, 2.0, 0.15), # 5
-    # (-1.0, 0.3, 2.0, 0.25), # 6
+if SCENARIO == 'Doorway':
+    scenario_configs = [
+        (-1.0, 0.5, 2.0, 0.15), # 0
+        (-1.0, 0.5, 2.0, 0.30), # 1
+        (-1.0, 0.5, 2.0, 0.45), # 2 redo
+        (-1.0, 0.4, 2.0, 0.15), # 3
+        (-1.0, 0.4, 2.0, 0.35), # 4 redo
+        (-1.0, 0.3, 2.0, 0.15), # 5
+        (-1.0, 0.3, 2.0, 0.25), # 6
 
-    (-0.5, 0.5, 2.0, 0.15), # 7 redo
-    (-0.5, 0.5, 2.0, 0.30), # 8 redo
-    (-0.5, 0.5, 2.0, 0.45), # 9 redo
-    # (-0.5, 0.4, 2.0, 0.15), # 10
-    (-0.5, 0.4, 2.0, 0.35), # 11 redo
-    # (-0.5, 0.3, 2.0, 0.15), # 12
-    (-0.5, 0.3, 2.0, 0.25), # 13 redo
-]
-scenarios = [DoorwayScenario(initial_x=conf[0], initial_y=conf[1], goal_x=conf[2], goal_y=conf[3]) for conf in scenario_configs]
+        (-0.5, 0.5, 2.0, 0.15), # 7 redo
+        (-0.5, 0.5, 2.0, 0.30), # 8 redo
+        (-0.5, 0.5, 2.0, 0.45), # 9 redo
+        (-0.5, 0.4, 2.0, 0.15), # 10
+        (-0.5, 0.4, 2.0, 0.35), # 11 redo
+        (-0.5, 0.3, 2.0, 0.15), # 12
+        (-0.5, 0.3, 2.0, 0.25), # 13 redo
+    ]
+    scenarios = [DoorwayScenario(initial_x=conf[0], initial_y=conf[1], goal_x=conf[2], goal_y=conf[3]) for conf in scenario_configs]
 
-best_params = [
-#   (0.5, 0.3, 0.3, 1.0, True, 16.0), # 0
-#   (0.8, 0.4, 0.4, 1.0, True, 16.0), # 1
-  (0.7, 0.6, 0.2, 1.3, True, 16.0), # 2 redo
-#   (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
-  (0.7, 0.6, 0.2, 1.3, True, 16.0), # 4 redo
-#   (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
-#   (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
-  (0.9, 0.3, 0.2, 0.7, True, 14.0), # 7 redo
-  (0.9, 0.2, 0.2, 0.8, False, 14.0), # 8 redo
-  (0.9, 0.3, 0.2, 0.8, False, 15.0), # 9 redo
-#   (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
-  (0.9, 0.3, 0.2, 0.9, False, 14.0), # 11 redo
-#   (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
-  (0.9, 0.3, 0.2, 1.1, False, 14.0), # 13 redo
-]
+    best_params = [
+    (0.5, 0.3, 0.3, 1.0, True, 16.0), # 0
+    (0.8, 0.4, 0.4, 1.0, True, 16.0), # 1
+    (0.7, 0.6, 0.2, 1.3, True, 16.0), # 2 redo
+    (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
+    (0.7, 0.6, 0.2, 1.3, True, 16.0), # 4 redo
+    (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
+    (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
+    (0.9, 0.3, 0.2, 0.7, True, 14.0), # 7 redo
+    (0.9, 0.2, 0.2, 0.8, False, 14.0), # 8 redo
+    (0.9, 0.3, 0.2, 0.8, False, 15.0), # 9 redo
+    (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
+    (0.9, 0.3, 0.2, 0.9, False, 14.0), # 11 redo
+    (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
+    (0.9, 0.3, 0.2, 1.1, False, 14.0), # 13 redo
+    ]
 
-folder_to_save_to = 'doorway_scenario_suite2/'
+    folder_to_save_to = 'doorway_scenario_suite3/'
 
-# folder_to_save_to = 'intersection_scenario_suite/'
-# best_params = [
-#   (0.5, 0.3, 0.3, 0.5, True, 14.0), # 0
-# ]
-# scenarios = [IntersectionScenario()]
+else:
+    folder_to_save_to = 'intersection_scenario_suite2/'
+    # best_params = [
+    # (0.5, 0.3, 0.3, 0.5, True, 14.0), # 0
+    # ]
+    # scenarios = [IntersectionScenario()]
 
-# config.runtime = 14.0
+    scenario_configs = [
+        (0.8, 0.8),
+        (0.8, 1.0),
+        (0.8, 1.2),
+        (1.0, 0.8),
+        (1.0, 1.0),
+        (1.0, 1.2),
+        (1.2, 0.8),
+        (1.2, 1.0)
+        (1.2, 1.2),
+    ]
+    scenarios = [IntersectionScenario(start=conf[0], goal=conf[1]) for conf in scenario_configs]
 
-# scenario_configs = [
-#     (0.8, 0.8),
-#     (1.0, 1.0),
-#     (1.2, 1.2),
-#     (0.8, 1.0),
-#     (0.8, 1.2),
-#     (1.0, 0.8),
-#     (1.0, 1.2),
-#     (1.2, 0.8),
-#     (1.2, 1.0)
-# ]
-# scenarios = [IntersectionScenario(start=conf[0], goal=conf[1]) for conf in scenario_configs]
+    best_params = [
+        (0.6, 0.1),
+        (0.6, 0.1),
+        (0.6, 0.1),
+        (0.6, 0.25),
+        (0.6, 0.25),
+        (0.6, 0.25),
+        (0.6, 0.2),
+        (0.6, 0.2),
+        (0.6, 0.2)
+    ]
 
-# best_params = [
-#     (0.65, 0.5, 2.0),
-#     (0.5, 0.5, 2.0),
-#     (0.65, 0.5, 2.0),
-#     (0.65, 0.5, 2.0),
-#     (0.65, 0.5, 2.0),
-#     (0.5, 0.5, 2.0),
-#     (0.5, 0.5, 2.0),
-#     (0.65, 0.5, 2.0),
-#     (0.65, 0.5, 2.0)
-# ]
+assert(len(scenarios) == len(best_params))
 
 offset = [0]
 zero_faster = [True, False]
@@ -100,8 +105,8 @@ for scenario, mpc_params in zip(scenarios, best_params):
         config.runtime = mpc_params[5]
     else:
         config.opp_gamma = mpc_params[0]
-        config.liveliness_threshold = mpc_params[1]
-        zeta = mpc_params[2]
+        config.liveliness_gamma = mpc_params[1]
+        config.runtime = mpc_params[3]
 
     for z in zero_faster:
         for o in offset:

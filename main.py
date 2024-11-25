@@ -23,6 +23,8 @@ from metrics import gather_all_metric_data
 # zeta = 2.0
 # scenario = IntersectionScenario(start=0.8, goal=1.2)
 # scenario = IntersectionScenario(start=1.0, goal=1.0)
+scenario_params = (0.8, 0.8)
+scenario = IntersectionScenario(start=scenario_params[0], goal=scenario_params[1])
 
 # scenarios = [
 #     (0.8, 0.8)
@@ -47,11 +49,8 @@ from metrics import gather_all_metric_data
 #     (0.65, 0.5, 2.0)
 # ]
 
-
-# config.opp_gamma = 0.1
-# config.obs_gamma = 0.1
-scenario_params = (-1.0, 0.5, 2.0, 0.15)
-scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
+# scenario_params = (-1.0, 0.5, 2.0, 0.15)
+# scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
 
 plotter = Plotter()
 # plotter = None
@@ -81,6 +80,9 @@ controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 
 # controllers.append(ModelController("weights/livetest8_intersection_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
+# controllers.append(ModelController("weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
+
+# controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 
 # Setup agent 1
 # controllers.append(BlankController())
@@ -99,6 +101,9 @@ controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
 
 # controllers.append(ModelController("weights/livetest8_intersection_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
+# controllers.append(ModelController("weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
+
+# controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

@@ -124,7 +124,7 @@ class DataGenerator:
         # print(1/0)
 
         if not normalize:
-            return data, 0.0, 1.0
+            return data, np.zeros(data.shape[1]), np.ones(data.shape[1])
 
         data_mean = np.mean(data, axis=0)
         data_std = np.std(data, axis=0)
@@ -144,7 +144,7 @@ class DataGenerator:
         data = np.array(data)
 
         if not normalize:
-            return data, 0.0, 1.0
+            return data, np.zeros(data.shape[1]), np.ones(data.shape[1])
 
         data_mean = np.mean(data, axis=0)
         data_std = np.std(data, axis=0)

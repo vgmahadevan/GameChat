@@ -21,7 +21,7 @@ plot_end = True
 plot_end_ani_only = True
 plot_text_on = True
 # plot_text_on = False
-ani_save_name = 'datagen_replay.mp4'
+ani_save_name = 'intertest2.mp4'
 
 dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
@@ -44,9 +44,9 @@ T_horizon = 6                              # Prediction horizon time steps
 obstacle_avoidance = True
 mpc_use_opp_cbf = True
 # Gamma, in essence, is the leniancy on how much we can deprove the CBF.
-opp_gamma = 0.8                            # CBF parameter in [0,1]
+opp_gamma = 0.6                            # CBF parameter in [0,1]
 obs_gamma = 0.3                            # CBF parameter in [0,1]
-liveliness_gamma = 0.3                     # CBF parameter in [0,1]
+liveliness_gamma = 0.1                     # CBF parameter in [0,1]
 # safety_dist = 0.00                         # Safety distance
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
 mpc_liveness_safety_buffer = 0.03
@@ -128,7 +128,7 @@ nHidden24 = 64
 
 # saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 # saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
-saveprefix = f'weights/model_doorsuite2_lf'
+saveprefix = f'weights/model_30_norm_doorsuite2_lfnew_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
 
