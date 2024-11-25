@@ -124,14 +124,31 @@ class MPC:
             cbf_constraints.append(-h_k1 + (1-self.obs_gamma)*h_k)
 
         if config.mpc_use_opp_cbf:
-            # obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)
-            obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
-            obs_projected = (self.opp_state[0] + self.opp_state[3] * math.cos(self.opp_state[2]) * config.MPC_Ts, self.opp_state[1] + self.opp_state[3] * math.sin(self.opp_state[2]) * config.MPC_Ts, config.agent_radius)
+            obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)
+            # obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
+            # opp_state = np.array(self.opp_state)
+            # opp_A, _ = self.env.get_double_integrator_dynamics_np(opp_state)
+            # opp_state_proj = opp_state + opp_A*config.MPC_Ts
+            # opp_k1 = (opp_state_proj[0], opp_state_proj[1], config.agent_radius)
+            opp_k1 = (self.model.tvp['x_moving_obs'] + self.opp_state[3] * math.cos(self.opp_state[2]) * config.MPC_Ts,
+                      self.model.tvp['y_moving_obs'] + self.opp_state[3] * math.sin(self.opp_state[2]) * config.MPC_Ts,
+                      config.agent_radius)
             h_k = self.h_obs(self.model.x['x'], obs)
-            # h_k1 = self.h_obs(x_k1, obs)
-            h_k1 = self.h_obs(x_k1, obs_projected)
-            # print(obs, obs_projected)
+            h_k1 = self.h_obs(x_k1, opp_k1)
+
+            # next_state_debug = np.array(self.initial_state[:2]) + np.array([np.cos(self.initial_state[2]), np.sin(self.initial_state[2])]) * self.initial_state[3] * config.MPC_Ts
+            # h_k_debug = self.h_obs(self.initial_state, obs)
+            # h_k1_debug = self.h_obs(next_state_debug, opp_k1)
+            # print(f"\nAgent idx: {self.agent_idx}")
+            # print(f"\tInitial state: {self.initial_state}, Obs: {obs}, H_k: {h_k_debug}")
+            # print(f"\tNext ego: {next_state_debug}, next opp: {opp_k1}, H_k1: {h_k1_debug}")
+
+            # delta_h_k + gamma*h_k >= 0
+            # h_k1 - h_k + gamma*h_k >= 0
+            # -h_k1 + h_k - gamma*h_k <= 0
+            # -h_k1 + (1 - gamma)*h_k <= 0
             cbf_constraints.append(-h_k1 + (1-self.opp_gamma)*h_k)
+            # print(cbf_constraints[-1])
 
         return cbf_constraints
     
@@ -153,8 +170,9 @@ class MPC:
 
         def tvp_fun_mpc(t_now):
             # Moving obstacles trajectory
-            tvp_struct_mpc['_tvp', :, 'x_moving_obs'] = self.opp_state[0] + self.opp_state[3] * math.cos(self.opp_state[2]) * t_now
-            tvp_struct_mpc['_tvp', :, 'y_moving_obs'] = self.opp_state[1] + self.opp_state[3] * math.sin(self.opp_state[2]) * t_now
+            for k in range(config.T_horizon + 1):
+                tvp_struct_mpc['_tvp', k, 'x_moving_obs'] = self.opp_state[0] + self.opp_state[3] * math.cos(self.opp_state[2]) * config.MPC_Ts * k
+                tvp_struct_mpc['_tvp', k, 'y_moving_obs'] = self.opp_state[1] + self.opp_state[3] * math.sin(self.opp_state[2]) * config.MPC_Ts * k
 
             return tvp_struct_mpc
 
@@ -179,16 +197,22 @@ class MPC:
 
         # Compute CBF constraints
         opp_state = np.array(self.opp_state)
-        opp_A, _ = self.env.get_double_integrator_dynamics_np(opp_state)
+        # opp_A, _ = self.env.get_double_integrator_dynamics_np(opp_state)
+        # opp_k1 = opp_state + opp_A*config.MPC_Ts
 
         h_k = self.h_v(self.model.x['x'], self.opp_state, ts=0.0, t=0)
 
-        opp_k1 = opp_state + opp_A*config.MPC_Ts
-        h_k1 = self.h_v(x_k1, opp_k1, ts=config.MPC_Ts, t=1)
-        constraint = -h_k1 + (1-self.live_gamma)*h_k
+        # h_k1 = self.h_v(x_k1, opp_k1, ts=config.MPC_Ts, t=1)
+        h_k1 = self.h_v(x_k1, opp_state, ts=config.MPC_Ts, t=1)
+
+        if h_k is None or h_k1 is None:
+            return
+
+
         # -h_k1 + (1 - gamma)*h_k <= 0
         # h_k1 >= h_k - gamma*h_k
         # (h_k1 - h_k) >= -gamma*h_k
+        constraint = -h_k1 + (1-self.live_gamma)*h_k
         mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
 
     # def h_v(self, x, opp_x):
@@ -274,7 +298,8 @@ class MPC:
         initial_closest_to_opp = np.array(self.initial_state[:2]) + vec_to_opp * (config.agent_radius + config.mpc_liveness_safety_buffer / 2.0)
         opp_closest_to_initial = np.array(self.opp_state[:2]) - vec_to_opp * (config.agent_radius + config.mpc_liveness_safety_buffer / 2.0)
         intersection = get_ray_intersection_point(initial_closest_to_opp, self.initial_state[2], opp_closest_to_initial, opp_state[2])
-        assert(intersection is not None)
+        if intersection is None:
+            return None
 
         # d0 = sqrt((x[0] - intersection[0]) ** 2.0 + (x[1] - intersection[1]) ** 2.0)
         d0_reg = np.linalg.norm(initial_closest_to_opp - intersection)

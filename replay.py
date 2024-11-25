@@ -29,10 +29,10 @@ bags.sort()
 # bags = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json']
 # bags = ['obs_doorway_with_offsets/l_0_faster_edge_cases.json']
 
+bags = ['doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json']
+
 for bag in bags:
     print("Viewing", bag)
-    # scenario = DoorwayScenario()
-    scenario = IntersectionScenario()
     config.ani_save_name = os.path.basename(bag).rstrip('json') + '.mp4'
     # scenario = NoObstacleDoorwayScenario()
 
@@ -40,6 +40,9 @@ for bag in bags:
     plotter = Plotter()
     # logger = DataLogger.load_file('doorway_train_data_with_liveness_0_faster.json')
     logger = DataLogger.load_file(bag)
+    scenario = DoorwayScenario()
+    # scenario = IntersectionScenario()
+    scenario.goals = np.array(logger.data['iterations'][0]['goals'])
     # logger = DataLogger.load_file('all_data_with_offsets/doorway_train_data_with_liveness_0_faster_off0.json')
     output_logger = BlankLogger()
 

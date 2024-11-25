@@ -84,15 +84,16 @@ class Plotter:
         x1_state = self.x_cum[1][frame].T.copy()
         x1_state[2] = np.rad2deg(x1_state[2])
         agent_dist = np.linalg.norm(x0_state[:2] - x1_state[:2])
-        collides = agent_dist < config.agent_radius * 2 + config.safety_dist
+        opp_collides = agent_dist < config.agent_radius * 2 + config.safety_dist
         closest_obs_dists = []
+        obs_collides = False
         for state in [x0_state, x1_state]:
             closest_obs_dist = float("inf")
             for obs in self.scenario.obstacles:
                 dist = np.linalg.norm(state[:2] - np.array(obs[:2]))
                 closest_obs_dist = min(closest_obs_dist, dist)
             if closest_obs_dist < config.agent_radius + obs[2] + config.safety_dist:
-                collides = True
+                obs_collides = True
             closest_obs_dists.append(closest_obs_dist)
 
         liveliness_text = [f'Iteration: {frame}, Timestamp: {frame * config.sim_ts}',
@@ -106,7 +107,7 @@ class Plotter:
         if not config.plot_text_on:
             liveliness_text = []
         
-        text_color = 'red' if collides else 'green' if is_live else 'magenta'
+        text_color = 'red' if opp_collides else 'orange' if obs_collides else 'green' if is_live else 'magenta'
         self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top', color=text_color)
 
         # Determine the start index for the fading effect
@@ -116,7 +117,7 @@ class Plotter:
         start_index = frame - trail_length * trail_separation  # Adjust '10' to control the length of the fading trail
 
         # Draw the fading trails for agents 1 and 2
-        for i in range(start_index, frame, config.plot_rate * trail_separation):
+        for i in range(start_index, frame + 1, config.plot_rate * trail_separation):
             if i < 0:
                 continue
         # if True:

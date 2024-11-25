@@ -50,7 +50,7 @@ from metrics import gather_all_metric_data
 
 # config.opp_gamma = 0.1
 # config.obs_gamma = 0.1
-scenario_params = (-1.0, 0.3, 2.0, 0.15)
+scenario_params = (-1.0, 0.5, 2.0, 0.15)
 scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
 
 plotter = Plotter()
