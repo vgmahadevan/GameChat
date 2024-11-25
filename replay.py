@@ -32,6 +32,23 @@ bags.sort()
 
 # bags = ['doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json']
 
+bags = [
+    'doorway_scenario_suite2/s_doorway_-1.0_0.5_2.0_0.45_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-1.0_0.5_2.0_0.45_l_1_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-1.0_0.4_2.0_0.35_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-1.0_0.4_2.0_0.35_l_1_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.5_2.0_0.15_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.5_2.0_0.15_l_1_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.5_2.0_0.3_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.5_2.0_0.3_l_1_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.5_2.0_0.45_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.5_2.0_0.45_l_1_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.4_2.0_0.35_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.4_2.0_0.35_l_1_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.3_2.0_0.25_l_0_faster_off0.json',
+    'doorway_scenario_suite2/s_doorway_-0.5_0.3_2.0_0.25_l_1_faster_off0.json'
+]
+
 for bag in bags:
     print("Viewing", bag)
     config.ani_save_name = bag.rstrip('json') + '.mp4'
