@@ -18,7 +18,8 @@ from util import calculate_all_metrics
 # dirname = 'all_data_with_offsets'
 # dirname = 'obs_doorway_with_offsets'
 # dirname = 'doorway_scenario_suite'
-dirname = 'intersection_scenario_suite'
+# dirname = 'intersection_scenario_suite'
+dirname = 'doorway_scenario_suite2'
 
 bags = []
 for filename in os.listdir(dirname):
@@ -29,11 +30,11 @@ bags.sort()
 # bags = ['doorway_scenario_suite/s_-1.0_0.5_2.0_0.15_l_0_faster_off0.json']
 # bags = ['obs_doorway_with_offsets/l_0_faster_edge_cases.json']
 
-bags = ['doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json']
+# bags = ['doorway_scenario_suite/s_-1.0_0.3_2.0_0.15_l_0_faster_off0.json']
 
 for bag in bags:
     print("Viewing", bag)
-    config.ani_save_name = os.path.basename(bag).rstrip('json') + '.mp4'
+    config.ani_save_name = bag.rstrip('json') + '.mp4'
     # scenario = NoObstacleDoorwayScenario()
 
     # Matplotlib plotting handler

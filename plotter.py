@@ -153,7 +153,10 @@ class Plotter:
         ani = FuncAnimation(self.fig, lambda frame: self.update(frame), frames=len(self.x_cum[0]) // config.plot_rate, init_func=lambda: self.init(), blit=False)
 
         # Save the animation
-        ani.save(os.path.join('animations/', config.ani_save_name), writer='ffmpeg')
+        ani_save_path = os.path.join('animations/', config.ani_save_name)
+        ani_save_folder = os.path.dirname(ani_save_path)
+        os.makedirs(ani_save_folder, exist_ok=True)        
+        ani.save(ani_save_path, writer='ffmpeg')
         if config.plot_end_ani_only:
             return
 
