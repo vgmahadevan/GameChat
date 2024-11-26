@@ -145,8 +145,8 @@ class Environment:
                 opp_vel = 0.0 if len(self.history) < 2 else np.linalg.norm(opp_state[:2] - self.history[-2][1-agent_idx, :2]) / config.sim_ts
                 opp_state = np.append(opp_state, [opp_vel])
             self.reset_state(initial_state)
-            controller.reset_state(initial_state, opp_state)
             cycle_start_time = time.time()
+            controller.reset_state(initial_state, opp_state)
             u1 = self.apply_control_lims(controller.make_step(sim_time, initial_state))
             compute_times.append(time.time() - cycle_start_time)
             x1 = self.simulator.make_step(u1)

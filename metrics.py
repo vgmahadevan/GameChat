@@ -125,4 +125,3 @@ def gather_all_metric_data(scenario, traj0, traj1, goals, compute_history, desir
     avg_compute_0, avg_compute_1 = np.mean(compute_history, axis=0)
 
     return [goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1, avg_compute_0, avg_compute_1]
-

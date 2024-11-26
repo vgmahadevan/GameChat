@@ -72,8 +72,6 @@ SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
-# RUN_AGENT = 'MPC_UNLIVE'
-# RUN_AGENT = 'BarrierNet'
 RUN_AGENT = 'LiveNet'
 
 filename = f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}.json'

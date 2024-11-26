@@ -17,17 +17,17 @@ from model_controller import ModelController
 from simulation import run_simulation
 from plotter import Plotter
 
-SCENARIO = 'Doorway'
-# SCENARIO = 'Intersection'
+# SCENARIO = 'Doorway'
+SCENARIO = 'Intersection'
 
 RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
 # RUN_AGENT = 'BarrierNet'
 # RUN_AGENT = 'LiveNet'
 
-SIM_RESULTS_MODE = False
+SIM_RESULTS_MODE = True
 
-NUM_SIMS = 1
+NUM_SIMS = 50
 
 def get_mpc_live_controllers(scenario, zero_goes_faster):
     if SCENARIO == 'Doorway':
@@ -110,9 +110,7 @@ if __name__ == '__main__':
 
     all_metric_data = []
     for sim in range(NUM_SIMS if SIM_RESULTS_MODE else 1):
-        print("Running sim:", sim)
-        plotter = Plotter()
-        config.ani_save_name = "Hmmm.mp4"
+        plotter = None
         logger = BlankLogger() if SIM_RESULTS_MODE else DataLogger(f"experiment_results/histories/{RUN_AGENT}_{SCENARIO}.json")
 
         # Add all initial and goal positions of the agents here (Format: [x, y, theta])
@@ -131,11 +129,9 @@ if __name__ == '__main__':
         env.compute_history = []
         x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 
-        # desired_path_0 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_agent_0.json", 0)
-        # desired_path_1 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_agent_1.json", 1)
-        # metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history, desired_path_0=desired_path_0, desired_path_1=desired_path_1)
-
-        metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history)
+        desired_path_0 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_{RUN_AGENT}_0.json", 0)
+        desired_path_1 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_{RUN_AGENT}_1.json", 1)
+        metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history, desired_path_0=desired_path_0, desired_path_1=desired_path_1)
         all_metric_data.append(metric_data)
 
     if SIM_RESULTS_MODE:
