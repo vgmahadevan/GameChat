@@ -46,10 +46,10 @@ def gen_figure(ys, title, labels, ylabel, filesuffix, ylims=None, add_dotted=Non
     if ylims is not None:
         plt.ylim(ylims)
 
-    plt.savefig(f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}_{filesuffix}.pdf')
+    plt.savefig(f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png')
 
-# SCENARIO = 'Doorway'
-SCENARIO = 'Intersection'
+SCENARIO = 'Doorway'
+# SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
