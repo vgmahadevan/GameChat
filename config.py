@@ -27,6 +27,7 @@ dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 mpc_p0_faster = True
 agent_zero_offset = 0
 consider_intersects = True
+mpc_use_new_liveness_filter = True
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)

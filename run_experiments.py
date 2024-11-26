@@ -11,18 +11,22 @@ import numpy as np
 from metrics import gather_all_metric_data
 from mpc_cbf import MPC
 from scenarios import DoorwayScenario, IntersectionScenario
-from data_logger import BlankLogger
+from data_logger import BlankLogger, DataLogger
 from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
 
-# SCENARIO = 'Doorway'
-SCENARIO = 'Intersection'
+SCENARIO = 'Doorway'
+# SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
 # RUN_AGENT = 'BarrierNet'
 RUN_AGENT = 'LiveNet'
+
+SIM_RESULTS_MODE = False
+
+NUM_SIMS = 50
 
 def get_mpc_live_controllers(scenario, zero_goes_faster):
     if SCENARIO == 'Doorway':
@@ -39,6 +43,8 @@ def get_mpc_live_controllers(scenario, zero_goes_faster):
         config.obs_gamma = 0.3
         config.liveliness_gamma = 0.1
         config.runtime = 14.0
+
+    config.mpc_use_new_liveness_filter = False
 
     controllers = [
         MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=scenario.goals[0,:].copy(), static_obs=scenario.obstacles.copy()),
@@ -101,13 +107,12 @@ config.plot_live = False
 config.plot_end = False
 
 print(f"Running experimnets on agent {RUN_AGENT} on scenario {SCENARIO}")
-NUM_SIMS = 50
 
 all_metric_data = []
-for sim in range(NUM_SIMS):
+for sim in range(NUM_SIMS if SIM_RESULTS_MODE else 1):
     print("Running sim:", sim)
     plotter = None
-    logger = BlankLogger()
+    logger = BlankLogger() if SIM_RESULTS_MODE else DataLogger(f"experiment_results/histories/{RUN_AGENT}_{SCENARIO}.json")
 
     # Add all initial and goal positions of the agents here (Format: [x, y, theta])
     goals = scenario.goals.copy()
@@ -127,7 +132,8 @@ for sim in range(NUM_SIMS):
     metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals)
     all_metric_data.append(metric_data)
 
-all_metric_data = np.array(all_metric_data)
-save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}.csv"
-print(f"Saving experiment results to {save_filename}")
-np.savetxt(save_filename, all_metric_data, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1')
+if SIM_RESULTS_MODE:
+    all_metric_data = np.array(all_metric_data)
+    save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}.csv"
+    print(f"Saving experiment results to {save_filename}")
+    np.savetxt(save_filename, all_metric_data, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1')

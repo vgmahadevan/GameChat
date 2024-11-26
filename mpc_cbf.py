@@ -181,8 +181,12 @@ class MPC:
 
         l, _, _, _, intersecting, is_live = calculate_all_metrics(self.initial_state.copy(), self.opp_state, self.liveness_thresh)
         # if is_live:
-        if not intersecting:
-            return
+        if config.mpc_use_new_liveness_filter:
+            if not intersecting:
+                return
+        else:
+            if is_live:
+                return
 
         # print(f"Adding constraint, liveliness = {l}, intersecting = {intersecting}")
 
@@ -192,6 +196,8 @@ class MPC:
 
         # Compute CBF constraints
         opp_state = np.array(self.opp_state)
+
+        self.h_v = self.h_v_new if config.mpc_use_new_liveness_filter else self.h_v_old
 
         h_k = self.h_v(self.model.x['x'], self.opp_state, ts=0.0)
         h_k1 = self.h_v(x_k1, opp_state, ts=config.MPC_Ts)
@@ -206,32 +212,32 @@ class MPC:
         mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
 
     # Original liveness filter
-    # def h_v(self, x, opp_x):
-    #     self.A_matrix = SX.zeros(2, 2)
-    #     max_zeta = 0.3 / opp_x[3]
-    #     upper_zeta = min(max_zeta, config.zeta)
+    def h_v_old(self, x, opp_x, ts):
+        self.A_matrix = SX.zeros(2, 2)
+        max_zeta = 0.3 / opp_x[3]
+        upper_zeta = min(max_zeta, config.zeta)
 
-    #     # The A matrix looks like this:
-    #     # [[1, -zeta]
-    #     #  [-zeta, 1]]
-    #     # So that when multiplied by the velocity vector [ego_v, opp_v], the result is [ego_v - zeta*opp_v, opp_v - zeta*ego_v]
-    #     self.A_matrix[0, 0] = 1.0
-    #     self.A_matrix[0, 1] = -upper_zeta
-    #     self.A_matrix[1, 0] = -config.zeta
-    #     self.A_matrix[1, 1] = 1.0
+        # The A matrix looks like this:
+        # [[1, -zeta]
+        #  [-zeta, 1]]
+        # So that when multiplied by the velocity vector [ego_v, opp_v], the result is [ego_v - zeta*opp_v, opp_v - zeta*ego_v]
+        self.A_matrix[0, 0] = 1.0
+        self.A_matrix[0, 1] = -upper_zeta
+        self.A_matrix[1, 0] = -config.zeta
+        self.A_matrix[1, 1] = 1.0
 
-    #     # ego_v - 3 * opp_v >= 0.0 -> ego_v >= 3 * opp_v
-    #     # opp_v - 3 * ego_v >= 0.0 -> ego_v <= 1/3 * opp_v
-    #     # Means that agent 1 will speed up and agent 2 will slow down.
+        # ego_v - 3 * opp_v >= 0.0 -> ego_v >= 3 * opp_v
+        # opp_v - 3 * ego_v >= 0.0 -> ego_v <= 1/3 * opp_v
+        # Means that agent 1 will speed up and agent 2 will slow down.
 
-    #     vel_vector = vertcat(x[3], opp_x[3])
-    #     h_vec = self.A_matrix @ vel_vector
-    #     # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
-    #     h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
-    #     h = h_vec[h_idx]
-    #     return h
+        vel_vector = vertcat(x[3], opp_x[3])
+        h_vec = self.A_matrix @ vel_vector
+        # If agent 0 should go faster, then h_idx = self.agent_idx, otherwise h_idx = 1 - self.agent_idx
+        h_idx = self.agent_idx if config.mpc_p0_faster else 1 - self.agent_idx
+        h = h_vec[h_idx]
+        return h
 
-    def h_v(self, x, opp_state, ts):
+    def h_v_new(self, x, opp_state, ts):
         dir_to_opp = np.arctan2(opp_state[1] - self.initial_state[1], opp_state[0] - self.initial_state[0])
         vec_to_opp = np.array([np.cos(dir_to_opp), np.sin(dir_to_opp)])
         initial_closest_to_opp = np.array(self.initial_state[:2]) + vec_to_opp * (config.agent_radius + config.mpc_liveness_safety_buffer / 2.0)
