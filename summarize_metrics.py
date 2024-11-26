@@ -23,7 +23,9 @@ IDXS = {
     'delta_vel_0': 8,
     'delta_vel_1': 9,
     'path_dev_0': 10,
-    'path_dev_1': 11
+    'path_dev_1': 11,
+    'avg_compute_0': 12,
+    'avg_compute_1': 13
 }
 
 # Get num sims
@@ -54,6 +56,11 @@ deltaPaths = metrics[:, [IDXS['path_dev_0'], IDXS['path_dev_1']]].flatten()
 avg_delta_path = np.average(deltaPaths)
 err_delta_path = np.std(deltaPaths) / np.sqrt(deltaPaths.size)
 
+# Get average compute time.
+compute_times = metrics[:, [IDXS['avg_compute_0'], IDXS['avg_compute_1']]].flatten()
+avg_compute_time = np.average(compute_times)
+err_compute_time = np.std(compute_times) / np.sqrt(compute_times.size)
+
 print(f"Accumulated metrics for {AGENT} agents in {SCENARIO} scenario")
 print("Num simulations run:", num_sims)
 print("Number of collisions:", collisions)
@@ -61,6 +68,7 @@ print("Number of deadlocks:", deadlocks)
 print(f"Slower TTG: {avg_slower_ttg} +/- {err_slower_ttg}")
 print(f"Delta Velocity: {avg_delta_v} +/- {err_delta_v}")
 print(f"Path Deviation: {avg_delta_path} +/- {err_delta_path}")
+print(f"Compute Time: {avg_compute_time} +/- {err_compute_time}")
 
 # number of collisions
 # number of deadlocks
