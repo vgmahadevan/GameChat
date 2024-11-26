@@ -31,6 +31,14 @@ def train(dataloader, model, loss_fn, optimizer, losses):
         # loss, aloss, bloss = sidloss(model, loss_fn, pred, y)
         train_loss += loss.item()
 
+        if torch.isnan(loss):
+            idxs = torch.nonzero(torch.isnan(pred), as_tuple=True)[0][0]
+            print(idxs)
+            print(X[idxs].cpu() * input_std + input_mean)
+            print(pred[idxs])
+            print(y[idxs])
+            print(1/0)
+
         # Backpropagation
         optimizer.zero_grad()
         loss.backward()
@@ -75,7 +83,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents, config.static_obs_xy_only)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
@@ -118,6 +126,7 @@ if __name__ == "__main__":
         add_liveness_as_input=config.add_liveness_as_input,
         fixed_liveness_input=config.fixed_liveness_input,
         n_opponents=config.n_opponents,
+        static_obs_xy_only=config.static_obs_xy_only,
     )
 
     if config.use_barriernet:
@@ -196,6 +205,7 @@ if __name__ == "__main__":
         'separate_penalty_for_opp': config.separate_penalty_for_opp,
         'add_liveness_filter': config.add_liveness_filter,
         'x_is_d_goal': config.x_is_d_goal,
+        'static_obs_xy_only': config.static_obs_xy_only,
         'train_batch_size': config.train_batch_size,
         'learning_rate': config.learning_rate,
         'nHidden1': config.nHidden1,

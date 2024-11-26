@@ -60,7 +60,7 @@ if SCENARIO == 'Doorway':
     folder_to_save_to = 'doorway_scenario_suite3/'
 
 else:
-    folder_to_save_to = 'intersection_scenario_suite2/'
+    folder_to_save_to = 'intersection_scenario_suite3/'
     # best_params = [
     # (0.5, 0.3, 0.3, 0.5, True, 14.0), # 0
     # ]
@@ -74,21 +74,21 @@ else:
         (1.0, 1.0),
         (1.0, 1.2),
         (1.2, 0.8),
-        (1.2, 1.0)
+        (1.2, 1.0),
         (1.2, 1.2),
     ]
     scenarios = [IntersectionScenario(start=conf[0], goal=conf[1]) for conf in scenario_configs]
 
     best_params = [
-        (0.6, 0.1),
-        (0.6, 0.1),
-        (0.6, 0.1),
-        (0.6, 0.25),
-        (0.6, 0.25),
-        (0.6, 0.25),
-        (0.6, 0.2),
-        (0.6, 0.2),
-        (0.6, 0.2)
+        (0.6, 0.1, 13.0),
+        (0.6, 0.1, 14.0),
+        (0.6, 0.1, 16.0),
+        (0.6, 0.1, 13.0),
+        (0.6, 0.1, 14.0),
+        (0.6, 0.1, 15.0),
+        (0.6, 0.1, 16.0),
+        (0.6, 0.1, 16.0),
+        (0.6, 0.1, 16.0)
     ]
 
 assert(len(scenarios) == len(best_params))
@@ -106,7 +106,7 @@ for scenario, mpc_params in zip(scenarios, best_params):
     else:
         config.opp_gamma = mpc_params[0]
         config.liveliness_gamma = mpc_params[1]
-        config.runtime = mpc_params[3]
+        config.runtime = mpc_params[2]
 
     for z in zero_faster:
         for o in offset:

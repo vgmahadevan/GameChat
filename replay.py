@@ -20,7 +20,8 @@ from util import calculate_all_metrics
 # dirname = 'doorway_scenario_suite'
 # dirname = 'intersection_scenario_suite'
 # dirname = 'doorway_scenario_suite2'
-dirname = 'doorway_scenario_suite3'
+# dirname = 'doorway_scenario_suite3'
+dirname = 'intersection_scenario_suite2'
 
 bags = []
 for filename in os.listdir(dirname):

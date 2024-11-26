@@ -23,7 +23,8 @@ from metrics import gather_all_metric_data
 # zeta = 2.0
 # scenario = IntersectionScenario(start=0.8, goal=1.2)
 # scenario = IntersectionScenario(start=1.0, goal=1.0)
-scenario_params = (0.8, 0.8)
+config.liveliness_gamma = 0.1
+scenario_params = (1.0, 1.0)
 scenario = IntersectionScenario(start=scenario_params[0], goal=scenario_params[1])
 
 # scenarios = [
@@ -64,37 +65,22 @@ controllers = []
 
 # Setup agent 0
 # controllers.append(BlankController())
-controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_suite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_input_obs_wc_nolim_saf_intersuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-
-        # model_0_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json"
-        # model_1_def = "weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json"
-
-# controllers.append(ModelController("weights/model_base_input_obs_wc_nolim_saf_intersuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection base barriernet
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway base barriernet
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
-
+# controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
 # controllers.append(ModelController("weights/livetest8_intersection_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 
+controllers.append(ModelController("weights/model_40_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_nso_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_so_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+
+
 # Setup agent 1
 # controllers.append(BlankController())
-controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_suite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-# controllers.append(ModelController("weights/model_base_input_obs_wc_nolim_saf_intersuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-
-# controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 
 # controllers.append(ModelController("weights/model_base_input_obs_wc_nolim_saf_intersuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection base barriernet
 # controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_saf_suite_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
@@ -104,6 +90,12 @@ controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
 
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
+
+controllers.append(ModelController("weights/model_40_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_nso_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_so_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

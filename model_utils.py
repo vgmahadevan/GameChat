@@ -37,8 +37,11 @@ class ModelDefinition:
     add_liveness_as_input: bool
     n_opponents: int
     fixed_liveness_input: bool
+    static_obs_xy_only: bool
 
     def get_num_inputs(self):
+        if self.static_obs_xy_only:
+            return 4 + 4 + (self.n_opponents - 1) * 2 + self.add_liveness_as_input
         return 4 + self.n_opponents * 4 + self.add_liveness_as_input
 
 
@@ -67,4 +70,6 @@ class ModelDefinition:
                 data['n_opponents'] = 1
             if 'fixed_liveness_input' not in data:
                 data['fixed_liveness_input'] = False
+            if 'static_obs_xy_only' not in data:
+                data['static_obs_xy_only'] = False
             return ModelDefinition(**data)

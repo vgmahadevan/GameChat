@@ -42,9 +42,6 @@ class BarrierNet(nn.Module):
         self.zeta = 2.0
 
         print("NUM MODEL INPUTS:", model_definition.get_num_inputs())
-        if self.model_definition.add_liveness_filter:
-            # Liveness is the last input.
-            self.liveness_idx = self.model_definition.get_num_inputs() - 1
         
         self.fc1 = nn.Linear(model_definition.get_num_inputs(), model_definition.nHidden1).double()
         self.fc21 = nn.Linear(model_definition.nHidden1, model_definition.nHidden21).double()
@@ -112,13 +109,25 @@ class BarrierNet(nn.Module):
         # print("Model inputs:", x0)
 
         for opp_idx in range(self.model_definition.n_opponents):
-            # print()
-            start_idx = opp_idx * 4 + 4
-            # print("Start idx:", start_idx)
-            opp_x = x0[:, start_idx + OPP_X_OFFSET]
-            opp_y = x0[:, start_idx + OPP_Y_OFFSET]
-            opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
-            opp_vel = x0[:, start_idx + OPP_V_OFFSET]
+            if self.model_definition.static_obs_xy_only:
+                if opp_idx == 0:
+                    start_idx = opp_idx * 4 + 4
+                    opp_x = x0[:, start_idx + OPP_X_OFFSET]
+                    opp_y = x0[:, start_idx + OPP_Y_OFFSET]
+                    opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
+                    opp_vel = x0[:, start_idx + OPP_V_OFFSET]
+                else:
+                    start_idx = (opp_idx - 1) * 2 + 8
+                    opp_x = x0[:, start_idx + OPP_X_OFFSET]
+                    opp_y = x0[:, start_idx + OPP_Y_OFFSET]
+                    opp_theta = torch.tensor(0.0).to(config.device)
+                    opp_vel = torch.tensor(0.0).to(config.device)
+            else:
+                start_idx = opp_idx * 4 + 4
+                opp_x = x0[:, start_idx + OPP_X_OFFSET]
+                opp_y = x0[:, start_idx + OPP_Y_OFFSET]
+                opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
+                opp_vel = x0[:, start_idx + OPP_V_OFFSET]
 
             R = config.agent_radius + config.agent_radius + config.safety_dist
             if self.model_definition.x_is_d_goal:
@@ -212,12 +221,12 @@ class BarrierNet(nn.Module):
 
                 center_intersection = get_ray_intersection_point(ego_pos, ego_theta, opp_pos, opp_theta)
 
-                dir_to_opp = np.arctan2(opp_pos[1] - ego_pos[1], opp_pos[0] - ego_pos[0])
-                vec_to_opp = np.array([np.cos(dir_to_opp), np.sin(dir_to_opp)])
-                initial_closest_to_opp = ego_pos + vec_to_opp * (config.agent_radius)
-                opp_closest_to_initial = opp_pos - vec_to_opp * (config.agent_radius)
+                vec_to_opp = np.array([opp_pos[1] - ego_pos[1], opp_pos[0] - ego_pos[0]])
+                unit_vec_to_opp = vec_to_opp / np.linalg.norm(vec_to_opp)
+                initial_closest_to_opp = ego_pos + unit_vec_to_opp * (config.agent_radius)
+                opp_closest_to_initial = opp_pos - unit_vec_to_opp * (config.agent_radius)
                 intersection = get_ray_intersection_point(initial_closest_to_opp, ego_theta, opp_closest_to_initial, opp_theta)
-                if center_intersection is None or intersection is None:
+                if center_intersection is None or intersection is None or ego_vel == 0 or opp_vel == 0:
                     # print("No intersection!", x31*self.output_std + self.output_mean)
                     lim_G = Variable(torch.tensor([0.0, 1.0]))
                     lim_G = lim_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
@@ -263,11 +272,11 @@ class BarrierNet(nn.Module):
                     live_G = Variable(torch.tensor([0.0, -d0 / (ego_vel ** 2.0)]).to(config.device)).to(config.device)
                     live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
-                    print("\nClosest points:", initial_closest_to_opp, opp_closest_to_initial)
-                    print("Intersects:", center_intersection, intersection)
-                    print("D0", d0, "D1", d1, "Vel", ego_vel, "opp V", opp_vel)
-                    print("Barrier:", barrier)
-                    print("Ineq:", live_G, live_h)
+                    # print("\nClosest points:", initial_closest_to_opp, opp_closest_to_initial)
+                    # print("Intersects:", center_intersection, intersection)
+                    # print("D0", d0, "D1", d1, "Vel", ego_vel, "opp V", opp_vel)
+                    # print("Barrier:", barrier)
+                    # print("Ineq:", live_G, live_h)
 
                 G_live.append(live_G)
                 h_live.append(live_h)
@@ -293,6 +302,7 @@ class BarrierNet(nn.Module):
         e = Variable(torch.Tensor()).to(config.device)
 
         x31_actual = x31*self.output_std + self.output_mean
+        # print("Ref control:", x31_actual)
         if self.training or sgn == 1:
             x = QPFunction(verbose = 0)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
             # x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)

@@ -16,8 +16,8 @@ from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
 
-SCENARIO = 'Doorway'
-# SCENARIO = 'Intersection'
+# SCENARIO = 'Doorway'
+SCENARIO = 'Intersection'
 
 # RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
@@ -35,10 +35,9 @@ def get_mpc_live_controllers(scenario, zero_goes_faster):
     elif SCENARIO == 'Intersection':
         config.liveliness = True
         config.mpc_p0_faster = zero_goes_faster
-        config.opp_gamma = 0.5
+        config.opp_gamma = 0.6
         config.obs_gamma = 0.3
-        config.liveliness_gamma = 0.3
-        config.liveliness_threshold = 0.5
+        config.liveliness_gamma = 0.1
         config.runtime = 14.0
 
     controllers = [
@@ -79,6 +78,9 @@ def get_livenet_controllers(scenario):
     if SCENARIO == 'Doorway':
         # model_def = "weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json"
         model_def = "weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json"
+    elif SCENARIO == 'Intersection':
+        model_def = "weights/model_30_norm_intersuite2_lfnew_nso_0_1_bn_definition.json"
+    print(model_def)
 
     controllers = [
         ModelController(model_def, scenario.goals[0], scenario.obstacles.copy()),

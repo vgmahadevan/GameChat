@@ -157,6 +157,7 @@ class Plotter:
         ani_save_folder = os.path.dirname(ani_save_path)
         os.makedirs(ani_save_folder, exist_ok=True)        
         ani.save(ani_save_path, writer='ffmpeg')
+        print("Saved results animation to", ani_save_path)
         if config.plot_end_ani_only:
             return
 
