@@ -1,3 +1,4 @@
+import math
 import torch
 import config
 import numpy as np
@@ -136,11 +137,26 @@ def get_x_is_d_goal_input(inputs, goal):
     return inputs
 
 
-def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, static_obs_xy_only, goal, metrics=None):
+def rotate(origin, point, angle):
+    """
+    Rotate a point counterclockwise by a given angle around a given origin.
+
+    The angle should be given in radians.
+    """
+    ox, oy = origin
+    px, py = point
+
+    qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+    qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+    return qx, qy
+
+
+def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, static_obs_xy_only, ego_frame_inputs, goal, metrics=None):
     if metrics is None and add_liveness_as_input:
         metrics = calculate_all_metrics(np.array(inputs[:4]), np.array(inputs[4:8]), config.liveness_threshold)
 
     ego_pos = inputs[:2].copy()
+    ego_theta = inputs[2]
     num_obstacles = num_total_opponents - 1
     agent_obs = sorted(scenario_obstacles, key = lambda o: np.linalg.norm(ego_pos - np.array(o[:2])))
     agent_obs = agent_obs[:num_obstacles]
@@ -148,14 +164,23 @@ def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_
     # print(agent_obs)
 
     if x_is_d_goal:
+        origin = np.array([0.0, 0.0])
         inputs = get_x_is_d_goal_input(inputs, goal)
+        if ego_frame_inputs:
+            goal_x, goal_y = rotate(origin, (inputs[0], inputs[1]), -ego_theta)
+            opp_x, opp_y = rotate(origin, (inputs[4], inputs[5]), -ego_theta)
+            opp_theta = inputs[6] - ego_theta
+            inputs[0], inputs[1], inputs[2], inputs[4], inputs[5], inputs[6] = goal_x, goal_y, 0.0, opp_x, opp_y, opp_theta
 
     for obs_x, obs_y, _ in agent_obs:
         if x_is_d_goal:
+            obs_inp_x, obs_inp_y = obs_x - ego_pos[0], obs_y - ego_pos[1]
+            if ego_frame_inputs:
+                obs_inp_x, obs_inp_y = rotate(origin, (obs_inp_x, obs_inp_y), -ego_theta)
             if static_obs_xy_only:
-                obs_inp = np.array([obs_x - ego_pos[0], obs_y - ego_pos[1]]) # opp - ego (ego frame)
+                obs_inp = np.array([obs_inp_x, obs_inp_y]) # opp - ego (ego frame)
             else:
-                obs_inp = np.array([obs_x - ego_pos[0], obs_y - ego_pos[1], 0.0, 0.0]) # opp - ego (ego frame)
+                obs_inp = np.array([obs_inp_x, obs_inp_y, 0.0, 0.0]) # opp - ego (ego frame)            
         else:
             if static_obs_xy_only:
                 obs_inp = np.array([obs_x, obs_y]) # opp - ego (ego frame)

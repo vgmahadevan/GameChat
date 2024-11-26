@@ -103,7 +103,8 @@ fixed_liveness_input = True
 x_is_d_goal = True
 n_opponents = 12
 separate_penalty_for_opp = False
-static_obs_xy_only = False
+static_obs_xy_only = True
+ego_frame_inputs = True
 
 train_batch_size = 32
 # train_batch_size = 1
