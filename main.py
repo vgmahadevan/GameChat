@@ -75,8 +75,8 @@ controllers = []
 # controllers.append(ModelController("weights/model_40_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_nso_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
-controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
-# controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_so_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
 
 # Setup agent 1
@@ -95,8 +95,8 @@ controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0
 # controllers.append(ModelController("weights/model_40_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_nso_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_nso_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
-controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
-# controllers.append(ModelController("weights/model_30_norm_intersuite3_lfnew_so_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+# controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

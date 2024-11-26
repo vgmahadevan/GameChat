@@ -79,7 +79,7 @@ def get_livenet_controllers(scenario):
         # model_def = "weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json"
         model_def = "weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json"
     elif SCENARIO == 'Intersection':
-        model_def = "weights/model_30_norm_intersuite2_lfnew_nso_0_1_bn_definition.json"
+        model_def = "weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json"
     print(model_def)
 
     controllers = [

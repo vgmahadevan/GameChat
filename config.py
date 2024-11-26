@@ -80,8 +80,8 @@ use_barriernet = True
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
 # train_data_paths = ['doorway_scenario_suite/']
-# train_data_paths = ['doorway_scenario_suite2/']
-train_data_paths = ['intersection_scenario_suite2/']
+train_data_paths = ['doorway_scenario_suite2/']
+# train_data_paths = ['intersection_scenario_suite2/']
 # train_data_paths = ['intersection_scenario_suite3/']
 
 # train_data_paths = []
@@ -111,7 +111,7 @@ train_batch_size = 32
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 40
+epochs = 30
 nHidden1 = 256
 nHidden21 = 128
 nHidden22 = 64
@@ -131,7 +131,7 @@ nHidden24 = 64
 
 # saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 # saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
-saveprefix = f'weights/model_40_norm_intersuite2_lfnew_nso_'
+saveprefix = f'weights/model_30_norm_doorsuite2_lfnew_so_ego_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
 

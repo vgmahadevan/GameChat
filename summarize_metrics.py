@@ -1,10 +1,10 @@
 import config
 import numpy as np
 
-AGENT = 'MPC'
+# AGENT = 'MPC'
 # AGENT = 'MPC_UNLIVE'
 # AGENT = 'BarrierNet'
-# AGENT = 'LiveNet'
+AGENT = 'LiveNet'
 
 # SCENARIO = 'Doorway'
 SCENARIO = 'Intersection'
