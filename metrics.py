@@ -1,5 +1,6 @@
 import config
 import numpy as np
+from data_logger import DataLogger
 
 def dist_between_line_and_point(target_point, line_point, line_heading):
     cos_heading = np.cos(line_heading)
@@ -12,7 +13,7 @@ def dist_between_line_and_point(target_point, line_point, line_heading):
     
     return distance
 
-def get_desired_path(start, goal, discretization=0.01):
+def get_straight_line_desired_path(start, goal, discretization=0.01):
     number_of_points = int(np.linalg.norm(start - goal) / discretization) + 1
     xs = np.linspace(start[0] , goal[0], number_of_points)
     ys = np.linspace(start[1], goal[1], number_of_points)
@@ -84,11 +85,19 @@ def check_for_obs_collisions(traj, obstacles, early_exit = False):
     return min_dist, collides
 
 
-def gather_all_metric_data(scenario, traj0, traj1, goals, desired_path_0=None, desired_path_1=None):
+def load_desired_path(filename, agent_idx):
+    logger = DataLogger.load_file(filename)
+    path = []
+    for iteration in logger.data['iterations']:
+        path.append(iteration['states'][agent_idx][:2])
+    return np.array(path)
+
+
+def gather_all_metric_data(scenario, traj0, traj1, goals, compute_history, desired_path_0=None, desired_path_1=None):
     if desired_path_0 is None:
-        desired_path_0 = get_desired_path(scenario.initial[0], scenario.goals[0])
+        desired_path_0 = get_straight_line_desired_path(scenario.initial[0], scenario.goals[0])
     if desired_path_1 is None:
-        desired_path_1 = get_desired_path(scenario.initial[1], scenario.goals[1])
+        desired_path_1 = get_straight_line_desired_path(scenario.initial[1], scenario.goals[1])
 
     goal_reach_idx0 = check_when_reached_goal(traj0, goals[0, :2])
     goal_reach_idx1 = check_when_reached_goal(traj1, goals[1, :2])
@@ -112,5 +121,8 @@ def gather_all_metric_data(scenario, traj0, traj1, goals, desired_path_0=None, d
     goal_reach_idx0 = -1 if goal_reach_idx0 is None else goal_reach_idx0
     goal_reach_idx1 = -1 if goal_reach_idx1 is None else goal_reach_idx1
 
-    return [goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1]
+    compute_history = np.array(compute_history)
+    avg_compute_0, avg_compute_1 = np.mean(compute_history, axis=0)
+
+    return [goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1, avg_compute_0, avg_compute_1]
 

@@ -35,7 +35,7 @@ class DataLogger:
         self.data['obstacles'] = obstacles
 
 
-    def log_iteration(self, states, goals, controls, use_for_training):
+    def log_iteration(self, states, goals, controls, use_for_training, compute_times):
         states = [state.reshape(-1).tolist() for state in states]
         goals = [goal.reshape(-1).tolist() for goal in goals]
         controls = [control.reshape(-1).tolist() for control in controls]
@@ -44,6 +44,7 @@ class DataLogger:
             'goals': goals,
             'controls': controls,
             'use_for_training': use_for_training,
+            'compute_times': compute_times,
         })
         json.dump(self.data, open(self.filename, 'w'))
 
@@ -62,7 +63,7 @@ class BlankLogger:
     def set_obstacles(self, obstacles):
         pass
 
-    def log_iteration(self, states, goals, controls, use_for_training):
+    def log_iteration(self, states, goals, controls, use_for_training, compute_times):
         pass
 
 

@@ -1,3 +1,4 @@
+import time
 import do_mpc
 from casadi import *
 import config
@@ -11,6 +12,7 @@ class Environment:
         self.initial_states = initial_states
         self.goals = goals
         self.history = [initial_states.copy()]
+        self.compute_history = []
 
         self.model = self.define_model()
         self.simulator = self.define_simulator()
@@ -132,6 +134,7 @@ class Environment:
         new_states = np.zeros((self.num_agents, config.num_states))
         outputted_controls = np.zeros((self.num_agents, config.num_controls))
         use_for_training = []
+        compute_times = []
         for agent_idx in range(self.num_agents):
             # print(f"\nRunning Agent: {agent_idx}")
             controller = controllers[agent_idx]
@@ -143,7 +146,9 @@ class Environment:
                 opp_state = np.append(opp_state, [opp_vel])
             self.reset_state(initial_state)
             controller.reset_state(initial_state, opp_state)
+            cycle_start_time = time.time()
             u1 = self.apply_control_lims(controller.make_step(sim_time, initial_state))
+            compute_times.append(time.time() - cycle_start_time)
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = self.apply_state_lims(x1.ravel())
             outputted_controls[agent_idx, :] = u1.ravel()
@@ -151,7 +156,8 @@ class Environment:
             use_for_training.append(controller.use_for_training)
 
         # if sim_time >= abs(config.agent_zero_offset):
-        logger.log_iteration(self.initial_states, self.goals, outputted_controls, use_for_training)
+        logger.log_iteration(self.initial_states, self.goals, outputted_controls, use_for_training, compute_times)
+        self.compute_history.append(compute_times)
         self.initial_states = new_states.copy()
         self.history.append(new_states.copy())
         return new_states, outputted_controls

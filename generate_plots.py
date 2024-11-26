@@ -1,6 +1,6 @@
 import config
 import numpy as np
-from metrics import gather_all_metric_data, check_when_reached_goal
+from metrics import check_when_reached_goal
 from data_logger import DataLogger
 from util import get_ray_intersection_point
 import matplotlib.pyplot as plt
@@ -48,6 +48,23 @@ def gen_figure(ys, title, labels, ylabel, filesuffix, ylims=None, add_dotted=Non
 
     plt.savefig(f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png')
 
+def gen_traj_plot(desireds, trajs, labels, title, filesuffix, plot_skip = 3):
+    global figcount
+    plt.figure(figcount)
+    figcount += 1
+    plt.title(title)
+    for desired, traj, label in zip(desireds, trajs, labels):
+        plt.plot(desired[:, 0], desired[:, 1], linestyle='--', label = label)
+        plt.scatter(traj[::plot_skip, 0], traj[::plot_skip, 1], label = label)
+    
+
+    plt.ylabel('Y (m)')
+    plt.xlabel('X (m)')
+    plt.legend()
+
+    plt.savefig(f'experiment_results/desired_paths/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png')
+
+
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
@@ -68,6 +85,11 @@ opp_dist_vals = []
 liveness_cbf_vals = []
 vels_0 = []
 vels_1 = []
+
+logger0 = DataLogger.load_file(f"experiment_results/desired_paths/{SCENARIO}_agent_0.json")
+desired0 = np.array([iteration['states'][0] for iteration in logger0.data['iterations']])
+logger1 = DataLogger.load_file(f"experiment_results/desired_paths/{SCENARIO}_agent_1.json")
+desired1 = np.array([iteration['states'][1] for iteration in logger1.data['iterations']])
 
 traj0 = np.array([iteration['states'][0] for iteration in logger.data['iterations']])
 traj1 = np.array([iteration['states'][1] for iteration in logger.data['iterations']])
@@ -92,3 +114,4 @@ second_name = "Slower" if first_reached_goal < second_reached_goal else "Faster"
 gen_figure([vels_0, vels_1], "Agent Velocity", [f'{first_name} Agent', f'{second_name} Agent'], "Agent Velocity (m/s)", "velocities")
 gen_figure([obs_dist_vals_0, obs_dist_vals_1, opp_dist_vals], "Distance CBF Violation", [f'{first_name} Agent Static Obstacle Distance', f'{second_name} Agent Static Obstacle Distance', 'Inter-Agent Distance'],  "Distance (m)", "distance_cbf", add_dotted=(0, 'CBF Boundary'), ylims=[-0.2, np.max([obs_dist_vals_0, obs_dist_vals_1, opp_dist_vals])])
 gen_figure([liveness_cbf_vals], "Liveness CBF Violation", [f'Agent Liveness'],  "Liveness (s)", "liveness_cbf", add_dotted=(0, 'CBF Boundary'), ylims=[-0.2, 20])
+gen_traj_plot([desired0, desired1], [traj0, traj1], ["Agent 0", "Agent 1"], "Desired vs. Taken Trajectories", "desired")

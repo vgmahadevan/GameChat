@@ -120,8 +120,11 @@ class MPC:
             # -h_k1 + h_k - gamma*h_k <= 0
             # -h_k1 + (1 - gamma)*h_k <= 0
             h_k = self.h_obs(self.model.x['x'], obs)
-            h_k1 = self.h_obs(x_k1, obs)
-            cbf_constraints.append(-h_k1 + (1-self.obs_gamma)*h_k)
+            if config.mpc_static_obs_non_cbf_constraint:
+                cbf_constraints.append(-h_k + 0.001)
+            else:
+                h_k1 = self.h_obs(x_k1, obs)
+                cbf_constraints.append(-h_k1 + (1-self.obs_gamma)*h_k)
 
         if config.mpc_use_opp_cbf:
             obs = (self.model.tvp['x_moving_obs'], self.model.tvp['y_moving_obs'], config.agent_radius)

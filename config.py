@@ -28,6 +28,7 @@ mpc_p0_faster = True
 agent_zero_offset = 0
 consider_intersects = True
 mpc_use_new_liveness_filter = True
+mpc_static_obs_non_cbf_constraint = False
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
@@ -68,9 +69,9 @@ COST_MATRICES = {
     #     "R": np.array([3, 1.5]),                  # Controls cost matrix
     # },
     DynamicsModel.DOUBLE_INTEGRATOR: {
-        "Q": np.diag([20.0, 20.0, 0.0, 20.0]),  # State cost matrix DOORWAY
+        "Q": np.diag([20.0, 20.0, 0.0, 30.0]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
-        "R": np.array([2.0, 5.0]),                  # Controls cost matrix
+        "R": np.array([2.0, 2.0]),                  # Controls cost matrix
     }
 }
 
