@@ -69,7 +69,7 @@ COST_MATRICES = {
     #     "R": np.array([3, 1.5]),                  # Controls cost matrix
     # },
     DynamicsModel.DOUBLE_INTEGRATOR: {
-        "Q": np.diag([20.0, 20.0, 0.0, 30.0]),  # State cost matrix DOORWAY
+        "Q": np.diag([80.0, 80.0, 0.0, 30.0]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11, 3]), # State cost matrix INTERSECTION
         "R": np.array([2.0, 2.0]),                  # Controls cost matrix
     }

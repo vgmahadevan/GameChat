@@ -53,6 +53,7 @@ from metrics import gather_all_metric_data
 
 scenario_params = (-1.0, 0.5, 2.0, 0.15)
 scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True, initial_vel=0.3)
+# scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True)
 
 plotter = Plotter()
 # plotter = None

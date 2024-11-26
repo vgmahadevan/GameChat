@@ -98,6 +98,7 @@ def get_scenario(scenario_type):
     if scenario_type == 'Doorway':
         scenario_params = (-1.0, 0.5, 2.0, 0.15)
         return DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
+        # return DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True, initial_vel=0.3)
     elif scenario_type == 'Intersection':
         return IntersectionScenario()
 

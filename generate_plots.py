@@ -68,10 +68,10 @@ def gen_traj_plot(desireds, trajs, labels, title, filesuffix, plot_skip = 3):
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
-# RUN_AGENT = 'MPC'
+RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
 # RUN_AGENT = 'BarrierNet'
-RUN_AGENT = 'LiveNet'
+# RUN_AGENT = 'LiveNet'
 
 filename = f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}.json'
 logger = DataLogger.load_file(filename)
