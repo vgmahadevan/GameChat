@@ -15,6 +15,7 @@ from data_logger import BlankLogger, DataLogger
 from environment import Environment
 from model_controller import ModelController
 from simulation import run_simulation
+from plotter import Plotter
 
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
@@ -26,7 +27,7 @@ RUN_AGENT = 'MPC'
 
 SIM_RESULTS_MODE = False
 
-NUM_SIMS = 5
+NUM_SIMS = 1
 
 def get_mpc_live_controllers(scenario, zero_goes_faster):
     if SCENARIO == 'Doorway':
@@ -97,8 +98,8 @@ def get_livenet_controllers(scenario):
 def get_scenario(scenario_type):
     if scenario_type == 'Doorway':
         scenario_params = (-1.0, 0.5, 2.0, 0.15)
-        return DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
-        # return DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True, initial_vel=0.3)
+        # return DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3])
+        return DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True, initial_vel=0.3)
     elif scenario_type == 'Intersection':
         return IntersectionScenario()
 
@@ -110,7 +111,8 @@ if __name__ == '__main__':
     all_metric_data = []
     for sim in range(NUM_SIMS if SIM_RESULTS_MODE else 1):
         print("Running sim:", sim)
-        plotter = None
+        plotter = Plotter()
+        config.ani_save_name = "Hmmm.mp4"
         logger = BlankLogger() if SIM_RESULTS_MODE else DataLogger(f"experiment_results/histories/{RUN_AGENT}_{SCENARIO}.json")
 
         # Add all initial and goal positions of the agents here (Format: [x, y, theta])
@@ -129,10 +131,11 @@ if __name__ == '__main__':
         env.compute_history = []
         x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 
-        desired_path_0 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_agent_0.json", 0)
-        desired_path_1 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_agent_1.json", 1)
+        # desired_path_0 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_agent_0.json", 0)
+        # desired_path_1 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_agent_1.json", 1)
+        # metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history, desired_path_0=desired_path_0, desired_path_1=desired_path_1)
 
-        metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history, desired_path_0=desired_path_0, desired_path_1=desired_path_1)
+        metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history)
         all_metric_data.append(metric_data)
 
     if SIM_RESULTS_MODE:

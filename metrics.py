@@ -34,7 +34,7 @@ def calculate_path_deviation(traj, desired_path):
         deviation = dist_between_line_and_point(state[:2], desired_path[closest_idx], line_heading)
 
         total_deviation += deviation
-    return total_deviation
+    return total_deviation / len(traj)
 
 
 def check_when_reached_goal(traj, goal):

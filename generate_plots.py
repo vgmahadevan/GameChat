@@ -1,7 +1,8 @@
 import config
 import numpy as np
-from metrics import check_when_reached_goal
+from metrics import check_when_reached_goal, get_straight_line_desired_path
 from data_logger import DataLogger
+from run_experiments import get_scenario
 from util import get_ray_intersection_point
 import matplotlib.pyplot as plt
 
@@ -47,6 +48,7 @@ def gen_figure(ys, title, labels, ylabel, filesuffix, ylims=None, add_dotted=Non
         plt.ylim(ylims)
 
     plt.savefig(f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png')
+    print("Saved plot to", f"experiment_results/histories/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png")
 
 def gen_traj_plot(desireds, trajs, labels, title, filesuffix, plot_skip = 3):
     global figcount
@@ -63,15 +65,16 @@ def gen_traj_plot(desireds, trajs, labels, title, filesuffix, plot_skip = 3):
     plt.legend()
 
     plt.savefig(f'experiment_results/desired_paths/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png')
+    print("Saved plot to", f"experiment_results/desired_paths/{RUN_AGENT}_{SCENARIO}_{filesuffix}.png")
 
 
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
-RUN_AGENT = 'MPC'
+# RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
 # RUN_AGENT = 'BarrierNet'
-# RUN_AGENT = 'LiveNet'
+RUN_AGENT = 'LiveNet'
 
 filename = f'experiment_results/histories/{RUN_AGENT}_{SCENARIO}.json'
 logger = DataLogger.load_file(filename)
@@ -86,9 +89,9 @@ liveness_cbf_vals = []
 vels_0 = []
 vels_1 = []
 
-logger0 = DataLogger.load_file(f"experiment_results/desired_paths/{SCENARIO}_agent_0.json")
+logger0 = DataLogger.load_file(f"experiment_results/desired_paths/{SCENARIO}_{RUN_AGENT}_0.json")
 desired0 = np.array([iteration['states'][0] for iteration in logger0.data['iterations']])
-logger1 = DataLogger.load_file(f"experiment_results/desired_paths/{SCENARIO}_agent_1.json")
+logger1 = DataLogger.load_file(f"experiment_results/desired_paths/{SCENARIO}_{RUN_AGENT}_1.json")
 desired1 = np.array([iteration['states'][1] for iteration in logger1.data['iterations']])
 
 traj0 = np.array([iteration['states'][0] for iteration in logger.data['iterations']])
@@ -114,4 +117,4 @@ second_name = "Slower" if first_reached_goal < second_reached_goal else "Faster"
 gen_figure([vels_0, vels_1], "Agent Velocity", [f'{first_name} Agent', f'{second_name} Agent'], "Agent Velocity (m/s)", "velocities")
 gen_figure([obs_dist_vals_0, obs_dist_vals_1, opp_dist_vals], "Distance CBF Violation", [f'{first_name} Agent Static Obstacle Distance', f'{second_name} Agent Static Obstacle Distance', 'Inter-Agent Distance'],  "Distance (m)", "distance_cbf", add_dotted=(0, 'CBF Boundary'), ylims=[-0.2, np.max([obs_dist_vals_0, obs_dist_vals_1, opp_dist_vals])])
 gen_figure([liveness_cbf_vals], "Liveness CBF Violation", [f'Agent Liveness'],  "Liveness (s)", "liveness_cbf", add_dotted=(0, 'CBF Boundary'), ylims=[-0.2, 20])
-gen_traj_plot([desired0, desired1], [traj0, traj1], ["Agent 0", "Agent 1"], "Desired vs. Taken Trajectories", "desired")
+gen_traj_plot([desired0, desired1], [traj0, traj1], [f"{first_name} Agent", f"{second_name} Agent"], "Desired vs. Taken Trajectories", "desired")
