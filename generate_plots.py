@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 COLORS = ['orange', 'blue', 'magenta']
 
-SCENARIO = 'Doorway'
-# SCENARIO = 'Intersection'
+# SCENARIO = 'Doorway'
+SCENARIO = 'Intersection'
 
 RUN_AGENT = 'MPC'
 # RUN_AGENT = 'LiveNet'

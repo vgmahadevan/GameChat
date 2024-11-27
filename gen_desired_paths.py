@@ -21,8 +21,8 @@ NUM_AGENTS = 2
 AGENT = "MPC"
 # AGENT = "LiveNet"
 
-SCENARIO = "Doorway"
-# SCENARIO = "Intersection"
+# SCENARIO = "Doorway"
+SCENARIO = "Intersection"
 
 scenario = get_scenario(SCENARIO)
 

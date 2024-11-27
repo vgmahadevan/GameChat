@@ -20,10 +20,10 @@ from plotter import Plotter
 # SCENARIO = 'Doorway'
 SCENARIO = 'Intersection'
 
-# RUN_AGENT = 'MPC'
+RUN_AGENT = 'MPC'
 # RUN_AGENT = 'MPC_UNLIVE'
 # RUN_AGENT = 'BarrierNet'
-RUN_AGENT = 'LiveNet'
+# RUN_AGENT = 'LiveNet'
 
 SIM_RESULTS_MODE = False
 

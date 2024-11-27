@@ -1,10 +1,10 @@
 import config
 import numpy as np
 
-AGENT = 'MPC'
+# AGENT = 'MPC'
 # AGENT = 'MPC_UNLIVE'
 # AGENT = 'BarrierNet'
-# AGENT = 'LiveNet'
+AGENT = 'LiveNet'
 
 # SCENARIO = 'Doorway'
 SCENARIO = 'Intersection'
@@ -57,7 +57,7 @@ avg_delta_path = np.average(deltaPaths)
 err_delta_path = np.std(deltaPaths) / np.sqrt(deltaPaths.size)
 
 # Get average compute time.
-compute_times = metrics[:, [IDXS['avg_compute_0'], IDXS['avg_compute_1']]].flatten()
+compute_times = metrics[:, [IDXS['avg_compute_0'], IDXS['avg_compute_1']]].flatten() * 1000.0 # S -> MS conversion
 avg_compute_time = np.average(compute_times)
 err_compute_time = np.std(compute_times) / np.sqrt(compute_times.size)
 
