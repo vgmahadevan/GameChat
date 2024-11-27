@@ -15,7 +15,7 @@ from plotter import Plotter
 from data_logger import BlankLogger
 from environment import Environment
 from simulation import run_simulation
-from run_experiments import get_livenet_controllers
+from run_experiments import get_livenet_controllers, get_mpc_live_controllers
 from metrics import gather_all_metric_data, load_desired_path
 
 # start x, start y, goal x, goal y, opp gamma, obs gamma, liveness gamma
@@ -93,12 +93,12 @@ scenario_configs = [
     (-0.5, 0.3, 2.0, 0.25, 0.3, False), # 13
 ]
 
-VIZ = True
+VIZ = False
 SCENARIO = 'Doorway'
-RUN_AGENT = 'LiveNet'
+RUN_AGENT = 'MPC'
 
 all_metric_data = []
-scenario_configs = scenario_configs[:1]
+# scenario_configs = scenario_configs[:1]
 for scenario_config in scenario_configs:
     scenario = DoorwayScenario(initial_x=scenario_config[0], initial_y=scenario_config[1], goal_x=scenario_config[2], goal_y=scenario_config[3], initial_vel=scenario_config[4], start_facing_goal=scenario_config[5])
     print(f"Running scenario {str(scenario)}")
@@ -113,7 +113,10 @@ for scenario_config in scenario_configs:
     goals = scenario.goals.copy()
     logger.set_obstacles(scenario.obstacles.copy())
     env = Environment(scenario.initial.copy(), scenario.goals.copy())
-    controllers = get_livenet_controllers(scenario, SCENARIO)
+    if RUN_AGENT == "LiveNet":
+        controllers = get_livenet_controllers(scenario, SCENARIO)
+    elif RUN_AGENT == "MPC":
+        controllers = get_mpc_live_controllers(scenario, SCENARIO)
 
     x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 
