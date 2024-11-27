@@ -9,54 +9,123 @@
 import os
 import matplotlib.pyplot as plt
 import config
-from mpc_cbf import MPC
+import numpy as np
 from scenarios import DoorwayScenario, NoObstacleDoorwayScenario, IntersectionScenario
 from plotter import Plotter
 from data_logger import BlankLogger
-from model_controller import ModelController
 from environment import Environment
 from simulation import run_simulation
-
-VIZ = False
+from run_experiments import get_livenet_controllers
+from metrics import gather_all_metric_data, load_desired_path
 
 # start x, start y, goal x, goal y, opp gamma, obs gamma, liveness gamma
 scenario_configs = [
-    (-1.0, 0.5, 2.0, 0.15), # 0
-    (-1.0, 0.5, 2.0, 0.30), # 1
-    (-1.0, 0.5, 2.0, 0.45), # 2
-    (-1.0, 0.4, 2.0, 0.15), # 3
-    (-1.0, 0.4, 2.0, 0.35), # 4
-    (-1.0, 0.3, 2.0, 0.15), # 5
-    (-1.0, 0.3, 2.0, 0.25), # 6
+    # Starting vel 0, Facing goal
 
-    (-0.5, 0.5, 2.0, 0.15), # 7
-    (-0.5, 0.5, 2.0, 0.30), # 8
-    (-0.5, 0.5, 2.0, 0.45), # 9
-    (-0.5, 0.4, 2.0, 0.15), # 10
-    (-0.5, 0.4, 2.0, 0.35), # 11
-    (-0.5, 0.3, 2.0, 0.15), # 12
-    (-0.5, 0.3, 2.0, 0.25), # 13
+    (-1.0, 0.5, 2.0, 0.15, 0.0, True), # 0
+    (-1.0, 0.5, 2.0, 0.30, 0.0, True), # 1
+    (-1.0, 0.5, 2.0, 0.45, 0.0, True), # 2
+    (-1.0, 0.4, 2.0, 0.15, 0.0, True), # 3
+    (-1.0, 0.4, 2.0, 0.35, 0.0, True), # 4
+    (-1.0, 0.3, 2.0, 0.15, 0.0, True), # 5
+    (-1.0, 0.3, 2.0, 0.25, 0.0, True), # 6
+
+    (-0.5, 0.5, 2.0, 0.15, 0.0, True), # 7
+    (-0.5, 0.5, 2.0, 0.30, 0.0, True), # 8
+    (-0.5, 0.5, 2.0, 0.45, 0.0, True), # 9
+    (-0.5, 0.4, 2.0, 0.15, 0.0, True), # 10
+    (-0.5, 0.4, 2.0, 0.35, 0.0, True), # 11
+    (-0.5, 0.3, 2.0, 0.15, 0.0, True), # 12
+    (-0.5, 0.3, 2.0, 0.25, 0.0, True), # 13
+
+    # Starting vel 0, Not facing goal
+
+    (-1.0, 0.5, 2.0, 0.15, 0.0, False), # 0
+    (-1.0, 0.5, 2.0, 0.30, 0.0, False), # 1
+    (-1.0, 0.5, 2.0, 0.45, 0.0, False), # 2
+    (-1.0, 0.4, 2.0, 0.15, 0.0, False), # 3
+    (-1.0, 0.4, 2.0, 0.35, 0.0, False), # 4
+    (-1.0, 0.3, 2.0, 0.15, 0.0, False), # 5
+    (-1.0, 0.3, 2.0, 0.25, 0.0, False), # 6
+
+    (-0.5, 0.5, 2.0, 0.15, 0.0, False), # 7
+    (-0.5, 0.5, 2.0, 0.30, 0.0, False), # 8
+    (-0.5, 0.5, 2.0, 0.45, 0.0, False), # 9
+    (-0.5, 0.4, 2.0, 0.15, 0.0, False), # 10
+    (-0.5, 0.4, 2.0, 0.35, 0.0, False), # 11
+    (-0.5, 0.3, 2.0, 0.15, 0.0, False), # 12
+    (-0.5, 0.3, 2.0, 0.25, 0.0, False), # 13
+
+    # Starting vel 0.3, Facing goal
+
+    (-1.0, 0.5, 2.0, 0.15, 0.3, True), # 0
+    (-1.0, 0.5, 2.0, 0.30, 0.3, True), # 1
+    (-1.0, 0.5, 2.0, 0.45, 0.3, True), # 2
+    (-1.0, 0.4, 2.0, 0.15, 0.3, True), # 3
+    (-1.0, 0.4, 2.0, 0.35, 0.3, True), # 4
+    (-1.0, 0.3, 2.0, 0.15, 0.3, True), # 5
+    (-1.0, 0.3, 2.0, 0.25, 0.3, True), # 6
+
+    (-0.5, 0.5, 2.0, 0.15, 0.3, True), # 7
+    (-0.5, 0.5, 2.0, 0.30, 0.3, True), # 8
+    (-0.5, 0.5, 2.0, 0.45, 0.3, True), # 9
+    (-0.5, 0.4, 2.0, 0.15, 0.3, True), # 10
+    (-0.5, 0.4, 2.0, 0.35, 0.3, True), # 11
+    (-0.5, 0.3, 2.0, 0.15, 0.3, True), # 12
+    (-0.5, 0.3, 2.0, 0.25, 0.3, True), # 13
+
+    # Starting vel 0.3, Not facing goal
+
+    (-1.0, 0.5, 2.0, 0.15, 0.3, False), # 0
+    (-1.0, 0.5, 2.0, 0.30, 0.3, False), # 1
+    (-1.0, 0.5, 2.0, 0.45, 0.3, False), # 2
+    (-1.0, 0.4, 2.0, 0.15, 0.3, False), # 3
+    (-1.0, 0.4, 2.0, 0.35, 0.3, False), # 4
+    (-1.0, 0.3, 2.0, 0.15, 0.3, False), # 5
+    (-1.0, 0.3, 2.0, 0.25, 0.3, False), # 6
+
+    (-0.5, 0.5, 2.0, 0.15, 0.3, False), # 7
+    (-0.5, 0.5, 2.0, 0.30, 0.3, False), # 8
+    (-0.5, 0.5, 2.0, 0.45, 0.3, False), # 9
+    (-0.5, 0.4, 2.0, 0.15, 0.3, False), # 10
+    (-0.5, 0.4, 2.0, 0.35, 0.3, False), # 11
+    (-0.5, 0.3, 2.0, 0.15, 0.3, False), # 12
+    (-0.5, 0.3, 2.0, 0.25, 0.3, False), # 13
 ]
 
+VIZ = True
+SCENARIO = 'Doorway'
+RUN_AGENT = 'LiveNet'
+
+all_metric_data = []
+scenario_configs = scenario_configs[:1]
 for scenario_config in scenario_configs:
-    print(f"Running scenario {scenario_config}")
-    scenario = DoorwayScenario(initial_x=scenario_config[0], initial_y=scenario_config[1], goal_x=scenario_config[2], goal_y=scenario_config[3])
+    scenario = DoorwayScenario(initial_x=scenario_config[0], initial_y=scenario_config[1], goal_x=scenario_config[2], goal_y=scenario_config[3], initial_vel=scenario_config[4], start_facing_goal=scenario_config[5])
+    print(f"Running scenario {str(scenario)}")
 
     logger = BlankLogger()
-    plotter = Plotter()
-    # plotter = None
+    if VIZ:
+        plotter = Plotter()
+    else:
+        plotter = None
 
     # Add all initial and goal positions of the agents here (Format: [x, y, theta])
     goals = scenario.goals.copy()
     logger.set_obstacles(scenario.obstacles.copy())
     env = Environment(scenario.initial.copy(), scenario.goals.copy())
-    controllers = []
+    controllers = get_livenet_controllers(scenario, SCENARIO)
 
-    # Setup agents
-    controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy()))
-    controllers.append(ModelController("weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy()))
-    # controllers.append(MPC(agent_idx=0, goal=goals[0,:], opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, static_obs=scenario.obstacles.copy(), delay_start=max(config.agent_zero_offset, 0.0)))
-    # controllers.append(MPC(agent_idx=1, goal=goals[1,:], opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
+    x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 
-    run_simulation(scenario, env, controllers, logger, plotter)
-    plt.close()
+    desired_path_0 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_{RUN_AGENT}_0.json", 0)
+    desired_path_1 = load_desired_path(f"experiment_results/desired_paths/{SCENARIO}_{RUN_AGENT}_1.json", 1)
+    metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history, desired_path_0=desired_path_0, desired_path_1=desired_path_1)
+    all_metric_data.append(metric_data)
+
+    all_metric_data_save = np.array(all_metric_data)
+    save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}_suite.csv"
+    print(f"Saving experiment results to {save_filename}")
+    np.savetxt(save_filename, all_metric_data_save, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1, avg_compute_0, avg_compute_1')
+
+    if VIZ:
+        plt.close()

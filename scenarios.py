@@ -27,7 +27,7 @@ class DoorwayScenario:
         self.initial_y = initial_y
         self.goal_x = goal_x
         self.goal_y = goal_y
-        self.config = (initial_x, initial_y, goal_x, goal_y)
+        self.config = (initial_x, initial_y, goal_x, goal_y, start_facing_goal, initial_vel)
         self.initial = np.array([[self.initial_x, self.initial_y, 0],
                     [self.initial_x, -self.initial_y, 0]])
         self.goals = np.array([[self.goal_x, -self.goal_y, 0.0],
@@ -65,7 +65,7 @@ class DoorwayScenario:
 
 
     def save_str(self):
-        return f"s_doorway_{self.config[0]}_{self.config[1]}_{self.config[2]}_{self.config[3]}"
+        return f"s_doorway_{self.config[0]}_{self.config[1]}_{self.config[2]}_{self.config[3]}_{self.config[4]}_{self.config[5]}"
 
 
 class NoObstacleDoorwayScenario:
@@ -99,13 +99,13 @@ class NoObstacleDoorwayScenario:
 
 
 class IntersectionScenario:
-    def __init__(self, start=1.0, goal=1.0):
-        self.initial = np.array([[0.0, -start, np.pi / 2, 0.0],
-                      [-start, 0.0, 0.0, 0.0]])
+    def __init__(self, start=1.0, goal=1.0, start_vel=0.0):
+        self.initial = np.array([[0.0, -start, np.pi / 2, start_vel],
+                      [-start, 0.0, 0.0, start_vel]])
         self.goals = np.array([[0.0, goal, np.pi / 2, 0.0],
                     [goal, 0.0, 0.0, 0.0]
                     ])
-        self.config = (start, goal)
+        self.config = (start, goal, start_vel)
         self.ox=-0.3
         self.ox1=0.3
 
@@ -156,4 +156,4 @@ class IntersectionScenario:
 
 
     def save_str(self):
-        return f"s_intersection_{self.config[0]}_{self.config[1]}"
+        return f"s_intersection_{self.config[0]}_{self.config[1]}_{self.config[2]}"

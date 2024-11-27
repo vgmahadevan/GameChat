@@ -49,7 +49,7 @@ for agent_idx in range(2):
             config.liveliness_gamma = 0.3
             config.mpc_use_new_liveness_filter = True
 
-            controllers = get_livenet_controllers(scenario)
+            controllers = get_livenet_controllers(scenario, SCENARIO)
             controllers[1] = MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=scenario.goals[1,:].copy(), static_obs=scenario.obstacles.copy())
 
             if agent_idx == 0:

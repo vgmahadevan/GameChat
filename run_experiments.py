@@ -81,12 +81,14 @@ def get_barriernet_controllers(scenario):
     ]
     return controllers
 
-def get_livenet_controllers(scenario):
-    if SCENARIO == 'Doorway':
+def get_livenet_controllers(scenario, scenario_type=SCENARIO):
+    if scenario_type == 'Doorway':
         # model_def = "weights/model_30_norm_doorsuite2_lf_0_1_bn_definition.json"
         model_def = "weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json"
-    elif SCENARIO == 'Intersection':
+    elif scenario_type == 'Intersection':
         model_def = "weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json"
+    else:
+        raise ValueError(f"Scenario {scenario_type} not found!")
     print(model_def)
 
     controllers = [
@@ -94,6 +96,7 @@ def get_livenet_controllers(scenario):
         ModelController(model_def, scenario.goals[1], scenario.obstacles.copy()),
     ]
     return controllers
+
 
 def get_scenario(scenario_type):
     if scenario_type == 'Doorway':
