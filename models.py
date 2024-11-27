@@ -43,17 +43,25 @@ class BarrierNet(nn.Module):
         
         self.fc1 = nn.Linear(model_definition.get_num_inputs(), model_definition.nHidden1).double()
         self.fc21 = nn.Linear(model_definition.nHidden1, model_definition.nHidden21).double()
-        self.fc22 = nn.Linear(model_definition.nHidden1, model_definition.nHidden22).double()
+        self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
+
+        self.num_obs_hiddens = 1
         if self.model_definition.separate_penalty_for_opp:
-            self.fc23 = nn.Linear(model_definition.nHidden1, model_definition.nHidden23).double()
+            self.num_obs_hiddens = 2
+        if self.model_definition.sep_pen_for_each_obs:
+            self.num_obs_hiddens = self.model_definition.n_opponents
+        
+        self.fc_obs_1 = []
+        self.fc_obs_2 = []
+        for _ in range(self.num_obs_hiddens):
+            self.fc_obs_1.append(nn.Linear(model_definition.nHidden1, model_definition.nHidden22).double())
+            self.fc_obs_2.append(nn.Linear(model_definition.nHidden22, N_CL).double())
+
+        self.fc_obs_1_list = nn.ModuleList(self.fc_obs_1)
+        self.fc_obs_2_list = nn.ModuleList(self.fc_obs_2)
+
         if self.model_definition.add_liveness_filter:
             self.fc24 = nn.Linear(model_definition.nHidden1, model_definition.nHidden24).double()
-
-        self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
-        self.fc32 = nn.Linear(model_definition.nHidden22, N_CL).double()
-        if self.model_definition.separate_penalty_for_opp:
-            self.fc33 = nn.Linear(model_definition.nHidden23, N_CL).double()
-        if self.model_definition.add_liveness_filter:
             self.fc34 = nn.Linear(model_definition.nHidden24, 2).double()
 
         # self.s0 = Parameter(torch.ones(1), requires_grad=True)
@@ -75,16 +83,12 @@ class BarrierNet(nn.Module):
         x21 = F.relu(self.fc21(x))
         x31 = self.fc31(x21)
 
-        x22 = F.relu(self.fc22(x))
-        x32 = self.fc32(x22)
-        x32 = 4*nn.Sigmoid()(x32)  # ensure CBF parameters are positive
-
-        if self.model_definition.separate_penalty_for_opp:
-            x23 = F.relu(self.fc23(x))
-            x33 = self.fc33(x23)
-            x33 = 4*nn.Sigmoid()(x33)  # ensure CBF parameters are positive
-        else:
-            x33 = None
+        x3obs = []
+        for fc22, fc32 in zip(self.fc_obs_1_list, self.fc_obs_2_list):
+            x22 = F.relu(fc22(x))
+            x32 = fc32(x22)
+            x32 = 4*nn.Sigmoid()(x32)  # ensure CBF parameters are positive
+            x3obs.append(x32)
 
         if self.model_definition.add_liveness_filter:
             x24 = F.relu(self.fc24(x))
@@ -93,14 +97,12 @@ class BarrierNet(nn.Module):
         else:
             x34 = None
 
-        # print(x31, x32, x33, x34)
-
         # BarrierNet
-        x = self.dCBF(x0, x31, x32, x33, x34, sgn, nBatch)
+        x = self.dCBF(x0, x31, x3obs, x34, sgn, nBatch)
                
         return x
 
-    def dCBF(self, x0, x31, x32, x33, x34, sgn, nBatch):
+    def dCBF(self, x0, x31, x3obs, x34, sgn, nBatch):
         theta = x0[:,EGO_THETA_IDX]
         v = x0[:,EGO_V_IDX]
         sin_theta = torch.sin(theta)
@@ -118,13 +120,13 @@ class BarrierNet(nn.Module):
         for opp_idx in range(self.model_definition.n_opponents):
             if self.model_definition.static_obs_xy_only:
                 if opp_idx == 0:
-                    start_idx = opp_idx * 4 + 4
+                    start_idx = 4
                     opp_x = x0[:, start_idx + OPP_X_OFFSET]
                     opp_y = x0[:, start_idx + OPP_Y_OFFSET]
                     opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
                     opp_vel = x0[:, start_idx + OPP_V_OFFSET]
                 else:
-                    start_idx = (opp_idx - 1) * 2 + 8
+                    start_idx = (opp_idx - 1) * (2 + self.model_definition.add_dist_to_static_obs) + 8
                     opp_x = x0[:, start_idx + OPP_X_OFFSET]
                     opp_y = x0[:, start_idx + OPP_Y_OFFSET]
                     opp_theta = torch.tensor(0.0).to(config.device)
@@ -136,12 +138,13 @@ class BarrierNet(nn.Module):
                 opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
                 opp_vel = x0[:, start_idx + OPP_V_OFFSET]
 
-            R = config.agent_radius + config.agent_radius + config.safety_dist
             if self.model_definition.x_is_d_goal:
                 dx, dy = -opp_x, -opp_y
             else:
                 dx = (x0[:,EGO_X_IDX] - opp_x)
                 dy = (x0[:,EGO_Y_IDX] - opp_y)
+            R = config.agent_radius + config.agent_radius + config.safety_dist
+
             opp_sin_theta = torch.sin(opp_theta)
             opp_cos_theta = torch.cos(opp_theta)
         
@@ -149,18 +152,26 @@ class BarrierNet(nn.Module):
             # print("\tInputs:", opp_x, opp_y, opp_theta, opp_vel)
             # print("\tBarrier:", barrier)  
             barrier_dot = 2*dx*(v*cos_theta - opp_vel*opp_cos_theta) + 2*dy*(v*sin_theta - opp_vel*opp_sin_theta)
-            # Lf2b = 2*(v*v + opp_vel*opp_vel + 2*v*opp_vel*torch.cos(theta - opp_theta))
             Lf2b = 2*(v*v + opp_vel*opp_vel - 2*v*opp_vel*torch.cos(theta + opp_theta))
             LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1))
             LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
             obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
             obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
-            penalty = x32
-            if self.model_definition.separate_penalty_for_opp and opp_idx == 0:
-                penalty = x33
+
+            penalty = x3obs[0]
+            if self.model_definition.separate_penalty_for_opp:
+                penalty = x3obs[0] if opp_idx == 0 else x3obs[1]
+            if self.model_definition.sep_pen_for_each_obs:
+                penalty = x3obs[opp_idx]
+
             obs_h = (torch.reshape(Lf2b + (penalty[:,0] + penalty[:,1])*barrier_dot + (penalty[:,0] * penalty[:,1])*barrier, (nBatch, 1)))
             G.append(obs_G)
             h.append(obs_h)
+
+            if config.logging2:
+                file = open("penalties2.txt", "a+")
+                file.write(f"\tIdx: {opp_idx}, " + str(penalty) + "\n")
+                file.close()
 
             if config.logging:
                 print("Obstacle:", opp_x.item(), opp_y.item(), opp_theta.item(), opp_vel.item())
@@ -270,11 +281,15 @@ class BarrierNet(nn.Module):
                     # live_G = Variable(torch.tensor([0.0, d1]).to(config.device)).to(config.device)
                     # live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     # live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
-                    barrier = d0 / ego_vel - d1 / opp_vel
+                    barrier = d0 / ego_vel - d1 / opp_vel # t_0 - t_1
                     penalty = x34[i, 0]
                     live_G = Variable(torch.tensor([0.0, d0 / (ego_vel ** 2.0)]).to(config.device)).to(config.device)
                     live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
+                    if config.logging:
+                        print("Slower. D0", d0, "D1", d1, "Vel", ego_vel, "opp V", opp_vel)
+                        print("Barrier:", barrier, "Penalty:", penalty)
+                        print("Ineq:", live_G, live_h)
                 else: # If faster agent
                     # barrier = (d1 * ego_vel - d0 * opp_vel)
                     # penalty = x34[i, 1]
@@ -288,9 +303,10 @@ class BarrierNet(nn.Module):
                     live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
                     # print("\nClosest points:", initial_closest_to_opp, opp_closest_to_initial)
                     # print("Intersects:", center_intersection, intersection)
-                    # print("D0", d0, "D1", d1, "Vel", ego_vel, "opp V", opp_vel)
-                    # print("Barrier:", barrier)
-                    # print("Ineq:", live_G, live_h)
+                    if config.logging:
+                        print("Faster. D0", d0, "D1", d1, "Vel", ego_vel, "opp V", opp_vel)
+                        print("Barrier:", barrier, "Penalty:", penalty)
+                        print("Ineq:", live_G, live_h)
 
                 G_live.append(live_G)
                 h_live.append(live_h)
@@ -336,29 +352,8 @@ class BarrierNet(nn.Module):
                     print("Outputted control:", x)
             except Exception as e:
                 print("ERROR WHEN SOLVING FOR OPTIMIZER, USING REFERENCE CONTROL INSTEAD:", x31)
-                x = x31_actual[0].cpu()
+                x = -x31_actual[0].cpu()
 
             x = (x - self.output_mean_np) / self.output_std_np
         
         return x
-
-
-
-class FCNet(nn.Module):
-    def __init__(self, model_definition):
-        super().__init__()
-        self.fc1 = nn.Linear(N_FEATURES, model_definition.nHidden1).double()
-        self.fc21 = nn.Linear(model_definition.nHidden1, model_definition.nHidden21).double()
-        self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
-
-
-    def forward(self, x, sgn):
-        nBatch = x.size(0)
-
-        # Normal FC network.
-        x = x.view(nBatch, -1)
-        x = F.relu(self.fc1(x))
-        x21 = F.relu(self.fc21(x))
-        x31 = self.fc31(x21)
-        
-        return x31

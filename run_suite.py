@@ -108,7 +108,7 @@ RUN_AGENT = 'LiveNet'
 # model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition"
 # model_path = "model_35_norm_doorsuite4_lfnew_nso_nego_8o_small_0_1_bn_definition"
 # model_path = "model_35_norm_doorsuite4_lfnew_nso_nego_wnewl_small_0_1_bn_definition"
-model_path = "srikar_iter_00_1_bn_definition"
+model_path = "srikar_iter_20_1_bn_definition"
 
 all_metric_data = []
 # scenario_configs = scenario_configs[:1]

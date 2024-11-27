@@ -24,7 +24,6 @@ class ModelDefinition:
     nHidden1: int
     nHidden21: int
     nHidden22: Optional[int]
-    nHidden23: Optional[int]
     nHidden24: Optional[int]
     input_mean: float
     input_std: float
@@ -40,10 +39,13 @@ class ModelDefinition:
     static_obs_xy_only: bool
     ego_frame_inputs: bool
     add_new_liveness_as_input: bool
+    sep_pen_for_each_obs: bool
+    add_dist_to_static_obs: bool
+    nHidden23: Optional[int] = None
 
     def get_num_inputs(self):
         if self.static_obs_xy_only:
-            return 4 + 4 + (self.n_opponents - 1) * 2 + self.add_liveness_as_input + self.add_new_liveness_as_input
+            return 4 + 4 + (self.n_opponents - 1) * (2 + self.add_dist_to_static_obs) + self.add_liveness_as_input + self.add_new_liveness_as_input
         return 4 + self.n_opponents * 4 + self.add_liveness_as_input + self.add_new_liveness_as_input
 
 
@@ -78,4 +80,8 @@ class ModelDefinition:
                 data['ego_frame_inputs'] = False
             if 'add_new_liveness_as_input' not in data:
                 data['add_new_liveness_as_input'] = False
+            if 'sep_pen_for_each_obs' not in data:
+                data['sep_pen_for_each_obs'] = False
+            if 'add_dist_to_static_obs' not in data:
+                data['add_dist_to_static_obs'] = False
             return ModelDefinition(**data)

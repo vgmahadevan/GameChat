@@ -6,7 +6,7 @@ import shutil
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from model_utils import ModelDefinition
-from models import FCNet, BarrierNet
+from models import BarrierNet
 from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 
@@ -54,6 +54,7 @@ def train(dataloader, model, loss_fn, optimizer, losses):
     return losses
 
 def test(dataloader, model, loss_fn, losses):
+    config.logging2 = True
     num_batches = len(dataloader)
     model.eval()
     test_loss = 0
@@ -75,6 +76,7 @@ def test(dataloader, model, loss_fn, losses):
     # blosscum /= num_batches
     losses.append(test_loss)
     # print(f"Test avg loss: {test_loss:>8f}, Reg avg loss: {alosscum}, Sid avg los: {blosscum}  \n")
+    config.logging2 = False
     print(f"Test avg loss: {test_loss:>8f} \n")
     return losses
 
@@ -83,7 +85,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents, config.static_obs_xy_only, config.ego_frame_inputs, config.add_new_liveness_as_input)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents, config.static_obs_xy_only, config.ego_frame_inputs, config.add_new_liveness_as_input, config.add_dist_to_static_obs)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
@@ -113,7 +115,6 @@ if __name__ == "__main__":
         nHidden1=config.nHidden1,
         nHidden21=config.nHidden21,
         nHidden22=config.nHidden22,
-        nHidden23=config.nHidden23,
         nHidden24=config.nHidden24 if config.add_liveness_filter else None,
         input_mean=input_mean.tolist(),
         input_std=input_std.tolist(),
@@ -127,17 +128,15 @@ if __name__ == "__main__":
         fixed_liveness_input=config.fixed_liveness_input,
         n_opponents=config.n_opponents,
         static_obs_xy_only=config.static_obs_xy_only,
+        add_dist_to_static_obs=config.add_dist_to_static_obs,
         ego_frame_inputs=config.ego_frame_inputs,
         add_new_liveness_as_input=config.add_new_liveness_as_input,
+        sep_pen_for_each_obs=config.sep_pen_for_each_obs
     )
 
-    if config.use_barriernet:
-        model = BarrierNet(model_definition).to(config.device)
-        print(model)
-        print(list(model.parameters()))
-        # print(1/0)
-    else:
-        model = FCNet(model_definition).to(config.device)
+    model = BarrierNet(model_definition).to(config.device)
+    print(model)
+    print(list(model.parameters()))
     print(model_definition)
     print(model)
 
@@ -155,6 +154,9 @@ if __name__ == "__main__":
         print(f"Epoch {t+1}\n-------------------------------")
         train_losses = train(train_dataloader, model, loss_fn, optimizer, train_losses)
         print("Finished training epoch")
+        file = open("penalties2.txt", "a+")
+        file.write(f"Epoch: {t}\n")
+        file.close()
         test_losses = test(test_dataloader, model, loss_fn, test_losses)
 
         # Save the model with the best test loss.
@@ -208,12 +210,12 @@ if __name__ == "__main__":
         'add_liveness_filter': config.add_liveness_filter,
         'x_is_d_goal': config.x_is_d_goal,
         'static_obs_xy_only': config.static_obs_xy_only,
+        'add_dist_to_static_obs': config.add_dist_to_static_obs,
         'train_batch_size': config.train_batch_size,
         'learning_rate': config.learning_rate,
         'nHidden1': config.nHidden1,
         'nHidden21': config.nHidden21,
         'nHidden22': config.nHidden22,
-        'nHidden23': config.nHidden23,
         'nHidden24': config.nHidden24,
         'saveprefix': config.saveprefix,
         'best_training_epoch': best_training_epoch,

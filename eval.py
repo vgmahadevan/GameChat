@@ -3,7 +3,7 @@ import torch
 import config
 import matplotlib.pyplot as plt
 from model_utils import ModelDefinition
-from models import FCNet, BarrierNet
+from models import BarrierNet
 from data_logger import DataGenerator, Dataset
 from sklearn.model_selection import train_test_split
 

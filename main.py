@@ -47,7 +47,7 @@ controllers = []
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
-controllers.append(ModelController("weights/srikar_iter_00_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+controllers.append(ModelController("weights/srikar_iter_4_3opp_od_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
 
 # Setup agent 1
@@ -58,7 +58,7 @@ controllers.append(ModelController("weights/srikar_iter_00_1_bn_definition.json"
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
-controllers.append(ModelController("weights/srikar_iter_00_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+controllers.append(ModelController("weights/srikar_iter_4_3opp_od_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

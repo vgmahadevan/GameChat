@@ -72,6 +72,10 @@ class Environment:
         A = SX.zeros(4, 1)
         A[0] = x[3] * cos(x[2]) # x_dot = v * cos(theta)
         A[1] = x[3] * sin(x[2]) # y_dot = v * sin(theta)
+        # dx = 1/2 at^2 + vt
+        # dx = 1/2 a_xt^2 + v_xt
+        # v_xt = v cos(theta)
+        # a_xt = a 
 
         B = SX.zeros(4, 2)
         B[2, 0] = 1 # dtheta = omega
@@ -136,7 +140,7 @@ class Environment:
         use_for_training = []
         compute_times = []
         for agent_idx in range(self.num_agents):
-            config.logging = agent_idx == 0
+            config.logging = agent_idx == 1
             # print(f"\nRunning Agent: {agent_idx}")
             controller = controllers[agent_idx]
             initial_state = self.initial_states[agent_idx, :]

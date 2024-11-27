@@ -151,7 +151,7 @@ def rotate(origin, point, angle):
     return qx, qy
 
 
-def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, static_obs_xy_only, ego_frame_inputs, add_new_liveness_as_input, goal, metrics=None):
+def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, static_obs_xy_only, ego_frame_inputs, add_new_liveness_as_input, add_dist_to_static_obs, goal, metrics=None):
     if metrics is None and add_liveness_as_input:
         metrics = calculate_all_metrics(np.array(inputs[:4]), np.array(inputs[4:8]), config.liveness_threshold)
 
@@ -182,7 +182,7 @@ def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_
             if ego_frame_inputs:
                 obs_inp_x, obs_inp_y = rotate(origin, (obs_inp_x, obs_inp_y), -ego_theta)
             if static_obs_xy_only:
-                obs_inp = np.array([obs_inp_x, obs_inp_y]) # opp - ego (ego frame)
+                obs_inp = np.array([obs_inp_x, obs_inp_y]) # opp - ego (ego frame)     
             else:
                 obs_inp = np.array([obs_inp_x, obs_inp_y, 0.0, 0.0]) # opp - ego (ego frame)            
         else:
@@ -190,6 +190,8 @@ def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_
                 obs_inp = np.array([obs_x, obs_y]) # opp - ego (ego frame)
             else:
                 obs_inp = np.array([obs_x, obs_y, 0.0, 0.0])
+        if static_obs_xy_only and add_dist_to_static_obs:
+            obs_inp = np.append(obs_inp, [np.sqrt(obs_x ** 2 + obs_y ** 2)])
         inputs = np.append(inputs, obs_inp)
 
     if add_liveness_as_input:

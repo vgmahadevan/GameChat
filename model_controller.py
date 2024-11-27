@@ -2,7 +2,7 @@ import torch
 import config
 import numpy as np
 from model_utils import ModelDefinition
-from models import FCNet, BarrierNet
+from models import BarrierNet
 from util import perturb_model_input, axay_to_aw_control
 
 
@@ -10,10 +10,7 @@ class ModelController:
     def __init__(self, model_definition_filepath, goal, static_obs):
         self.model_definition = ModelDefinition.from_json(model_definition_filepath)
         self.goal = goal
-        if self.model_definition.is_barriernet:
-            self.model = BarrierNet(self.model_definition).to(config.device)
-        else:
-            self.model = FCNet(self.model_definition).to(config.device)
+        self.model = BarrierNet(self.model_definition).to(config.device)
         self.static_obs = static_obs
         print(self.model_definition.weights_path)
         self.model.load_state_dict(torch.load(self.model_definition.weights_path))
@@ -40,6 +37,7 @@ class ModelController:
             self.model_definition.static_obs_xy_only,
             self.model_definition.ego_frame_inputs,
             self.model_definition.add_new_liveness_as_input,
+            self.model_definition.add_dist_to_static_obs,
             self.goal
         )
 

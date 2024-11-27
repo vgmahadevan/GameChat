@@ -69,7 +69,7 @@ class BlankLogger:
 
 # Extracts inputs and outputs from data files.
 class DataGenerator:
-    def __init__(self, filenames, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, num_opponents, static_obs_xy_only, ego_frame_inputs, add_new_liveness_as_input):
+    def __init__(self, filenames, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, num_opponents, static_obs_xy_only, ego_frame_inputs, add_new_liveness_as_input, add_dist_to_static_obs):
         self.x_is_d_goal = x_is_d_goal
         self.add_liveness_as_input = add_liveness_as_input
         self.fixed_liveness_input = fixed_liveness_input
@@ -77,6 +77,7 @@ class DataGenerator:
         self.static_obs_xy_only = static_obs_xy_only
         self.ego_frame_inputs = ego_frame_inputs
         self.add_new_liveness_as_input = add_new_liveness_as_input
+        self.add_dist_to_static_obs = add_dist_to_static_obs
 
         self.data_streams = []
         self.filenames = filenames
@@ -122,6 +123,7 @@ class DataGenerator:
                         self.static_obs_xy_only,
                         self.ego_frame_inputs,
                         self.add_new_liveness_as_input,
+                        self.add_dist_to_static_obs,
                         iteration['goals'][agent_idx],
                         metrics
                     )
