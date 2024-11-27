@@ -39,8 +39,6 @@ class BarrierNet(nn.Module):
         self.output_mean = torch.from_numpy(self.output_mean_np).to(config.device)
         self.output_std = torch.from_numpy(self.output_std_np).to(config.device)
 
-        self.zeta = 2.0
-
         print("NUM MODEL INPUTS:", model_definition.get_num_inputs())
         
         self.fc1 = nn.Linear(model_definition.get_num_inputs(), model_definition.nHidden1).double()
@@ -53,6 +51,8 @@ class BarrierNet(nn.Module):
 
         self.fc31 = nn.Linear(model_definition.nHidden21, N_CL).double()
         self.fc32 = nn.Linear(model_definition.nHidden22, N_CL).double()
+        if self.model_definition.separate_penalty_for_opp:
+            self.fc33 = nn.Linear(model_definition.nHidden23, N_CL).double()
         if self.model_definition.add_liveness_filter:
             self.fc34 = nn.Linear(model_definition.nHidden24, 2).double()
 
@@ -79,6 +79,13 @@ class BarrierNet(nn.Module):
         x32 = self.fc32(x22)
         x32 = 4*nn.Sigmoid()(x32)  # ensure CBF parameters are positive
 
+        if self.model_definition.separate_penalty_for_opp:
+            x23 = F.relu(self.fc23(x))
+            x33 = self.fc33(x23)
+            x33 = 4*nn.Sigmoid()(x33)  # ensure CBF parameters are positive
+        else:
+            x33 = None
+
         if self.model_definition.add_liveness_filter:
             x24 = F.relu(self.fc24(x))
             x34 = self.fc34(x24)
@@ -89,11 +96,11 @@ class BarrierNet(nn.Module):
         # print(x31, x32, x33, x34)
 
         # BarrierNet
-        x = self.dCBF(x0, x31, x32, x34, sgn, nBatch)
+        x = self.dCBF(x0, x31, x32, x33, x34, sgn, nBatch)
                
         return x
 
-    def dCBF(self, x0, x31, x32, x34, sgn, nBatch):
+    def dCBF(self, x0, x31, x32, x33, x34, sgn, nBatch):
         theta = x0[:,EGO_THETA_IDX]
         v = x0[:,EGO_V_IDX]
         sin_theta = torch.sin(theta)
@@ -149,9 +156,16 @@ class BarrierNet(nn.Module):
             obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
             obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
             penalty = x32
+            if self.model_definition.separate_penalty_for_opp and opp_idx == 0:
+                penalty = x33
             obs_h = (torch.reshape(Lf2b + (penalty[:,0] + penalty[:,1])*barrier_dot + (penalty[:,0] * penalty[:,1])*barrier, (nBatch, 1)))
             G.append(obs_G)
             h.append(obs_h)
+
+            if config.logging:
+                print("Obstacle:", opp_x.item(), opp_y.item(), opp_theta.item(), opp_vel.item())
+                print("\tBarrier:", barrier.item(), "Barrier dot:", barrier_dot.item(), "Penalty:", penalty)
+                print("\tG:", obs_G, "H:", obs_h.item())
 
             # print("\n\nINPUT:", x0)
             # print("Dx:", dx, "Dy:", dy, "vx:", v*cos_theta, "Opp vx:", opp_vel*opp_cos_theta, "vy:", v*sin_theta, "Opp vy:", opp_vel*opp_sin_theta)
@@ -302,7 +316,8 @@ class BarrierNet(nn.Module):
         e = Variable(torch.Tensor()).to(config.device)
 
         x31_actual = x31*self.output_std + self.output_mean
-        # print("Ref control:", x31_actual)
+        if config.logging:
+            print("Ref control:", x31_actual)
         if self.training or sgn == 1:
             x = QPFunction(verbose = 0)(Q.double(), x31_actual.double(), G.double(), h.double(), e, e)
             # x = QPFunction(verbose = 0)(Q.double(), x31.double(), G.double(), h.double(), e, e)
@@ -317,6 +332,8 @@ class BarrierNet(nn.Module):
                 # x = solver(Q[0].double(), x31[0].double(), G[0].double(), h[0].double())
                 x = solver(Q[0].double(), x31_actual[0].double(), G[0].double(), h[0].double())
                 x = np.array([x[0], x[1]])
+                if config.logging:
+                    print("Outputted control:", x)
             except Exception as e:
                 print("ERROR WHEN SOLVING FOR OPTIMIZER, USING REFERENCE CONTROL INSTEAD:", x31)
                 x = x31_actual[0].cpu()

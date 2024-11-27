@@ -83,7 +83,7 @@ if __name__ == "__main__":
             'shuffle': True,
             'num_workers': 4}
 
-    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents, config.static_obs_xy_only, config.ego_frame_inputs)
+    generator = DataGenerator(config.train_data_paths, config.x_is_d_goal, config.add_liveness_as_input, config.fixed_liveness_input, config.n_opponents, config.static_obs_xy_only, config.ego_frame_inputs, config.add_new_liveness_as_input)
 
     norm_inputs, input_mean, input_std = generator.get_inputs(agent_idxs=config.agents_to_train_on, normalize=True)
     norm_outputs, output_mean, output_std = generator.get_outputs(agent_idxs=config.agents_to_train_on, normalize=True)
@@ -128,6 +128,7 @@ if __name__ == "__main__":
         n_opponents=config.n_opponents,
         static_obs_xy_only=config.static_obs_xy_only,
         ego_frame_inputs=config.ego_frame_inputs,
+        add_new_liveness_as_input=config.add_new_liveness_as_input,
     )
 
     if config.use_barriernet:

@@ -9,7 +9,20 @@ AGENT = 'LiveNet'
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
-metrics = np.loadtxt(f'experiment_results/{AGENT}_{SCENARIO}_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/{AGENT}_{SCENARIO}_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_30_norm_doorsuite4_lfnew_nso_nego_0_1_bn_definition_suite.csv', delimiter=',')
+
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_40_norm_doorsuite4_lfnew_nso_nego_wl_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_40_norm_doorsuite4_lfnew_nso_nego_8o_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_35_norm_doorsuite4_lfnew_nso_nego_8o_small_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_35_norm_doorsuite4_lfnew_nso_nego_wnewl_small_0_1_bn_definition_suite.csv', delimiter=',')
+metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_00_1_bn_definition_suite.csv', delimiter=',')
+
+# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_wl_0_1_bn_definition"
+# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_8o_0_1_bn_definition"
+# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition"
+
 
 IDXS = {
     'goal_reach_idx0': 0,

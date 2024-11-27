@@ -151,12 +151,16 @@ def rotate(origin, point, angle):
     return qx, qy
 
 
-def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, static_obs_xy_only, ego_frame_inputs, goal, metrics=None):
+def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_goal, add_liveness_as_input, fixed_liveness_input, static_obs_xy_only, ego_frame_inputs, add_new_liveness_as_input, goal, metrics=None):
     if metrics is None and add_liveness_as_input:
         metrics = calculate_all_metrics(np.array(inputs[:4]), np.array(inputs[4:8]), config.liveness_threshold)
 
-    ego_pos = inputs[:2].copy()
+    ego_pos = np.array(inputs[:2].copy())
     ego_theta = inputs[2]
+    ego_vel = inputs[3]
+    opp_pos = np.array(inputs[4:6].copy())
+    opp_theta = inputs[6]
+    opp_vel = inputs[7]
     num_obstacles = num_total_opponents - 1
     agent_obs = sorted(scenario_obstacles, key = lambda o: np.linalg.norm(ego_pos - np.array(o[:2])))
     agent_obs = agent_obs[:num_obstacles]
@@ -197,6 +201,32 @@ def perturb_model_input(inputs, scenario_obstacles, num_total_opponents, x_is_d_
         else: # Intersecting
             liveness = metrics[0]
         inputs = np.append(inputs, liveness)
+
+    if add_new_liveness_as_input:
+        center_intersection = get_ray_intersection_point(list(ego_pos), ego_theta, list(opp_pos), opp_theta)
+        vec_to_opp = opp_pos - ego_pos
+        unit_vec_to_opp = vec_to_opp / np.linalg.norm(vec_to_opp)
+        initial_closest_to_opp = ego_pos + unit_vec_to_opp * (config.agent_radius)
+        opp_closest_to_initial = opp_pos - unit_vec_to_opp * (config.agent_radius)
+        intersection = get_ray_intersection_point(list(initial_closest_to_opp), ego_theta, list(opp_closest_to_initial), opp_theta)
+        if center_intersection is None or intersection is None or ego_vel == 0 or opp_vel == 0:
+            inputs = np.append(inputs, 10.0)
+        else:
+            d0 = np.linalg.norm(initial_closest_to_opp - intersection)
+            d1 = np.linalg.norm(opp_closest_to_initial - intersection)
+
+            d0_center = np.linalg.norm(ego_pos - center_intersection)
+            d1_center = np.linalg.norm(opp_pos - center_intersection)
+
+            t0 = d0_center / ego_vel
+            t1 = d1_center / opp_vel
+
+            if t0 < t1: # Ego agent is faster
+                barrier = d1 / opp_vel - d0 / ego_vel
+            else: # Ego agent is slower
+                barrier = d0 / ego_vel - d1 / opp_vel
+            inputs = np.append(inputs, barrier)
+
     return inputs
 
 

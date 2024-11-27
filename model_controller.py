@@ -39,6 +39,7 @@ class ModelController:
             self.model_definition.fixed_liveness_input,
             self.model_definition.static_obs_xy_only,
             self.model_definition.ego_frame_inputs,
+            self.model_definition.add_new_liveness_as_input,
             self.goal
         )
 

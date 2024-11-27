@@ -19,14 +19,14 @@ from metrics import gather_all_metric_data
 
 # config.liveliness_gamma = 0.1
 # config.runtime = 15.0
-scenario_params = (1.0, 1.0)
-scenario = IntersectionScenario(start=scenario_params[0], goal=scenario_params[1], start_vel=0.3)
+# scenario_params = (1.0, 1.0)
+# scenario = IntersectionScenario(start=scenario_params[0], goal=scenario_params[1], start_vel=0.3)
 
 # scenario_params = (-1.0, 0.5, 2.0, 0.15)
 # scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True, initial_vel=0.3)
-# scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], start_facing_goal=True)
-# scenario.initial[0][3] = 0.0
-config.ani_save_name = "TEST.mp4"
+
+scenario_params = (-1.0, 0.5, 2.0, 0.15, 0.0, True)
+scenario = DoorwayScenario(initial_x=scenario_params[0], initial_y=scenario_params[1], goal_x=scenario_params[2], goal_y=scenario_params[3], initial_vel=scenario_params[4], start_facing_goal=scenario_params[5])
 
 
 plotter = Plotter()
@@ -41,20 +41,24 @@ controllers = []
 
 # Setup agent 0
 # controllers.append(BlankController())
-controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=0, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[0,:], static_obs=scenario.obstacles.copy()))
 
 # WORKING
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Doorway livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
+controllers.append(ModelController("weights/srikar_iter_00_1_bn_definition.json", goals[0], static_obs=scenario.obstacles.copy())) # Intersection livenet
+
 
 # Setup agent 1
 # controllers.append(BlankController())
-controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
+# controllers.append(MPC(agent_idx=1, opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, goal=goals[1,:], static_obs=scenario.obstacles.copy()))
 
 # WORKING
 # controllers.append(ModelController("weights/model_30_norm_doorsuite2_lfnew_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Doorway livenet
 # controllers.append(ModelController("weights/model_30_norm_intersuite2_lfnew_so_ego_0_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
+
+controllers.append(ModelController("weights/srikar_iter_00_1_bn_definition.json", goals[1], static_obs=scenario.obstacles.copy())) # Intersection livenet
 
 x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
 

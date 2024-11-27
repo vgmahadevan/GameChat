@@ -39,11 +39,12 @@ class ModelDefinition:
     fixed_liveness_input: bool
     static_obs_xy_only: bool
     ego_frame_inputs: bool
+    add_new_liveness_as_input: bool
 
     def get_num_inputs(self):
         if self.static_obs_xy_only:
-            return 4 + 4 + (self.n_opponents - 1) * 2 + self.add_liveness_as_input
-        return 4 + self.n_opponents * 4 + self.add_liveness_as_input
+            return 4 + 4 + (self.n_opponents - 1) * 2 + self.add_liveness_as_input + self.add_new_liveness_as_input
+        return 4 + self.n_opponents * 4 + self.add_liveness_as_input + self.add_new_liveness_as_input
 
 
     def save(self, path: str):
@@ -75,4 +76,6 @@ class ModelDefinition:
                 data['static_obs_xy_only'] = False
             if 'ego_frame_inputs' not in data:
                 data['ego_frame_inputs'] = False
+            if 'add_new_liveness_as_input' not in data:
+                data['add_new_liveness_as_input'] = False
             return ModelDefinition(**data)

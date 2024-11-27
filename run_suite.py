@@ -15,6 +15,7 @@ from plotter import Plotter
 from data_logger import BlankLogger
 from environment import Environment
 from simulation import run_simulation
+from model_controller import ModelController
 from run_experiments import get_livenet_controllers, get_mpc_live_controllers
 from metrics import gather_all_metric_data, load_desired_path
 
@@ -95,7 +96,19 @@ scenario_configs = [
 
 VIZ = False
 SCENARIO = 'Doorway'
-RUN_AGENT = 'MPC'
+RUN_AGENT = 'LiveNet'
+# model_path = "model_30_norm_doorsuite2_lfnew_0_1_bn_definition"
+# model_path = "model_30_norm_doorsuite4_lfnew_nso_ego_0_1_bn_definition"
+# model_path = "model_30_norm_doorsuite4_lfnew_so_nego_0_1_bn_definition"
+
+# model_path = "model_30_norm_doorsuite4_lfnew_nso_nego_0_1_bn_definition" # 23 / 56
+
+# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_wl_0_1_bn_definition"
+# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_8o_0_1_bn_definition"
+# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition"
+# model_path = "model_35_norm_doorsuite4_lfnew_nso_nego_8o_small_0_1_bn_definition"
+# model_path = "model_35_norm_doorsuite4_lfnew_nso_nego_wnewl_small_0_1_bn_definition"
+model_path = "srikar_iter_00_1_bn_definition"
 
 all_metric_data = []
 # scenario_configs = scenario_configs[:1]
@@ -114,7 +127,14 @@ for scenario_config in scenario_configs:
     logger.set_obstacles(scenario.obstacles.copy())
     env = Environment(scenario.initial.copy(), scenario.goals.copy())
     if RUN_AGENT == "LiveNet":
-        controllers = get_livenet_controllers(scenario, SCENARIO)
+        # controllers = get_livenet_controllers(scenario, SCENARIO)
+        model_def = f"weights/{model_path}.json"
+        print(model_def)
+        controllers = [
+            ModelController(model_def, scenario.goals[0], scenario.obstacles.copy()),
+            ModelController(model_def, scenario.goals[1], scenario.obstacles.copy()),
+        ]
+
     elif RUN_AGENT == "MPC":
         controllers = get_mpc_live_controllers(scenario, SCENARIO)
 
@@ -126,7 +146,7 @@ for scenario_config in scenario_configs:
     all_metric_data.append(metric_data)
 
     all_metric_data_save = np.array(all_metric_data)
-    save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}_suite.csv"
+    save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}_{model_path}_suite.csv"
     print(f"Saving experiment results to {save_filename}")
     np.savetxt(save_filename, all_metric_data_save, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1, avg_compute_0, avg_compute_1')
 

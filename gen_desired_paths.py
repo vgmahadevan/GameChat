@@ -18,11 +18,13 @@ from run_experiments import get_mpc_live_controllers, get_scenario, get_livenet_
 
 NUM_AGENTS = 2
 
-AGENT = "MPC"
+# AGENT = "MPC"
 # AGENT = "LiveNet"
+AGENT = "MPC_UNLIVE"
+# AGENT = "BarrierNet"
 
-# SCENARIO = "Doorway"
-SCENARIO = "Intersection"
+SCENARIO = "Doorway"
+# SCENARIO = "Intersection"
 
 scenario = get_scenario(SCENARIO)
 
@@ -36,7 +38,7 @@ for agent_idx in range(2):
     controllers = []
 
     if SCENARIO == "Doorway":
-        if AGENT == "MPC":
+        if AGENT == "MPC" or AGENT == "MPC_UNLIVE" or AGENT == "BarrierNet":
             controllers = get_mpc_live_controllers(scenario, config.mpc_p0_faster)
             other_agent = 1 - agent_idx
             scenario.initial[other_agent][3] = 0.0
@@ -57,7 +59,7 @@ for agent_idx in range(2):
                 env.initial_states[1][3] = 0.0
 
     elif SCENARIO == "Intersection":
-        if AGENT == "MPC" or AGENT == "LiveNet":
+        if AGENT == "MPC" or AGENT == "LiveNet" or AGENT == "MPC_UNLIVE" or AGENT == "BarrierNet":
             controllers = get_mpc_live_controllers(scenario, config.mpc_p0_faster)
             other_agent = 1 - agent_idx
             scenario.initial[other_agent][3] = 0.0

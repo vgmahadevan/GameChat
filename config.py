@@ -17,7 +17,7 @@ plot_live = False
 # plot_live_pause_iteration = None
 plot_live_pause_iteration = 0
 plot_arrows = False
-plot_end = True
+plot_end = False
 plot_end_ani_only = True
 plot_text_on = True
 # plot_text_on = False
@@ -37,8 +37,9 @@ else:
     num_states = 4 # (x, y, theta, v)
     num_controls = 2 # (a, omega)
 
+logging = False
 n = 2                                      # Number of agents
-runtime = 18.0                             # Total runtime [s]
+runtime = 10.0                             # Total runtime [s]
 sim_ts = 0.2                                # Simulation Sampling time [s]
 MPC_Ts = 0.1                                   # MPC Sampling time [s]
 T_horizon = 6                              # Prediction horizon time steps
@@ -81,7 +82,8 @@ use_barriernet = True
 #                     'doorway_scenario_suite/s_-0.5_0.5_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.4_2.0_0.15_l_0_faster_off0.json', 'doorway_scenario_suite/s_-0.5_0.3_2.0_0.15_l_0_faster_off0.json', ]
 
 # train_data_paths = ['doorway_scenario_suite/']
-train_data_paths = ['doorway_scenario_suite2/']
+# train_data_paths = ['doorway_scenario_suite2/']
+train_data_paths = ['doorway_scenario_suite_4/']
 # train_data_paths = ['intersection_scenario_suite2/']
 # train_data_paths = ['intersection_scenario_suite3/']
 
@@ -99,6 +101,7 @@ add_control_limits = False
 add_liveness_filter = True
 add_liveness_as_input = False
 fixed_liveness_input = True
+add_new_liveness_as_input = True
 
 # Changing the inputs / outputs
 x_is_d_goal = True
@@ -112,12 +115,13 @@ train_batch_size = 32
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 learning_rate = 1e-3
-epochs = 30
+epochs = 35
 nHidden1 = 256
 nHidden21 = 128
 nHidden22 = 64
 nHidden23 = 64
 nHidden24 = 64
+
 # l = liveness, nl = no liveness
 # g = goal, ng = no goal
 # saf = trained on both slow and fast variations.
@@ -132,9 +136,10 @@ nHidden24 = 64
 
 # saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 # saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
-saveprefix = f'weights/model_30_norm_doorsuite2_lfnew_so_ego_'
+# saveprefix = f'weights/model_30_norm_doorsuite4_lfnew_nso_nego_'
+saveprefix = f'weights/srikar_iter_0'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
 
 
-description = "Base model, no limits, no liveness, obs are inputs, run on intersection suite"
+description = "Base model, no limits, no liveness, obs are inputs, run on doorway suite"
