@@ -140,7 +140,7 @@ class Environment:
         use_for_training = []
         compute_times = []
         for agent_idx in range(self.num_agents):
-            config.logging = agent_idx == 1
+            # config.logging = agent_idx == 1
             # print(f"\nRunning Agent: {agent_idx}")
             controller = controllers[agent_idx]
             initial_state = self.initial_states[agent_idx, :]

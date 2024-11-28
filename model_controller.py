@@ -53,7 +53,7 @@ class ModelController:
                 model_output = model_output.reshape(-1).cpu().detach().numpy()
 
         output = model_output * self.model_definition.label_std + self.model_definition.label_mean
-        print("Outputted controls:", output)
+        # print("Outputted controls:", output)
         output = output.reshape(-1, 1)
 
         return output

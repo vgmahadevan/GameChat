@@ -108,7 +108,12 @@ RUN_AGENT = 'LiveNet'
 # model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition"
 # model_path = "model_35_norm_doorsuite4_lfnew_nso_nego_8o_small_0_1_bn_definition"
 # model_path = "model_35_norm_doorsuite4_lfnew_nso_nego_wnewl_small_0_1_bn_definition"
-model_path = "srikar_iter_20_1_bn_definition"
+# model_path = "srikar_iter_5_3opp_od_0_1_bn_definition"
+# model_path = "srikar_iter_6_3opp_od_seploop_0_1_bn_definition"
+
+# model_path = "srikar_iter_6_3opp_od_seploop_suite5_0_1_bn_definition"
+# model_path = "srikar_iter_7_suite5_0_1_bn_definition"
+model_path = "srikar_iter_7_nol_suite5_0_1_bn_definition"
 
 all_metric_data = []
 # scenario_configs = scenario_configs[:1]
@@ -147,7 +152,7 @@ for scenario_config in scenario_configs:
 
     all_metric_data_save = np.array(all_metric_data)
     save_filename = f"experiment_results/{RUN_AGENT}_{SCENARIO}_{model_path}_suite.csv"
-    print(f"Saving experiment results to {save_filename}")
+    print(f"Saving suite results to {save_filename}")
     np.savetxt(save_filename, all_metric_data_save, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1, avg_compute_0, avg_compute_1')
 
     if VIZ:

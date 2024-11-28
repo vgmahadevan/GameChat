@@ -117,26 +117,53 @@ class BarrierNet(nn.Module):
         # print("\n\n\nIteration")
         # print("Model inputs:", x0)
 
-        for opp_idx in range(self.model_definition.n_opponents):
-            if self.model_definition.static_obs_xy_only:
-                if opp_idx == 0:
-                    start_idx = 4
-                    opp_x = x0[:, start_idx + OPP_X_OFFSET]
-                    opp_y = x0[:, start_idx + OPP_Y_OFFSET]
-                    opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
-                    opp_vel = x0[:, start_idx + OPP_V_OFFSET]
-                else:
-                    start_idx = (opp_idx - 1) * (2 + self.model_definition.add_dist_to_static_obs) + 8
-                    opp_x = x0[:, start_idx + OPP_X_OFFSET]
-                    opp_y = x0[:, start_idx + OPP_Y_OFFSET]
-                    opp_theta = torch.tensor(0.0).to(config.device)
-                    opp_vel = torch.tensor(0.0).to(config.device)
+        if True:
+            start_idx = 4
+            opp_x = x0[:, start_idx + OPP_X_OFFSET]
+            opp_y = x0[:, start_idx + OPP_Y_OFFSET]
+            opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
+            opp_vel = x0[:, start_idx + OPP_V_OFFSET]
+
+            if self.model_definition.x_is_d_goal:
+                dx, dy = -opp_x, -opp_y
             else:
-                start_idx = opp_idx * 4 + 4
+                dx = (x0[:,EGO_X_IDX] - opp_x)
+                dy = (x0[:,EGO_Y_IDX] - opp_y)
+
+            R = config.agent_radius + config.agent_radius + config.safety_dist
+
+            opp_sin_theta = torch.sin(opp_theta)
+            opp_cos_theta = torch.cos(opp_theta)
+        
+            barrier = dx**2 + dy**2 - R**2
+            barrier_dot = 2*dx*(v*cos_theta - opp_vel*opp_cos_theta) + 2*dy*(v*sin_theta - opp_vel*opp_sin_theta)
+            Lf2b = 2*(v*v + opp_vel*opp_vel - 2*v*opp_vel*torch.cos(theta + opp_theta))
+            LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1))
+            LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
+            obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
+            obs_G = torch.reshape(obs_G, (nBatch, 1, N_CL))
+
+            penalty = x3obs[0]
+
+            obs_h = (torch.reshape(Lf2b + (penalty[:,0] + penalty[:,1])*barrier_dot + (penalty[:,0] * penalty[:,1])*barrier, (nBatch, 1)))
+            G.append(obs_G)
+            h.append(obs_h)
+
+            if config.logging:
+                print("Obstacle:", opp_x.item(), opp_y.item(), opp_theta.item(), opp_vel.item())
+                print("\tBarrier:", barrier.item(), "Barrier dot:", barrier_dot.item(), "Penalty:", penalty)
+                print("\tG:", obs_G, "H:", obs_h.item())
+
+
+        for opp_idx in range(self.model_definition.n_opponents - 1):
+            if self.model_definition.static_obs_xy_only:
+                start_idx = opp_idx * (2 + self.model_definition.add_dist_to_static_obs) + 8
                 opp_x = x0[:, start_idx + OPP_X_OFFSET]
                 opp_y = x0[:, start_idx + OPP_Y_OFFSET]
-                opp_theta = x0[:, start_idx + OPP_THETA_OFFSET]
-                opp_vel = x0[:, start_idx + OPP_V_OFFSET]
+            else:
+                start_idx = opp_idx * 4 + 8
+                opp_x = x0[:, start_idx + OPP_X_OFFSET]
+                opp_y = x0[:, start_idx + OPP_Y_OFFSET]
 
             if self.model_definition.x_is_d_goal:
                 dx, dy = -opp_x, -opp_y
@@ -149,10 +176,8 @@ class BarrierNet(nn.Module):
             opp_cos_theta = torch.cos(opp_theta)
         
             barrier = dx**2 + dy**2 - R**2
-            # print("\tInputs:", opp_x, opp_y, opp_theta, opp_vel)
-            # print("\tBarrier:", barrier)  
-            barrier_dot = 2*dx*(v*cos_theta - opp_vel*opp_cos_theta) + 2*dy*(v*sin_theta - opp_vel*opp_sin_theta)
-            Lf2b = 2*(v*v + opp_vel*opp_vel - 2*v*opp_vel*torch.cos(theta + opp_theta))
+            barrier_dot = 2*dx*v*cos_theta + 2*dy*v*sin_theta
+            Lf2b = 2*v*v
             LgLfbu1 = torch.reshape(-2*dx*v*sin_theta + 2*dy*v*cos_theta, (nBatch, 1))
             LgLfbu2 = torch.reshape(2*dx*cos_theta + 2*dy*sin_theta, (nBatch, 1))
             obs_G = torch.cat([-LgLfbu1, -LgLfbu2], dim=1)
@@ -160,32 +185,23 @@ class BarrierNet(nn.Module):
 
             penalty = x3obs[0]
             if self.model_definition.separate_penalty_for_opp:
-                penalty = x3obs[0] if opp_idx == 0 else x3obs[1]
+                penalty = x3obs[1]
             if self.model_definition.sep_pen_for_each_obs:
-                penalty = x3obs[opp_idx]
+                penalty = x3obs[opp_idx + 1]
 
             obs_h = (torch.reshape(Lf2b + (penalty[:,0] + penalty[:,1])*barrier_dot + (penalty[:,0] * penalty[:,1])*barrier, (nBatch, 1)))
             G.append(obs_G)
             h.append(obs_h)
 
-            if config.logging2:
+            if config.logging2 and opp_idx == 0:
                 file = open("penalties2.txt", "a+")
-                file.write(f"\tIdx: {opp_idx}, " + str(penalty) + "\n")
+                file.write(f"\tIdx: {opp_idx}, " + str(penalty[:10]) + "\n")
                 file.close()
 
             if config.logging:
                 print("Obstacle:", opp_x.item(), opp_y.item(), opp_theta.item(), opp_vel.item())
                 print("\tBarrier:", barrier.item(), "Barrier dot:", barrier_dot.item(), "Penalty:", penalty)
                 print("\tG:", obs_G, "H:", obs_h.item())
-
-            # print("\n\nINPUT:", x0)
-            # print("Dx:", dx, "Dy:", dy, "vx:", v*cos_theta, "Opp vx:", opp_vel*opp_cos_theta, "vy:", v*sin_theta, "Opp vy:", opp_vel*opp_sin_theta)
-            # print("Opp barrier:", barrier)
-            # print("Barrier dot:", barrier_dot)
-            # print("Lf2b:", Lf2b)
-            # print("LgLfbu1:", LgLfbu1)
-            # print("Penalty:", penalty)
-            # print("Obs g:", obs_G, "Obs h:", obs_h)
 
         # Add control limits as soft inequality constraints.
         if self.model_definition.add_control_limits:
@@ -276,11 +292,6 @@ class BarrierNet(nn.Module):
                 # #     print("\tIntersection:", intersection, "D0:", d0, "D1:", d1)
 
                 if t0 >= t1: # If slower agent
-                    # barrier = (d0 * opp_vel -  d1 * ego_vel)
-                    # penalty = x34[i, 0]
-                    # live_G = Variable(torch.tensor([0.0, d1]).to(config.device)).to(config.device)
-                    # live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                    # live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
                     barrier = d0 / ego_vel - d1 / opp_vel # t_0 - t_1
                     penalty = x34[i, 0]
                     live_G = Variable(torch.tensor([0.0, d0 / (ego_vel ** 2.0)]).to(config.device)).to(config.device)
@@ -291,11 +302,6 @@ class BarrierNet(nn.Module):
                         print("Barrier:", barrier, "Penalty:", penalty)
                         print("Ineq:", live_G, live_h)
                 else: # If faster agent
-                    # barrier = (d1 * ego_vel - d0 * opp_vel)
-                    # penalty = x34[i, 1]
-                    # live_G = Variable(torch.tensor([0.0, -d1]).to(config.device)).to(config.device)
-                    # live_G = live_G.unsqueeze(0).expand(1, 1, N_CL).to(config.device)
-                    # live_h = torch.reshape(penalty * barrier, (1, 1)).to(config.device)
                     barrier = d1 / opp_vel - d0 / ego_vel
                     penalty = x34[i, 1]
                     live_G = Variable(torch.tensor([0.0, -d0 / (ego_vel ** 2.0)]).to(config.device)).to(config.device)

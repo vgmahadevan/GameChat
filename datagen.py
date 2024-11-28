@@ -16,6 +16,9 @@ from data_logger import DataLogger, BlankLogger
 from environment import Environment
 from simulation import run_simulation
 
+from metrics import gather_all_metric_data
+import numpy as np
+
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
@@ -97,68 +100,72 @@ if SCENARIO == 'Doorway':
     scenarios = [DoorwayScenario(initial_x=conf[0], initial_y=conf[1], goal_x=conf[2], goal_y=conf[3], initial_vel=conf[4], start_facing_goal=conf[5]) for conf in scenario_configs]
 
     best_params = [
-        (0.5, 0.3, 0.3, 1.0, True, 16.0), # 0
-        (0.8, 0.4, 0.4, 1.0, True, 16.0), # 1
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 2 redo
-        (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 4 redo
-        (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
-        (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
-        (0.9, 0.3, 0.2, 0.7, True, 14.0), # 7 redo
-        (0.9, 0.2, 0.2, 0.8, False, 14.0), # 8 redo
-        (0.9, 0.3, 0.2, 0.8, False, 15.0), # 9 redo
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 11 redo
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 13 redo
+        (0.5, 0.2, 0.3, 16.0), # 0
+        (0.8, 0.2, 0.4, 16.0), # 1
+        (0.7, 0.2, 0.2, 16.0), # 2 redo
+        (0.7, 0.2, 0.1, 18.0), # 3
+        (0.7, 0.2, 0.2, 16.0), # 4 redo
+        (0.8, 0.2, 0.2, 16.0), # 5
+        (0.8, 0.2, 0.2, 16.0), # 6
+        (0.9, 0.2, 0.2, 14.0), # 7 redo
+        (0.9, 0.2, 0.2, 14.0), # 8 redo
+        (0.9, 0.2, 0.2, 15.0), # 9 redo
+        (0.9, 0.2, 0.2, 14.0), # 10
+        (0.9, 0.2, 0.2, 14.0), # 11 redo
+        (0.9, 0.2, 0.2, 14.0), # 12
+        (0.9, 0.2, 0.2, 14.0), # 13 redo
 
-        (0.5, 0.3, 0.3, 1.0, True, 16.0), # 0
-        (0.8, 0.4, 0.4, 1.0, True, 16.0), # 1
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 2 redo
-        (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 4 redo
-        (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
-        (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
-        (0.9, 0.3, 0.2, 0.7, True, 14.0), # 7 redo
-        (0.9, 0.2, 0.2, 0.8, False, 14.0), # 8 redo
-        (0.9, 0.3, 0.2, 0.8, False, 15.0), # 9 redo
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 11 redo
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 13 redo
+        (0.5, 0.2, 0.3, 16.0), # 0
+        (0.8, 0.2, 0.4, 16.0), # 1
+        (0.7, 0.2, 0.2, 16.0), # 2 redo
+        (0.7, 0.2, 0.1, 18.0), # 3
+        (0.7, 0.2, 0.2, 16.0), # 4 redo
+        (0.8, 0.2, 0.2, 16.0), # 5
+        (0.8, 0.2, 0.2, 16.0), # 6
+        (0.9, 0.2, 0.2, 16.0), # 7 redo
+        (0.9, 0.2, 0.2, 14.0), # 8 redo
+        (0.9, 0.2, 0.2, 15.0), # 9 redo
+        (0.9, 0.2, 0.2, 14.0), # 10
+        (0.9, 0.2, 0.2, 14.0), # 11 redo
+        (0.9, 0.2, 0.2, 14.0), # 12
+        (0.9, 0.2, 0.2, 14.0), # 13 redo
 
-        (0.5, 0.3, 0.3, 1.0, True, 16.0), # 0
-        (0.8, 0.4, 0.4, 1.0, True, 16.0), # 1
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 2 redo
-        (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 4 redo
-        (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
-        (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
-        (0.9, 0.3, 0.2, 0.7, True, 14.0), # 7 redo
-        (0.9, 0.2, 0.2, 0.8, False, 14.0), # 8 redo
-        (0.9, 0.3, 0.2, 0.8, False, 15.0), # 9 redo
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 11 redo
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 13 redo
+        (0.5, 0.2, 0.3, 16.0), # 0
+        (0.8, 0.2, 0.4, 16.0), # 1
+        (0.7, 0.2, 0.2, 16.0), # 2 redo
+        (0.7, 0.2, 0.1, 18.0), # 3
+        (0.7, 0.2, 0.2, 16.0), # 4 redo
+        (0.8, 0.2, 0.2, 16.0), # 5
+        (0.8, 0.2, 0.2, 16.0), # 6
+        (0.9, 0.2, 0.2, 14.0), # 7 redo
+        (0.9, 0.2, 0.2, 14.0), # 8 redo
+        (0.9, 0.2, 0.2, 15.0), # 9 redo
+        (0.9, 0.2, 0.2, 14.0), # 10
+        (0.9, 0.2, 0.2, 14.0), # 11 redo
+        (0.9, 0.2, 0.2, 14.0), # 12
+        (0.9, 0.2, 0.2, 14.0), # 13 redo
 
-        (0.5, 0.3, 0.2, 1.0, False, 16.0), # 0
-        (0.8, 0.4, 0.4, 1.0, True, 16.0), # 1
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 2 redo
-        (0.7, 0.6, 0.1, 1.3, True, 18.0), # 3
-        (0.7, 0.6, 0.2, 1.3, True, 16.0), # 4 redo
-        (0.8, 0.6, 0.2, 1.4, True, 16.0), # 5
-        (0.8, 0.6, 0.2, 1.0, False, 16.0), # 6
-        (0.9, 0.3, 0.2, 0.7, True, 14.0), # 7 redo
-        (0.9, 0.2, 0.2, 0.8, False, 14.0), # 8 redo
-        (0.9, 0.3, 0.2, 0.8, False, 15.0), # 9 redo
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 10
-        (0.9, 0.3, 0.2, 0.9, False, 14.0), # 11 redo
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 12
-        (0.9, 0.3, 0.2, 1.1, False, 14.0), # 13 redo
+        (0.5, 0.2, 0.2, 16.0), # 0
+        (0.8, 0.2, 0.4, 16.0), # 1
+        (0.7, 0.2, 0.2, 16.0), # 2 redo
+        (0.7, 0.2, 0.1, 18.0), # 3
+        (0.7, 0.2, 0.2, 16.0), # 4 redo
+        (0.8, 0.2, 0.2, 16.0), # 5
+        (0.8, 0.2, 0.2, 16.0), # 6
+        (0.9, 0.2, 0.2, 14.0), # 7 redo
+        (0.9, 0.2, 0.2, 14.0), # 8 redo
+        (0.9, 0.2, 0.2, 15.0), # 9 redo
+        (0.9, 0.2, 0.2, 14.0), # 10
+        (0.9, 0.2, 0.2, 14.0), # 11 redo
+        (0.9, 0.2, 0.2, 14.0), # 12
+        (0.9, 0.2, 0.2, 14.0), # 13 redo
     ]
 
-    folder_to_save_to = 'doorway_scenario_suite_4/'
+    scenario_configs = scenario_configs[28:]
+    scenarios = scenarios[28:]
+    best_params = best_params[28:]
+
+    folder_to_save_to = 'doorway_scenario_suite_6/'
 
 else:
     folder_to_save_to = 'intersection_scenario_suite3/'
@@ -192,9 +199,9 @@ else:
         (0.6, 0.1, 16.0)
     ]
 
-# start_idx, end_idx = 42, 56
+start_idx, end_idx = 21, 22
 # animations/doorway_scenario_suite_4/s_doorway_-1.0_0.5_2.0_0.15_False_0.3_l_1_faster_off0..mp4
-start_idx, end_idx = 42, 43
+# start_idx, end_idx = 42, 43
 scenarios = scenarios[start_idx:end_idx]
 best_params = best_params[start_idx:end_idx]
 
@@ -203,14 +210,13 @@ assert(len(scenarios) == len(best_params))
 
 offset = [0]
 zero_faster = [True, False]
+all_metric_data = []
 for scenario, mpc_params in zip(scenarios, best_params):
     if type(scenario) == DoorwayScenario:
         config.opp_gamma = mpc_params[0]
         config.obs_gamma = mpc_params[1]
         config.liveliness_gamma = mpc_params[2]
-        config.liveness_threshold = mpc_params[3]
-        config.mpc_use_opp_cbf = mpc_params[4]
-        config.runtime = mpc_params[5]
+        config.runtime = mpc_params[3]
     else:
         config.opp_gamma = mpc_params[0]
         config.liveliness_gamma = mpc_params[1]
@@ -246,6 +252,14 @@ for scenario, mpc_params in zip(scenarios, best_params):
             controllers.append(MPC(agent_idx=0, goal=goals[0,:], opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, static_obs=scenario.obstacles.copy(), delay_start=max(config.agent_zero_offset, 0.0)))
             controllers.append(MPC(agent_idx=1, goal=goals[1,:], opp_gamma=config.opp_gamma, obs_gamma=config.obs_gamma, live_gamma=config.liveliness_gamma, liveness_thresh=config.liveness_threshold, static_obs=scenario.obstacles.copy(), delay_start=max(-config.agent_zero_offset, 0.0)))
 
-            run_simulation(scenario, env, controllers, logger, plotter)
+            x_cum, u_cum = run_simulation(scenario, env, controllers, logger, plotter)
             print("Saving scenario to:", log_filename)
             # plt.close()
+
+            metric_data = gather_all_metric_data(scenario, x_cum[0], x_cum[1], scenario.goals, env.compute_history)
+            all_metric_data.append(metric_data)
+
+            all_metric_data_save = np.array(all_metric_data)
+            save_filename = f"{folder_to_save_to.rstrip('/')}_{start_idx}_{end_idx}.csv"
+            print(f"Saving experiment results to {save_filename}")
+            np.savetxt(save_filename, all_metric_data_save, fmt='%0.4f', delimiter=', ', header='goal_reach_idx0, goal_reach_idx1, min_agent_dist, traj_collision, obs_min_dist_0, obs_collision_0, obs_min_dist_1, obs_collision_1, delta_vel_0, delta_vel_1, path_dev_0, path_dev_1, avg_compute_0, avg_compute_1')

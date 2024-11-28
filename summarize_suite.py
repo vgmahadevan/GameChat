@@ -10,18 +10,19 @@ SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
 # metrics = np.loadtxt(f'experiment_results/{AGENT}_{SCENARIO}_suite.csv', delimiter=',')
-# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_30_norm_doorsuite4_lfnew_nso_nego_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_30_norm_doorsuite4_lfnew_nso_nego_0_1_bn_definition_suite.csv', delimiter=',') # 23/56
 
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_40_norm_doorsuite4_lfnew_nso_nego_wl_0_1_bn_definition_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_40_norm_doorsuite4_lfnew_nso_nego_8o_0_1_bn_definition_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_35_norm_doorsuite4_lfnew_nso_nego_8o_small_0_1_bn_definition_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_35_norm_doorsuite4_lfnew_nso_nego_wnewl_small_0_1_bn_definition_suite.csv', delimiter=',')
-metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_20_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_5_3opp_od_0_1_bn_definition_suite.csv', delimiter=',') # GOATED 28/56
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_6_3opp_od_seploop_0_1_bn_definition_suite.csv', delimiter=',')
 
-# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_wl_0_1_bn_definition"
-# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_8o_0_1_bn_definition"
-# model_path = "model_40_norm_doorsuite4_lfnew_nso_nego_seppen_0_1_bn_definition"
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_6_3opp_od_seploop_suite5_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_7_suite5_0_1_bn_definition_suite.csv', delimiter=',') # 32 / 56
+metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_7_nol_suite5_0_1_bn_definition_suite.csv', delimiter=',') # 35 /56 CASES
 
 
 IDXS = {
@@ -55,4 +56,7 @@ passed = np.sum(passed_rows)
 
 print(f"Analyzed suite metrics for {AGENT} agents in {SCENARIO} scenario")
 print(f"Number of passing scenarios: {passed} / {num_sims}")
-
+print(passed_rows[:14])
+print(passed_rows[14:28])
+print(passed_rows[28:42])
+print(passed_rows[42:56])

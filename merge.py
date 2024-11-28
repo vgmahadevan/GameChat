@@ -3,7 +3,7 @@ import os
 
 L = []
 
-for root, dirs, files in os.walk("animations/doorway_scenario_suite_4"):
+for root, dirs, files in os.walk("animations/doorway_scenario_suite_5"):
     files.sort()
     for file in files:
         if '1_faster' in file:
@@ -14,4 +14,4 @@ for root, dirs, files in os.walk("animations/doorway_scenario_suite_4"):
             L.append(video)
 
 final_clip = concatenate_videoclips(L)
-final_clip.to_videofile("merged.mp4", fps=24, remove_temp=False)
+final_clip.to_videofile("merged2.mp4", fps=24, remove_temp=False)
