@@ -9,6 +9,7 @@ AGENT = 'LiveNet'
 SCENARIO = 'Doorway'
 # SCENARIO = 'Intersection'
 
+metrics = np.loadtxt(f'experiment_results/MPC_Doorway_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/{AGENT}_{SCENARIO}_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_model_30_norm_doorsuite4_lfnew_nso_nego_0_1_bn_definition_suite.csv', delimiter=',') # 23/56
 
@@ -22,7 +23,14 @@ SCENARIO = 'Doorway'
 
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_6_3opp_od_seploop_suite5_0_1_bn_definition_suite.csv', delimiter=',')
 # metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_7_suite5_0_1_bn_definition_suite.csv', delimiter=',') # 32 / 56
-metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_7_nol_suite5_0_1_bn_definition_suite.csv', delimiter=',') # 35 /56 CASES
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_7_nol_suite5_0_1_bn_definition_suite.csv', delimiter=',') # 35 / 56 CASES. 25/28 of the LAST CASES
+
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_8_6nol_suite5_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_8_6l_suite5_0_1_bn_definition_suite.csv', delimiter=',') # 13 / 28
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_8_nol_suite5_0_1_bn_definition_suite.csv', delimiter=',')
+# metrics = np.loadtxt(f'experiment_results/LiveNet_Doorway_srikar_iter_8_l_suite5_0_1_bn_definition_suite.csv', delimiter=',')
+
+metrics = metrics[28:]
 
 
 IDXS = {

@@ -199,7 +199,7 @@ else:
         (0.6, 0.1, 16.0)
     ]
 
-start_idx, end_idx = 21, 22
+start_idx, end_idx = 21, 28
 # animations/doorway_scenario_suite_4/s_doorway_-1.0_0.5_2.0_0.15_False_0.3_l_1_faster_off0..mp4
 # start_idx, end_idx = 42, 43
 scenarios = scenarios[start_idx:end_idx]

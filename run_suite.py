@@ -113,7 +113,12 @@ RUN_AGENT = 'LiveNet'
 
 # model_path = "srikar_iter_6_3opp_od_seploop_suite5_0_1_bn_definition"
 # model_path = "srikar_iter_7_suite5_0_1_bn_definition"
-model_path = "srikar_iter_7_nol_suite5_0_1_bn_definition"
+# model_path = "srikar_iter_7_nol_suite5_0_1_bn_definition"
+# model_path = "srikar_iter_8_6nol_suite5_0_1_bn_definition"
+# model_path = "srikar_iter_8_6l_suite5_0_1_bn_definition"
+# model_path = "srikar_iter_8_nol_suite5_0_1_bn_definition"
+# model_path = "srikar_iter_8_l_suite5_0_1_bn_definition"
+
 
 all_metric_data = []
 # scenario_configs = scenario_configs[:1]

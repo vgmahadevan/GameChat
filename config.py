@@ -85,7 +85,8 @@ use_barriernet = True
 # train_data_paths = ['doorway_scenario_suite/']
 # train_data_paths = ['doorway_scenario_suite2/']
 # train_data_paths = ['doorway_scenario_suite_4/']
-train_data_paths = ['doorway_scenario_suite_5/']
+# train_data_paths = ['doorway_scenario_suite_5/']
+train_data_paths = ['doorway_scenario_suite_6/']
 # train_data_paths = ['intersection_scenario_suite2/']
 # train_data_paths = ['intersection_scenario_suite3/']
 
@@ -101,7 +102,7 @@ add_new_liveness_as_input = False
 
 # Changing the inputs / outputs
 x_is_d_goal = True
-n_opponents = 12
+n_opponents = 6
 separate_penalty_for_opp = False
 static_obs_xy_only = False
 add_dist_to_static_obs = False
@@ -134,9 +135,8 @@ nHidden24 = 64
 # saveprefix = f'weights/model_base_single_input_obs_wc_nolim_linp_f_fullsuite_live_'
 # saveprefix = f'weights/model_base_input_obs_wc_nolim_saf_intersuite_'
 # saveprefix = f'weights/model_30_norm_doorsuite4_lfnew_nso_nego_'
-saveprefix = f'weights/srikar_iter_7_nol_suite5_'
+saveprefix = f'weights/srikar_iter_8_6nol_suite5_'
 saveprefix += '_'.join([str(i) for i in agents_to_train_on])
 # saveprefix = "weights/test"
-
 
 description = "Base model, no limits, no liveness, obs are inputs, run on doorway suite"
