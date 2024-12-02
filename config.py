@@ -9,13 +9,13 @@ class DynamicsModel(Enum):
     DOUBLE_INTEGRATOR = auto()
 
 # Liveness parameters.
-liveliness = False
-liveness_threshold = 0.7
+liveliness = True
+liveness_threshold = 0.6
 plot_rate = 1
 plot_live = True
 plot_live_pause = False
 dynamics = DynamicsModel.SINGLE_INTEGRATOR
-# dynamics = DynamicsModel.DOUBLE_INTEGRATOR
+#dynamics = DynamicsModel.DOUBLE_INTEGRATOR
 
 if dynamics == DynamicsModel.SINGLE_INTEGRATOR:
     num_states = 3 # (x, y, theta)
