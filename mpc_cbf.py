@@ -195,35 +195,55 @@ class MPC:
 
     def make_step(self, x0):
         u1 = self.mpc.make_step(x0)
+        u1[0] = min(u1[0], config.v_limit)
 
         # Add liveliness condition here
         ego_state = self.initial_state.copy()
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR:
             ego_state = np.append(ego_state, [u1[0][0]])
-        l, ttc, pos_diff, vel_diff = calculate_liveliness(ego_state, self.opp_state)
+        l, ttc, pos_diff, vel_diff, col_pt = calculate_liveliness(ego_state, self.opp_state)
         # self.liveliness.append(l)
+        print("livesness", l)
         self.liveliness.append((l, pos_diff, vel_diff))
         self.u_ori.append(u1.ravel())
-        if l < config.liveness_threshold:
+        if col_pt and l < config.liveness_threshold:
             self.last_liveliness_iteration = self.env.sim_iteration
+            self.col_pt = col_pt
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
-            # if self.agent_idx == 1 and self.env.sim_iteration < self.last_liveliness_iteration + 5:
-            if self.env.sim_iteration < self.last_liveliness_iteration + 5:
-                curr_v0_v1_point = np.array([0.0, 0.0])
-                curr_v0_v1_point[self.agent_idx] = ego_state[3]
-                curr_v0_v1_point[1 - self.agent_idx] = self.opp_state[3]
-                desired_v0_v1_vec = np.array([config.zeta, 1.0])
-                desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
-                desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
-                mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
+            #if self.agent_idx == 0 and self.env.sim_iteration < self.last_liveliness_iteration + 5:
+            if self.env.sim_iteration < self.last_liveliness_iteration + 10:
                 u1_before_proj = u1.copy()
+                # curr_v0_v1_point = np.array([0.0, 0.0])
+                # curr_v0_v1_point[self.agent_idx] = ego_state[3]
+                # curr_v0_v1_point[1 - self.agent_idx] = self.opp_state[3]
+                # desired_v0_v1_vec = np.array([1, config.zeta])
+                # desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
+                # desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
+                # mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
+                ego_dist = np.linalg.norm(ego_state[0:1] - np.array(self.col_pt))
+                opp_dist = np.linalg.norm(self.opp_state[0:1] - np.array(self.col_pt))
+                if ego_dist > opp_dist:
+                    opp_ttc = (opp_dist + 0.5) / config.v_limit
+                    #opp_ttc = opp_dist+2 / self.opp_state[3]
+                    new_vel = (ego_dist - 0.5 ) / opp_ttc
+                    u1[0] = new_vel
+                    u1[0] = min(new_vel, config.v_limit)
+                else:
+                    u1[0] = config.v_limit
+
+
+                
                 # u1[0] *= mult_factor
-                u1 *= mult_factor
+                #u1 *= mult_factor
+
+                #u1[0] = min(u1[0], config.v_limit)
+                
                 print(f"Running liveness {l}")
+                #print("mult factor", mult_factor)
                 print("Position diff:", pos_diff)
                 print("Velocity diff:", vel_diff)
                 print(f"\tEgo Vel: {ego_state[3]}, Opp Vel: {self.opp_state[3]}")
-                print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
+                #print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
                 print(f"Original control {u1_before_proj.T}. Output control {u1.T}")
 
                 # v = (xf_minus_two - xf_two)/T

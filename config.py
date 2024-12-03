@@ -10,7 +10,7 @@ class DynamicsModel(Enum):
 
 # Liveness parameters.
 liveliness = True
-liveness_threshold = 0.6
+liveness_threshold = 0.7
 plot_rate = 1
 plot_live = True
 plot_live_pause = False
@@ -25,7 +25,7 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 20.0                             # Total runtime [s]
+runtime = 15.0                             # Total runtime [s]
 # runtime = 5.0
 Ts = 0.2                                   # Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps
@@ -50,7 +50,7 @@ COST_MATRICES = {
     DynamicsModel.SINGLE_INTEGRATOR: {
         "Q": np.diag([15, 15, 0.005]),  # State cost matrix DOORWAY
         # "Q": np.diag([100, 100, 11]), # State cost matrix INTERSECTION
-        "R": np.array([3, 1.5]),                  # Controls cost matrix
+        "R": np.array([3, 3]),                  # Controls cost matrix
     },
     DynamicsModel.DOUBLE_INTEGRATOR: {
         "Q": np.diag([15, 15, 0.005, 1]),  # State cost matrix DOORWAY
