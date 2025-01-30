@@ -16,7 +16,7 @@ class Plotter:
     def init(self):
         # Reset plot limits and other properties as needed
         self.ax.set_xlim(-1, 2)
-        self.ax.set_ylim(-1, 1)
+        self.ax.set_ylim(-2, 2)  # Adjusted y-axis limits
         self.liveliness_text.set_text(f'Liveliness function = {config.liveliness}')
         return []
 
@@ -46,7 +46,7 @@ class Plotter:
 
         # Reset plot limits and other properties as needed
         self.ax.set_xlim(-2.6, 2.2)
-        self.ax.set_ylim(-1, 1)
+        self.ax.set_ylim(-2, 2)  # Adjusted y-axis limits
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
         try:
@@ -74,9 +74,60 @@ class Plotter:
 
         # Draw the fading trails for agents 1 and 2
         for i in range(start_index, frame - 1, config.plot_rate):
-            alpha = 1 - ((frame - 1 - i) / trail_length)**2
-            self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
-            self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
+            alpha = max(0, 1 - 2*((frame - 1 - i) / trail_length)**2)
+            
+        #     alpha = 1 if i == frame-2 else 0
+        #    # Get the start and end points
+        #     start_point = self.x_cum[0][i, :]
+        #     end_point = self.x_cum[0][i+1, :]
+
+        #     # Compute the direction vector from start to end point
+        #     direction = end_point - start_point
+
+        #     # Normalize the direction vector
+        #     direction_norm = direction / np.linalg.norm(direction)
+
+        #     # The second point is the center of the line, and the total length is 1
+        #     # So the half-length is 0.5 units
+        #     half_length = 0.5
+
+        #     # The extended points: extend by half the total length in both directions
+        #     extended_start = end_point - half_length * direction_norm
+        #     extended_end = end_point + half_length * direction_norm
+
+        #     line_length = np.linalg.norm(extended_end - extended_start)
+        #     print(f"Line length: {line_length}")
+        #     # Plot the extended line
+        #     self.ax.plot([extended_start[0], extended_end[0]], [extended_start[1], extended_end[1]], 'r-', alpha=alpha, linewidth=5)
+
+
+
+        #     # Get the start and end points
+        #     start_point = self.x_cum[1][i, :]
+        #     end_point = self.x_cum[1][i+1, :]
+
+        #     # Compute the direction vector from start to end point
+        #     direction = end_point - start_point
+
+        #     # Normalize the direction vector
+        #     direction_norm = direction / (np.linalg.norm(direction) + 0.001)
+
+        #     # The second point is the center of the line, and the total length is 1
+        #     # So the half-length is 0.5 units
+        #     half_length = 0.5
+
+        #     # The extended points: extend by half the total length in both directions
+        #     extended_start = end_point - half_length * direction_norm
+        #     extended_end = end_point + half_length * direction_norm
+
+        #     # Plot the extended line
+        #     self.ax.plot([extended_start[0], extended_end[0]], [extended_start[1], extended_end[1]], 'b-', alpha=alpha, linewidth=5)
+
+
+            # self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
+            # self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
+            self.ax.plot(self.x_cum[0][i, 0], self.x_cum[0][i, 1], 'ro', alpha=alpha, markersize=10)
+            self.ax.plot(self.x_cum[1][i, 0], self.x_cum[1][i, 1], 'bo', alpha=alpha, markersize=10)
         
         pos_diff, vel_diff = self.controllers[0].liveliness[frame][1], self.controllers[0].liveliness[frame][2]
         self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
@@ -86,10 +137,10 @@ class Plotter:
         return []
 
 
-    def plot(self, scenario, controllers, x_cum, u_cum):
+    def plot(self, scenario, agents, x_cum, u_cum):
         self.scenario = scenario
         self.scenario.plot(self.ax)
-        self.controllers = controllers
+        self.agents = agents
         self.x_cum = x_cum
         self.u_cum = u_cum
 
@@ -106,7 +157,7 @@ class Plotter:
 
         if config.dynamics == config.DynamicsModel.SINGLE_INTEGRATOR:
             speed1, speed2 = u_cum.copy()
-            speed2_ori = controllers[1].u_ori.copy()
+            speed2_ori = agents[1].u_ori.copy()
             speed1 = [control[0] for control in speed1]
             speed2 = [control[0] for control in speed2]
             speed2_ori = [control[0] for control in speed2_ori]
@@ -116,7 +167,7 @@ class Plotter:
             speed2 = [state[3] for state in agent_2_states]
             speed2_ori = speed2
 
-        liveness = controllers[0].liveliness.copy()
+        liveness = [l[0] for l in agents[0].liveliness.copy()]
 
         # Creating iteration indices for each agent based on the number of velocity points
         iterations = range(0, len(speed1), config.plot_rate)
@@ -132,37 +183,36 @@ class Plotter:
 
         # Plotting the x and y velocities for Agent 1
         plt.subplot(2, 1, 1)
-        sns.lineplot(x=iterations, y=speed1, label='Agent 1 speed', marker='o',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        sns.lineplot(x=iterations, y=speed2, label='Agent 2 speed', marker='o',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        sns.lineplot(x=iterations, y=speed2_ori, label='Agent 2 speed original', marker='P',markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        plt.xlabel('Iteration', fontsize = fontsize)
-        plt.ylabel('Velocity', fontsize = fontsize)
-        plt.legend(loc='upper left', ncol=1, fontsize = fontsize)
+        sns.lineplot(x=iterations, y=speed1, label='Agent 1 speed', marker='o', markers=True, dashes=False, markeredgewidth=0, linewidth=5, markersize=15)
+        sns.lineplot(x=iterations, y=speed2, label='Agent 2 speed', marker='o', markers=True, dashes=False, markeredgewidth=0, linewidth=5, markersize=15)
+        sns.lineplot(x=iterations, y=speed2_ori, label='Agent 2 speed original', marker='P', markers=True, dashes=False, markeredgewidth=0, linewidth=5, markersize=15)
+        plt.xlabel('Iteration', fontsize=fontsize)
+        plt.ylabel('Velocity', fontsize=fontsize)
+        plt.legend(loc='upper left', ncol=1, fontsize=fontsize)
         plt.xlim(0, max(iterations))
         plt.ylim(min(speed1 + speed2 + speed2_ori), max(speed1 + speed2 + speed2_ori))
-        plt.xticks(np.arange(0, max(iterations)+1, 4*config.plot_rate), fontsize = fontsize)
-        plt.yticks(np.arange(round(min(speed1 + speed2 + speed2_ori), 1), round(max(speed1 + speed2 + speed2_ori), 1), .2), fontsize = fontsize)
+        plt.xticks(np.arange(0, max(iterations) + 1, 4 * config.plot_rate), fontsize=fontsize)
+        plt.yticks(np.arange(round(min(speed1 + speed2 + speed2_ori), 1), round(max(speed1 + speed2 + speed2_ori), 1), .2), fontsize=fontsize)
         plt.grid(which='major', color='#CCCCCC', linestyle='--')
         plt.grid(which='minor', color='#CCCCCC', linestyle='-', axis='both')
         plt.minorticks_on()
 
         plt.subplot(2, 1, 2)
-        sns.lineplot(x=iterations, y=liveness, label='Liveness value', marker='o', color = 'orange', markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        sns.lineplot(x=iterations, y=tuple(np.ones(len(iterations))*.3), label='Threshold', markers=True, dashes=False,markeredgewidth=0, linewidth = 5, markersize = 15)
-        #plt.title('Liveness values', fontsize = fontsize)
-        plt.xlabel('Iteration', fontsize = fontsize)
-        plt.ylabel('Liveness', fontsize = fontsize)
-        plt.legend(loc='upper left', ncol=1, fontsize = fontsize)
+        sns.lineplot(x=iterations, y=liveness, label='Liveness value', marker='o', color='orange', markers=True, dashes=False, markeredgewidth=0, linewidth=5, markersize=15)
+        sns.lineplot(x=iterations, y=tuple(np.ones(len(iterations)) * config.liveness_threshold), label='Threshold', markers=True, dashes=False, markeredgewidth=0, linewidth=5, markersize=15)
+        #plt.title('Liveness values', fontsize=fontsize)
+        plt.xlabel('Iteration', fontsize=fontsize)
+        plt.ylabel('Liveness', fontsize=fontsize)
+        plt.legend(loc='upper left', ncol=1, fontsize=fontsize)
         plt.xlim(0, max(iterations))
         plt.ylim(0, 1.5)
-        plt.xticks(np.arange(0, max(iterations)+1, 4*config.plot_rate), fontsize = fontsize)
-        plt.yticks(np.arange(0, 1.6, .2), fontsize = fontsize)
+        plt.xticks(np.arange(0, max(iterations) + 1, 4 * config.plot_rate), fontsize=fontsize)
+        plt.yticks(np.arange(0, 1.6, .2), fontsize=fontsize)
         plt.grid(which='major', color='#CCCCCC', linestyle='--')
         plt.grid(which='minor', color='#CCCCCC', linestyle='-', axis='both')
         plt.minorticks_on()
 
         plt.tight_layout()
-        plt.show()
         plt.show()
 
 

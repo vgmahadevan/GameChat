@@ -96,8 +96,11 @@ class Environment:
 
         new_states = np.zeros((self.num_agents, config.num_states))
         outputted_controls = np.zeros((self.num_agents, config.num_controls))
+
+        
+
         for agent_idx in range(self.num_agents):
-            print(f"\nRunning Agent: {agent_idx}")
+            #print(f"\nRunning Agent: {agent_idx}")
             controller = controllers[agent_idx]
             initial_state = self.initial_states[agent_idx, :]
             opp_state = self.initial_states[1-agent_idx, :].copy()
@@ -112,7 +115,7 @@ class Environment:
             new_states[agent_idx, :] = x1.ravel()
             outputted_controls[agent_idx, :] = u1.ravel()
             logger.log_iteration(agent_idx, initial_state, opp_state, outputted_controls[agent_idx, :])
-            print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
+            # print(f"Initial state: {initial_state}, Output control: {outputted_controls[agent_idx, :]}, New state: {new_states[agent_idx, :]}")
 
         self.initial_states = new_states.copy()
         self.history.append(new_states.copy())
