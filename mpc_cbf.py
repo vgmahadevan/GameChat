@@ -1,7 +1,7 @@
 import do_mpc
 from casadi import *
 import config
-from config import DynamicsModel
+from config import DynamicsModel, Role
 import numpy as np
 from util import calculate_liveliness, EPSILON
 
@@ -28,6 +28,7 @@ class MPC:
         self.u_ori = []
         self.liveliness = []
         self.last_liveliness_iteration = -10
+        self.role = None
 
     def initialize_controller(self, env):
         self.model = env.define_model()
@@ -107,8 +108,14 @@ class MPC:
         # Compute CBF constraints
         cbf_constraints = []
 
+        obs_to_add = self.static_obs.copy()
+        
+        if not config.liveliness:
+            opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
+            obs_to_add.append(opponent_obs)
+
         if self.agent_idx == 1:
-            for obs in self.static_obs:
+            for obs in obs_to_add:
                 # delta_h_k + gamma*h_k >= 0
                 # h_k1 - h_k + gamma*h_k >= 0
                 # -h_k1 + h_k - gamma*h_k <= 0
@@ -117,8 +124,9 @@ class MPC:
                 h_k1 = self.h_obs(x_k1, obs)
                 cbf_constraints.append(-h_k1 + (1-config.obs_gamma)*h_k)
         else:
-            opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
-            for obs in self.static_obs + [opponent_obs]:
+            # opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
+            # for obs in self.static_obs + [opponent_obs]:
+            for obs in obs_to_add:
                 # delta_h_k + gamma*h_k >= 0
                 # h_k1 - h_k + gamma*h_k >= 0
                 # -h_k1 + h_k - gamma*h_k <= 0
@@ -145,7 +153,7 @@ class MPC:
         if l > config.liveness_threshold:
             return
         
-        print(f"Adding constraint, liveliness = {l}")
+        #print(f"Adding constraint, liveliness = {l}")
 
         # Get state vector x_{t+k+1}
         A, B = self.env.get_dynamics(self.model.x['x'])
@@ -158,7 +166,7 @@ class MPC:
         # -h_k1 + (1 - gamma)*h_k <= 0
         # h_k1 >= h_k - gamma*h_k
         # (h_k1 - h_k) >= -gamma*h_k
-        print("\tConstraint:", constraint)
+        #print("\tConstraint:", constraint)
         mpc.set_nl_cons('liveliness_constraint', constraint, ub=0)
 
     def h_v(self, x, opp_x):
@@ -175,10 +183,10 @@ class MPC:
         # Means that agent 1 will speed up and agent 2 will slow down.
     
         vel_vector = vertcat(x[3], opp_x[3])
-        print(vel_vector)
+        #print(vel_vector)
         h_vec = self.A_matrix @ vel_vector
         h = h_vec[self.agent_idx]
-        print(h)
+        #print(h)
         # h = mmax(h_vec)
         return h
 
@@ -203,7 +211,7 @@ class MPC:
             ego_state = np.append(ego_state, [u1[0][0]])
         l, ttc, pos_diff, vel_diff, col_pt = calculate_liveliness(ego_state, self.opp_state)
         # self.liveliness.append(l)
-        print("livesness", l)
+        #print("livesness", l)
         self.liveliness.append((l, pos_diff, vel_diff))
         self.u_ori.append(u1.ravel())
         if col_pt and l < config.liveness_threshold:
@@ -211,7 +219,7 @@ class MPC:
             self.col_pt = col_pt
         if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
             #if self.agent_idx == 0 and self.env.sim_iteration < self.last_liveliness_iteration + 5:
-            if self.env.sim_iteration < self.last_liveliness_iteration + 10:
+            if self.env.sim_iteration < self.last_liveliness_iteration + 2:
                 u1_before_proj = u1.copy()
                 # curr_v0_v1_point = np.array([0.0, 0.0])
                 # curr_v0_v1_point[self.agent_idx] = ego_state[3]
@@ -220,12 +228,14 @@ class MPC:
                 # desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
                 # desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
                 # mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
-                ego_dist = np.linalg.norm(ego_state[0:1] - np.array(self.col_pt))
-                opp_dist = np.linalg.norm(self.opp_state[0:1] - np.array(self.col_pt))
-                if ego_dist > opp_dist:
-                    opp_ttc = (opp_dist + 0.5) / config.v_limit
+                ego_dist = np.linalg.norm(ego_state[0:2] - np.array(self.col_pt))
+                opp_dist = np.linalg.norm(self.opp_state[0:2] - np.array(self.col_pt))
+                if not self.role and ego_dist > opp_dist or self.role==Role.FOLLOWER:
+                    opp_ttc = (opp_dist + 0.25) / config.v_limit
                     #opp_ttc = opp_dist+2 / self.opp_state[3]
-                    new_vel = (ego_dist - 0.5 ) / opp_ttc
+                    new_vel = (ego_dist - 0.25 ) / opp_ttc
+                    #print(self.opp_state[0:2], np.array(self.col_pt), self.opp_state[0:2] - np.array(self.col_pt))
+                    #print(self.col_pt, self.opp_state, opp_dist, opp_ttc, ego_dist, new_vel)
                     u1[0] = new_vel
                     u1[0] = min(new_vel, config.v_limit)
                 else:
@@ -238,13 +248,13 @@ class MPC:
 
                 #u1[0] = min(u1[0], config.v_limit)
                 
-                print(f"Running liveness {l}")
-                #print("mult factor", mult_factor)
-                print("Position diff:", pos_diff)
-                print("Velocity diff:", vel_diff)
-                print(f"\tEgo Vel: {ego_state[3]}, Opp Vel: {self.opp_state[3]}")
-                #print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
-                print(f"Original control {u1_before_proj.T}. Output control {u1.T}")
+                # print(f"Running liveness {l}")
+                # #print("mult factor", mult_factor)
+                # print("Position diff:", pos_diff)
+                # print("Velocity diff:", vel_diff)
+                # print(f"\tEgo Vel: {ego_state[3]}, Opp Vel: {self.opp_state[3]}")
+                # #print(f"\tP1: {curr_v0_v1_point}, Desired P1: {desired_v0_v1_point}.")
+                # print(f"Original control {u1_before_proj.T}. Output control {u1.T}")
 
                 # v = (xf_minus_two - xf_two)/T
                 # norm_u1 = np.linalg.norm(u1_before_proj)

@@ -47,4 +47,5 @@ def get_intersection_point(ego_state, opp_state):
     intersection_x = x_ego + t * np.cos(theta_ego)
     intersection_y = y_ego + t * np.sin(theta_ego)
 
-    return (intersection_x, intersection_y)
+    intersection_pt = [intersection_x, intersection_y]
+    return intersection_pt

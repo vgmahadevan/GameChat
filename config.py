@@ -8,6 +8,15 @@ class DynamicsModel(Enum):
     SINGLE_INTEGRATOR = auto()
     DOUBLE_INTEGRATOR = auto()
 
+class Role(Enum):
+    LEADER = auto()
+    FOLLOWER = auto()
+
+class Task(Enum):
+    HOSPITAL = 0
+    AIRPORT = 1
+    GROCERY = 2
+
 # Liveness parameters.
 liveliness = True
 liveness_threshold = 0.7
@@ -36,13 +45,13 @@ obs_gamma = 0.2                            # CBF parameter in [0,1]
 liveliness_gamma = 0.3                     # CBF parameter in [0,1]
 # safety_dist = 0.00                         # Safety distance
 # agent_radius = 0.01                         # Robot radius (for obstacle avoidance)
-safety_dist = 0.03                         # Safety distance
+safety_dist = 0.01                         # Safety distance
 agent_radius = 0.1                         # Robot radius (for obstacle avoidance)
 zeta = 3.0
 
 # Actuator limits
 v_limit = 0.30                             # Linear velocity limit
-omega_limit = 0.5                          # Angular velocity limit
+omega_limit = 1.0                          # Angular velocity limit
 accel_limit = 0.3
 
 # ------------------------------------------------------------------------------
