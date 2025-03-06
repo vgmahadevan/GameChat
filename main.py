@@ -8,14 +8,15 @@
 
 import config
 from config import Role
+import time
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from mpc_cbf import MPC
 from scenarios import DoorwayScenario, NoObstacleDoorwayScenario, IntersectionScenario
 from plotter import Plotter
 from data_logger import DataLogger, BlankLogger
 from environment import Environment
-from model_controller import ModelController
 from LLM_utils import LLMAgent
 
 def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offset, priority_1, priority_2):
@@ -58,6 +59,14 @@ def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offs
     else:
         config.liveliness = True
 
+    if control_type == 1:
+        mpccbf = True
+    else:
+        mpccbf = False
+
+    if control_type == 2:
+        pass
+
     if control_type == 3:
         if priority_1 < priority_2:
             agents[0].role = Role.LEADER
@@ -67,10 +76,12 @@ def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offs
             agents[1].role = Role.LEADER
 
     # Initialize LLM agents
-    if control_type == 4:
+    time_duration = np.nan
+    if control_type == 4 or control_type == 5:
         agents[0].llm = LLMAgent(priority_1)
         agents[1].llm = LLMAgent(priority_2)
 
+        time_start = time.time()
         agent_2_output = "Begin the conversation"
         for _ in range(4):
             agent_1_output = agents[0].llm.query("user", "Other agent says: " + agent_2_output)
@@ -82,9 +93,14 @@ def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offs
             print(agent_2_output)
             if ("1" in agent_1_output) and ("1" in agent_2_output):
                 break
+        time_duration = time.time() - time_start
+
+        print(f"Time taken for LLM: {time_duration}")
         
-        agents[0].role = agents[0].llm.get_role()
-        agents[1].role = agents[1].llm.get_role()
+        llm_roles = [agents[0].llm.get_role(), agents[1].llm.get_role()]
+        if control_type == 4:
+            agents[0].role = agents[0].llm.get_role()
+            agents[1].role = agents[1].llm.get_role()
         print(agents[0].role)
         print(agents[1].role)
 
@@ -97,14 +113,19 @@ def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offs
         "higher_priority_ttg": np.nan,
         "makespan": np.nan,
         "second_min_vel": np.nan,
-        "path_deviation": np.nan
+        "path_deviation": np.nan,
+        "llm_time": time_duration
     }
     for sim_iteration in range(config.sim_steps):
         #print(f"\nIteration: {sim_iteration}")
         for agent_idx in range(config.n):
             x_cum[agent_idx].append(env.initial_states[agent_idx])
 
-        new_states, outputted_controls = env.run_simulation(sim_iteration, agents, logger)
+        if (control_type == 4 or control_type == 5) and time_duration < (sim_iteration + 1) * config.Ts:
+            agents[0].role = llm_roles[0]
+            agents[1].role = llm_roles[1]
+
+        new_states, outputted_controls = env.run_simulation(sim_iteration, agents, logger, mpccbf)
 
         for agent_idx in range(config.n):
             u_cum[agent_idx].append(outputted_controls[agent_idx])
@@ -132,6 +153,7 @@ def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offs
         if time_to_goal[0] is not None and time_to_goal[1] is not None:
             # determine if the agents have the correct priority
             print(time_to_door)
+            print(time_to_goal)
             print(priority_1, priority_2)
             if time_to_door[0] < time_to_door[1] and priority_1 < priority_2:
                 to_ret["correct_priority"] = 1
@@ -187,61 +209,82 @@ def run_one_experiment(scenario_type, control_type, agent_1_offset, agent_2_offs
         # Check for deadlock
         if sim_iteration > 0 and u_cum[0][-1][0] < 0.01 and u_cum[1][-1][0] < 0.01:
             to_ret["deadlock"] = 1
-            #print("DEADLOCKCCCCCCCCCC")
             break
 
         # Plots
         if sim_iteration % config.plot_rate == 0 and config.plot_live:
-            plotter.plot_live(scenario, agents, x_cum, u_cum)
+            plotter.plot_live(scenario, agents, x_cum, u_cum, scenario_type)
             pass
 
 # Discard the first element of both x1 and x2
-    x_cum = np.array(x_cum)
-    u_cum = np.array(u_cum)
-    plotter.plot(scenario, agents, x_cum, u_cum)
+    # x_cum = np.array(x_cum)
+    # u_cum = np.array(u_cum)
+    # plotter.plot(scenario, agents, x_cum, u_cum)
+    if sim_iteration % config.plot_rate == 0 and config.plot_live:
+        plotter.plot_live(scenario, agents, x_cum, u_cum, scenario_type)
+        pass
+    plt.close()
 
     return to_ret
 
-print(run_one_experiment(1, 0, 0, -.2, 0, 1))
+# print(run_one_experiment(0, 1, -.2, 0, 0, 1))
 
 # scenarios: 0 is Doorway, 1 is Intersection
-# types: 2 is no LLM or priorities, 3 is with priority codes, 4 is LLM
-# if __name__ == "__main__":
-#     records = []
-#     counter = 0
-#     for control_type in range(4, 1, -1):
-#         for scenario_type in range(2):
-#             for (off1, off2) in [(0, 0), (-.2, 0), (0, -.2)]:
-#                 for (p1, p2) in [(0, 1), (1, 0), (0, 2), (2, 0), (1, 2), (2, 1)]:
-#                     print(counter)
+# control types: 
+#   0 is MPCCBF
+#   1 is SMGCBF
+#   2 is GameChat no comm
+#   3 is GameChat with priorities known
+#   4 is GameChat pre SMG convo
+#   5 is GameChat during SMG convo
+if __name__ == "__main__":
+    records = []
+    counter = 0
+    # for control_type in range(1, -1, -1):
+    #     for scenario_type in range(1, 0, -1):
+    #         for (off1, off2) in [(0, 0), (-.2, 0), (0, -.2)]:
+    #             for (p1, p2) in [(0, 1), (1, 0), (0, 2), (2, 0), (1, 2), (2, 1)]:
+    #                 print(counter)
 
-#                     record = run_one_experiment(scenario_type, control_type, off1, off2, p1, p2)
-#                     record["scenario_type"] = scenario_type
-#                     record["control_type"] = control_type
-#                     record["offset1"] = off1
-#                     record["offset2"] = off2
-#                     record["priority1"] = p1
-#                     record["priority2"] = p2
-#                     records.append(record)
-#                     print(record)
-#                     counter += 1
+    #                 record = run_one_experiment(scenario_type, control_type, off1, off2, p1, p2)
+    #                 record["scenario_type"] = scenario_type
+    #                 record["control_type"] = control_type
+    #                 record["offset1"] = off1
+    #                 record["offset2"] = off2
+    #                 record["priority1"] = p1
+    #                 record["priority2"] = p2
+    #                 records.append(record)
+    #                 print(record)
+    #                 counter += 1
 
-#     control_type = 0
-#     for scenario_type in range(2):
-#         for (off1, off2) in [(0, 0), (-.25, 0), (0, -.25)]:
-#             for (p1, p2) in [(0, 1), (1, 0), (0, 2), (2, 0), (1, 2), (2, 1)]:
-#                 print(counter)
+    # control_type = 2
+    # for scenario_type in range(1, 0, -1):
+    #     for (off1, off2) in [(0, 0), (-.25, 0), (0, -.25)]:
+    #         for (p1, p2) in [(0, 1), (1, 0), (0, 2), (2, 0), (1, 2), (2, 1)]:
+    #             print(counter)
 
-#                 record = run_one_experiment(scenario_type, control_type, off1, off2, p1, p2)
-#                 record["scenario_type"] = scenario_type
-#                 record["control_type"] = control_type
-#                 record["offset1"] = off1
-#                 record["offset2"] = off2
-#                 record["priority1"] = p1
-#                 record["priority2"] = p2
-#                 records.append(record)
-#                 print(record)
-#                 counter += 1
+    #             record = run_one_experiment(scenario_type, control_type, off1, off2, p1, p2)
+    #             record["scenario_type"] = scenario_type
+    #             record["control_type"] = 5
+    #             record["offset1"] = off1
+    #             record["offset2"] = off2
+    #             record["priority1"] = p1
+    #             record["priority2"] = p2
+    #             records.append(record)
+    #             print(record)
+    #             counter += 1
 
-#     df = pd.DataFrame(records)
-#     df.to_csv("results.csv")
+    control_type = 5
+    for scenario_type in range(0, 2, 1):
+        (off1, off2) = (0, 0)
+        (p1, p2) = (2, 0)
+        run_one_experiment(scenario_type, control_type, off1, off2, p1, p2)
+
+
+    # df = pd.DataFrame(records)
+    # df.to_csv("llmresults.csv")
+
+    # SMGConvo doorway sym: 2.86
+    # SMGConvo intersection sym: 2.48
+    # SMGConvo doorway asym: 2.52
+    # SMGConvo intersection asym: 2.61

@@ -17,17 +17,17 @@ class Plotter:
         # Reset plot limits and other properties as needed
         self.ax.set_xlim(-1, 2)
         self.ax.set_ylim(-2, 2)  # Adjusted y-axis limits
-        self.liveliness_text.set_text(f'Liveliness function = {config.liveliness}')
+        #self.liveliness_text.set_text(f'Liveliness function = {config.liveliness}')
         return []
 
 
     # Function to update the plots
-    def plot_live(self, scenario, controllers, x_cum, u_cum):
+    def plot_live(self, scenario, controllers, x_cum, u_cum, scenario_type):
         self.scenario = scenario
         self.controllers = controllers
         self.x_cum = np.array(x_cum)
         self.u_cum = np.array(u_cum)
-        self.update(len(x_cum[0]) - 1)
+        self.update(len(x_cum[0]) - 1, scenario_type)
         plt.legend()
         plt.draw()
         plt.pause(0.01)
@@ -36,7 +36,7 @@ class Plotter:
 
 
     # Function to update the plots
-    def update(self, frame):
+    def update(self, frame, scenario_type):
         self.ax.clear()
 
         frame *= config.plot_rate
@@ -45,8 +45,13 @@ class Plotter:
         self.scenario.plot(self.ax)
 
         # Reset plot limits and other properties as needed
-        self.ax.set_xlim(-2.6, 2.2)
-        self.ax.set_ylim(-2, 2)  # Adjusted y-axis limits
+        self.ax.set_aspect('equal')
+        if scenario_type == 0:
+            self.ax.set_xlim(-1.5, 2.5)
+            self.ax.set_ylim(-1.5, 1.5)  # Adjusted y-axis limits
+        else:
+            self.ax.set_xlim(-2.4, 1.2)
+            self.ax.set_ylim(-2.4, 1.2)
 
         u0, u1 = np.round(self.u_cum[0][frame], 2), np.round(self.u_cum[1][frame], 2)
         try:
@@ -66,15 +71,17 @@ class Plotter:
                            f'Agent 1 U_ori = {u1_ori.T}.',
                            f'Agent 1 U = {u1.T}',
         ]
-        self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
+        #self.liveliness_text = self.ax.text(0.05, 0.95, '\n'.join(liveliness_text), transform=self.ax.transAxes, fontsize=10, verticalalignment='top')
 
         # Determine the start index for the fading effect
         trail_length = 20 * config.plot_rate
         start_index = max(0, frame - trail_length)  # Adjust '10' to control the length of the fading trail
 
         # Draw the fading trails for agents 1 and 2
+        max_i = 0
         for i in range(start_index, frame - 1, config.plot_rate):
-            alpha = max(0, 1 - 2*((frame - 1 - i) / trail_length)**2)
+            max_i = max(max_i, i)
+            alpha = max(0, min(.85, 1 - 1.5*((frame - 1 - i) / trail_length)**2))
             
         #     alpha = 1 if i == frame-2 else 0
         #    # Get the start and end points
@@ -126,13 +133,25 @@ class Plotter:
 
             # self.ax.plot(self.x_cum[0][i:i+2, 0], self.x_cum[0][i:i+2, 1], 'r-', alpha=alpha, linewidth=5)
             # self.ax.plot(self.x_cum[1][i:i+2, 0], self.x_cum[1][i:i+2, 1], 'b-', alpha=alpha, linewidth=5)
-            self.ax.plot(self.x_cum[0][i, 0], self.x_cum[0][i, 1], 'ro', alpha=alpha, markersize=10)
-            self.ax.plot(self.x_cum[1][i, 0], self.x_cum[1][i, 1], 'bo', alpha=alpha, markersize=10)
+            if scenario_type == 0:
+                self.ax.plot(self.x_cum[0][i, 0], self.x_cum[0][i, 1], 'bo', alpha=alpha, markersize=9)
+                self.ax.plot(self.x_cum[1][i, 0], self.x_cum[1][i, 1], 'ro', alpha=alpha, markersize=9)
+            else:
+                self.ax.plot(self.x_cum[0][i, 0], self.x_cum[0][i, 1], 'bo', alpha=alpha, markersize=8)
+                self.ax.plot(self.x_cum[1][i, 0], self.x_cum[1][i, 1], 'ro', alpha=alpha, markersize=8)
+        if scenario_type == 0:
+            self.ax.plot(self.x_cum[0][max_i, 0], self.x_cum[0][max_i, 1], 'bo', alpha=1, markersize=16)
+            self.ax.plot(self.x_cum[1][max_i, 0], self.x_cum[1][max_i, 1], 'ro', alpha=1, markersize=16)
+        else:    
+            self.ax.plot(self.x_cum[0][max_i, 0], self.x_cum[0][max_i, 1], 'bo', alpha=1, markersize=14)
+            self.ax.plot(self.x_cum[1][max_i, 0], self.x_cum[1][max_i, 1], 'ro', alpha=1, markersize=14)
         
         pos_diff, vel_diff = self.controllers[0].liveliness[frame][1], self.controllers[0].liveliness[frame][2]
-        self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
-        self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
-        
+        # self.ax.arrow(0, 0, pos_diff[0], pos_diff[1], head_width=0.05, head_length=0.1, fc='green', ec='green', label='Position difference')
+        # self.ax.arrow(0, 0, vel_diff[0], vel_diff[1], head_width=0.05, head_length=0.1, fc='orange', ec='orange', label='Velocity difference')
+        plt.title("t = {:.2f} s".format(frame * config.Ts), fontsize=28)
+        self.ax.tick_params(axis='both', labelsize=22)
+        plt.savefig(f'plots/plot_{scenario_type}_{frame}.png')
 
         return []
 

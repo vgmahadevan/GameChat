@@ -90,7 +90,7 @@ class Environment:
         self.simulator.reset_history()
         self.simulator.x0 = x0
 
-    def run_simulation(self, sim_iteration, controllers, logger):
+    def run_simulation(self, sim_iteration, controllers, logger, mpccbf=False):
         """Runs a closed-loop control simulation."""
         self.sim_iteration = sim_iteration
 
@@ -110,7 +110,7 @@ class Environment:
                 opp_state = np.append(opp_state, [opp_vel])
             self.reset_state(initial_state)
             controller.reset_state(initial_state, opp_state)
-            u1 = controller.make_step(initial_state)
+            u1 = controller.make_step(initial_state, mpccbf)
             x1 = self.simulator.make_step(u1)
             new_states[agent_idx, :] = x1.ravel()
             outputted_controls[agent_idx, :] = u1.ravel()

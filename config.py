@@ -34,7 +34,7 @@ else:
     num_controls = 2 # (a, omega)
 
 n = 2                                      # Number of agents
-runtime = 15.0                             # Total runtime [s]
+runtime = 20.0                             # Total runtime [s]
 # runtime = 5.0
 Ts = 0.2                                   # Sampling time [s]
 T_horizon = 4                              # Prediction horizon time steps

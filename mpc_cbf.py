@@ -109,7 +109,7 @@ class MPC:
         cbf_constraints = []
 
         obs_to_add = self.static_obs.copy()
-        
+
         if not config.liveliness:
             opponent_obs = (self.opp_state[0], self.opp_state[1], config.agent_radius)
             obs_to_add.append(opponent_obs)
@@ -201,7 +201,7 @@ class MPC:
         self.mpc.u0 = np.zeros_like(self.mpc.u0['u'])
         self.mpc.set_initial_guess()
 
-    def make_step(self, x0):
+    def make_step(self, x0, mpccbf=False):
         u1 = self.mpc.make_step(x0)
         u1[0] = min(u1[0], config.v_limit)
 
@@ -217,29 +217,61 @@ class MPC:
         if col_pt and l < config.liveness_threshold:
             self.last_liveliness_iteration = self.env.sim_iteration
             self.col_pt = col_pt
-        if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
-            #if self.agent_idx == 0 and self.env.sim_iteration < self.last_liveliness_iteration + 5:
-            if self.env.sim_iteration < self.last_liveliness_iteration + 2:
-                u1_before_proj = u1.copy()
-                # curr_v0_v1_point = np.array([0.0, 0.0])
-                # curr_v0_v1_point[self.agent_idx] = ego_state[3]
-                # curr_v0_v1_point[1 - self.agent_idx] = self.opp_state[3]
-                # desired_v0_v1_vec = np.array([1, config.zeta])
-                # desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
-                # desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
-                # mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
-                ego_dist = np.linalg.norm(ego_state[0:2] - np.array(self.col_pt))
-                opp_dist = np.linalg.norm(self.opp_state[0:2] - np.array(self.col_pt))
-                if not self.role and ego_dist > opp_dist or self.role==Role.FOLLOWER:
-                    opp_ttc = (opp_dist + 0.25) / config.v_limit
-                    #opp_ttc = opp_dist+2 / self.opp_state[3]
-                    new_vel = (ego_dist - 0.25 ) / opp_ttc
-                    #print(self.opp_state[0:2], np.array(self.col_pt), self.opp_state[0:2] - np.array(self.col_pt))
-                    #print(self.col_pt, self.opp_state, opp_dist, opp_ttc, ego_dist, new_vel)
-                    u1[0] = new_vel
-                    u1[0] = min(new_vel, config.v_limit)
-                else:
-                    u1[0] = config.v_limit
+
+        if not mpccbf:
+            if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
+                #if self.agent_idx == 0 and self.env.sim_iteration < self.last_liveliness_iteration + 5:
+                if self.env.sim_iteration < self.last_liveliness_iteration + 2:
+                    u1_before_proj = u1.copy()
+                    # curr_v0_v1_point = np.array([0.0, 0.0])
+                    # curr_v0_v1_point[self.agent_idx] = ego_state[3]
+                    # curr_v0_v1_point[1 - self.agent_idx] = self.opp_state[3]
+                    # desired_v0_v1_vec = np.array([1, config.zeta])
+                    # desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
+                    # desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
+                    # mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
+                    ego_dist = np.linalg.norm(ego_state[0:2] - np.array(self.col_pt))
+                    opp_dist = np.linalg.norm(self.opp_state[0:2] - np.array(self.col_pt))
+                    
+                    if not self.role and ego_dist > opp_dist or self.role==Role.FOLLOWER:
+                        opp_ttc = (opp_dist + 0.25) / config.v_limit
+                        #opp_ttc = opp_dist+2 / self.opp_state[3]
+                        new_vel = (ego_dist - 0.25 ) / opp_ttc
+                        #print(self.opp_state[0:2], np.array(self.col_pt), self.opp_state[0:2] - np.array(self.col_pt))
+                        #print(self.col_pt, self.opp_state, opp_dist, opp_ttc, ego_dist, new_vel)
+                        u1[0] = new_vel
+                        u1[0] = min(new_vel, config.v_limit)
+                    else:
+                        u1[0] = config.v_limit
+
+        else:
+            if config.dynamics == DynamicsModel.SINGLE_INTEGRATOR and config.liveliness:
+                if self.env.sim_iteration < self.last_liveliness_iteration + 5:
+                    u1_before_proj = u1.copy()
+                    curr_v0_v1_point = np.array([0.0, 0.0])
+                    curr_v0_v1_point[self.agent_idx] = ego_state[3]
+                    curr_v0_v1_point[1 - self.agent_idx] = self.opp_state[3]
+
+                    ego_dist = np.linalg.norm(ego_state[0:2] - np.array(self.col_pt))
+                    opp_dist = np.linalg.norm(self.opp_state[0:2] - np.array(self.col_pt))
+                    if not self.role and ego_dist > opp_dist or self.role==Role.FOLLOWER:
+                        if self.agent_idx == 0:
+                            desired_v0_v1_vec = np.array([1, config.zeta])
+                        else:
+                            desired_v0_v1_vec = np.array([config.zeta, 1])
+                        # desired_v0_v1_vec = np.array([1, config.zeta])
+                        desired_v0_v1_vec_normalized = desired_v0_v1_vec / np.linalg.norm(desired_v0_v1_vec)
+                        desired_v0_v1_point = np.dot(curr_v0_v1_point, desired_v0_v1_vec_normalized) * desired_v0_v1_vec_normalized
+                        mult_factor = (desired_v0_v1_point[self.agent_idx]) / u1[0]
+                    else:
+                        mult_factor = 1
+                    
+                    
+                    u1[0] *= mult_factor
+                        
+                    u1[0] = min(u1[0], config.v_limit)
+                # else:
+                #         u1[0] = config.v_limit
 
 
                 
